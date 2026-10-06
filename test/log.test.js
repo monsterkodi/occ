@@ -54,7 +54,7 @@ describe("log", () => {
 
   test("shows every session when no ids are given", () => {
     assert.ok(run([]).includes("$ webfetch"))
-    assert.ok(run([]).includes("$ bash"))
+    assert.ok(run([]).includes("$ shell"))
   })
 
   test("ids filter which sessions are shown", () => {

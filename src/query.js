@@ -124,9 +124,11 @@ function toBlocks(data, type, message, blocks) {
     if (part.type !== "tool") continue
 
     flush()
+    const name = part.name ?? "tool"
     blocks.push({
       kind: "call",
-      name: part.name ?? "tool",
+      name,
+      agent,
       command: commandOf(part.state?.input),
     })
 
@@ -134,10 +136,15 @@ function toBlocks(data, type, message, blocks) {
     if (result !== "") {
       blocks.push({
         kind: "result",
-        name: part.name ?? "tool",
+        name,
         text: result,
         outputPath: part.state?.metadata?.outputPath ?? null,
       })
+    }
+
+    const code = part.state?.metadata?.exit
+    if (typeof code === "number" && code !== 0) {
+      blocks.push({ kind: "exit", name, code })
     }
   }
 

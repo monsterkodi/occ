@@ -50,7 +50,7 @@ function tool(name, input, opts = {}) {
   } else if (opts.result !== undefined) {
     state.content = [{ type: "text", text: opts.result }]
   }
-  state.metadata = opts.metadata ?? { exit: 0 }
+  state.metadata = { exit: opts.exit ?? 0, ...opts.metadata }
   return { type: "tool", id: `call_${name}`, name, state }
 }
 
@@ -109,7 +109,18 @@ function seed(db) {
   insertMessage.run(...msg("m10", "ses_ccccccccccccccccccccccc3", "user", 1, { text: "one" }))
   insertMessage.run(...msg("m11", "ses_ccccccccccccccccccccccc3", "assistant", 2, {
     agent: "build",
-    content: [tool("bash", { command: "echo hi" }, { result: "hi\n" })],
+    content: [tool("shell", { command: "echo hi" }, { result: "hi\n" })],
+  }))
+  insertMessage.run(...msg("m12", "ses_ccccccccccccccccccccccc3", "assistant", 3, {
+    agent: "build",
+    content: [
+      tool("shell", { command: "cat > x <<'EOF'\nline\nEOF" }, { result: "" }),
+      text("after the tool"),
+    ],
+  }))
+  insertMessage.run(...msg("m13", "ses_ccccccccccccccccccccccc3", "assistant", 4, {
+    agent: "build",
+    content: [tool("shell", { command: "false" }, { result: "boom", exit: 42 })],
   }))
 }
 

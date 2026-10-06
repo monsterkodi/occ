@@ -92,9 +92,26 @@ describe("getSession blocks", () => {
     assert.equal(full.outputPath, null)
   })
 
-  test("any tool name is carried through, not just shell", () => {
+  test("every call block carries its tool name", () => {
     const names = blocks(C).filter((b) => b.kind === "call").map((b) => b.name)
-    assert.deepEqual(names, ["bash"])
+    assert.deepEqual(names, ["shell", "shell", "shell"])
+  })
+
+  test("a nonzero exit produces an exit block naming the tool", () => {
+    const exits = blocks(C).filter((b) => b.kind === "exit")
+    assert.deepEqual(exits, [{ kind: "exit", name: "shell", code: 42 }])
+  })
+
+  test("a zero exit produces no exit block", () => {
+    assert.equal(
+      blocks(A).filter((b) => b.kind === "exit").length,
+      0,
+    )
+  })
+
+  test("call blocks carry the agent of the message they came from", () => {
+    const call = blocks(C).find((b) => b.kind === "call")
+    assert.equal(call.agent, "build")
   })
 
   test("unknown session id is an error", () => {

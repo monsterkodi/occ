@@ -4,6 +4,7 @@ import { createColor } from "./src/render.js"
 import { ls } from "./src/ls.js"
 import { cat } from "./src/cat.js"
 import { log } from "./src/log.js"
+import { shell } from "./src/shell.js"
 import { OclsError } from "./src/db.js"
 
 const HELP = `
@@ -14,6 +15,7 @@ usage:
   ocls ls [id...]        print session table
   ocls cat [id...]       show session conversation
   ocls log [id...]       show session history including tool calls
+  ocls shell [id...]     show shell commands with their output
 
 session table columns: id start duration turns name
 `
@@ -22,6 +24,7 @@ const COMMANDS = {
   ls,
   cat,
   log,
+  shell,
 }
 
 function usage() {

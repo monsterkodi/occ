@@ -113,9 +113,19 @@ function markerContinued(c) {
   return c.gray("…")
 }
 
+function markerExit(c, name, code) {
+  return c.bgRed(c.bold(`$ ${name} exit ${code}`))
+}
+
 function renderBlock(block, c, inAgentRun) {
   if (block.kind === "call") {
-    return [markerTool(c, block.name), block.command, inAgentRun]
+    const marker = markerTool(c, block.name)
+    if (inAgentRun) return [marker, block.command, true]
+    return [`${markerAgent(c, block.agent)}\n${marker}`, block.command, true]
+  }
+
+  if (block.kind === "exit") {
+    return [markerExit(c, block.name, block.code), "", inAgentRun]
   }
 
   if (block.kind === "result") {
@@ -147,7 +157,9 @@ export function renderBlocks(blocks, color) {
   for (const block of blocks) {
     const [marker, text, next] = renderBlock(block, c, inAgentRun)
     inAgentRun = next
-    if (marker !== null) lines.push(marker, text)
+    if (marker === null) continue
+    lines.push(marker)
+    if (text !== "") lines.push(text)
   }
 
   return lines.join("\n")

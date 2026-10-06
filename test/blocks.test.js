@@ -47,12 +47,87 @@ describe("renderBlocks", () => {
   test("a result marker names the tool it came from", () => {
     const out = renderBlocks(
       [
-        block("call", { name: "edit", command: "old" }),
+        block("call", { name: "edit", agent: "build", command: "old" }),
         block("result", { name: "edit", text: "written", outputPath: null }),
       ],
       plain,
     )
-    assert.equal(out, "$ edit\nold\n$ edit result\nwritten")
+    assert.equal(out, "> agent build\n$ edit\nold\n$ edit result\nwritten")
+  })
+
+  test("a run opening with a tool call gets the agent marker first", () => {
+    const out = renderBlocks(
+      [
+        block("turn", { role: "user", agent: null, text: "do the thing" }),
+        block("call", { name: "bash", agent: "build", command: "false" }),
+        block("result", { name: "bash", text: "boom", outputPath: null }),
+        block("exit", { name: "bash", code: 42 }),
+        block("turn", { role: "agent", agent: "build", text: "it failed" }),
+      ],
+      plain,
+    )
+    assert.equal(
+      out,
+      [
+        "> user",
+        "do the thing",
+        "> agent build",
+        "$ bash",
+        "false",
+        "$ bash result",
+        "boom",
+        "$ bash exit 42",
+        "…",
+        "it failed",
+      ].join("\n"),
+    )
+  })
+
+  test("only one agent marker in a run that opens with a tool call", () => {
+    const markers = renderBlocks(
+      [
+        block("turn", { role: "user", agent: null, text: "go" }),
+        block("call", { name: "bash", agent: "build", command: "one" }),
+        block("result", { name: "bash", text: "1", outputPath: null }),
+        block("call", { name: "bash", agent: "build", command: "two" }),
+        block("result", { name: "bash", text: "2", outputPath: null }),
+        block("turn", { role: "agent", agent: "build", text: "done" }),
+      ],
+      plain,
+    )
+      .split("\n")
+      .filter((l) => l.startsWith(">"))
+    assert.deepEqual(markers, ["> user", "> agent build"])
+  })
+
+  test("a run opening with a tool call and no agent field", () => {
+    const out = renderBlocks(
+      [block("call", { name: "grep", agent: null, command: "x" })],
+      plain,
+    )
+    assert.equal(out, "> agent\n$ grep\nx")
+  })
+
+  test("a zero exit gets no exit marker", () => {
+    const out = renderBlocks(
+      [
+        block("call", { name: "bash", agent: "build", command: "true" }),
+        block("result", { name: "bash", text: "", outputPath: null }),
+      ],
+      plain,
+    )
+    assert.equal(out, "> agent build\n$ bash\ntrue")
+  })
+
+  test("an exit marker names the tool and the code", () => {
+    const out = renderBlocks(
+      [
+        block("call", { name: "edit", agent: "build", command: "old" }),
+        block("exit", { name: "edit", code: 1 }),
+      ],
+      plain,
+    )
+    assert.equal(out, "> agent build\n$ edit\nold\n$ edit exit 1")
   })
 
   test("there is never an agent marker and an ellipsis on one turn", () => {
@@ -88,14 +163,14 @@ describe("renderBlocks", () => {
   test("call and result text is verbatim and unindented", () => {
     const out = renderBlocks(
       [
-        block("call", { name: "shell", command: "line one\n  indented\n\nline four" }),
+        block("call", { name: "shell", agent: "build", command: "line one\n  indented\n\nline four" }),
         block("result", { name: "shell", text: "  leading space\ntrailing   ", outputPath: null }),
       ],
       plain,
     )
     assert.equal(
       out,
-      "$ shell\nline one\n  indented\n\nline four\n$ shell result\n  leading space\ntrailing",
+      "> agent build\n$ shell\nline one\n  indented\n\nline four\n$ shell result\n  leading space\ntrailing",
     )
   })
 
@@ -108,13 +183,19 @@ describe("renderBlocks", () => {
   })
 
   test("a call with no following result still renders the call", () => {
-    const out = renderBlocks([block("call", { name: "grep", command: "grep x" })], plain)
-    assert.equal(out, "$ grep\ngrep x")
+    const out = renderBlocks(
+      [block("call", { name: "grep", agent: "build", command: "grep x" })],
+      plain,
+    )
+    assert.equal(out, "> agent build\n$ grep\ngrep x")
   })
 
   test("the call marker shows the tool name", () => {
-    const out = renderBlocks([block("call", { name: "webfetch", command: "GET /x" })], plain)
-    assert.ok(out.startsWith("$ webfetch\n"))
+    const out = renderBlocks(
+      [block("call", { name: "webfetch", agent: "build", command: "GET /x" })],
+      plain,
+    )
+    assert.ok(out.includes("$ webfetch\n"))
   })
 
   test("empty text renders nothing", () => {
