@@ -134,6 +134,7 @@ function toBlocks(data, type, message, blocks) {
     if (result !== "") {
       blocks.push({
         kind: "result",
+        name: part.name ?? "tool",
         text: result,
         outputPath: part.state?.metadata?.outputPath ?? null,
       })

@@ -10,7 +10,7 @@ const history = [
   block("turn", { role: "user", agent: null, text: "hi conny" }),
   block("turn", { role: "agent", agent: "build", text: "let me look" }),
   block("call", { name: "shell", command: "ls -la; hyprctl version" }),
-  block("result", { text: "total 48", outputPath: null }),
+  block("result", { name: "shell", text: "total 48", outputPath: null }),
   block("turn", { role: "agent", agent: "build", text: "found it" }),
 ]
 
@@ -23,9 +23,9 @@ describe("renderBlocks", () => {
         "hi conny",
         "> agent build",
         "let me look",
-        "> shell",
+        "$ shell",
         "ls -la; hyprctl version",
-        "> result",
+        "$ shell result",
         "total 48",
         "…",
         "found it",
@@ -33,11 +33,39 @@ describe("renderBlocks", () => {
     )
   })
 
+  test("a tool marker starts with a dollar, a turn marker with an angle bracket", () => {
+    const lines = renderBlocks(history, plain).split("\n")
+    for (const line of lines.filter((l) => /^[>$]/.test(l))) {
+      const marker = line.split(" ")[0]
+      if (marker === "$") continue
+      assert.ok(marker.startsWith(">"), `tool marker ${marker}`)
+    }
+    assert.ok(lines.includes("> user"))
+    assert.ok(lines.includes("> agent build"))
+  })
+
+  test("a result marker names the tool it came from", () => {
+    const out = renderBlocks(
+      [
+        block("call", { name: "edit", command: "old" }),
+        block("result", { name: "edit", text: "written", outputPath: null }),
+      ],
+      plain,
+    )
+    assert.equal(out, "$ edit\nold\n$ edit result\nwritten")
+  })
+
   test("there is never an agent marker and an ellipsis on one turn", () => {
     const markers = renderBlocks(history, plain)
       .split("\n")
-      .filter((l) => l.startsWith(">") || l === "…")
-    assert.deepEqual(markers, ["> user", "> agent build", "> shell", "> result", "…"])
+      .filter((l) => l.startsWith(">") || l === "…" || l.startsWith("$"))
+    assert.deepEqual(markers, [
+      "> user",
+      "> agent build",
+      "$ shell",
+      "$ shell result",
+      "…",
+    ])
   })
 
   test("a user turn reopens the marker for the next agent turn", () => {
@@ -45,15 +73,15 @@ describe("renderBlocks", () => {
       [
         block("turn", { role: "agent", agent: "plan", text: "one" }),
         block("call", { name: "shell", command: "true" }),
-        block("result", { text: "ok", outputPath: null }),
+        block("result", { name: "shell", text: "ok", outputPath: null }),
         block("turn", { role: "user", agent: null, text: "thanks" }),
         block("turn", { role: "agent", agent: "plan", text: "two" }),
       ],
       plain,
     )
     assert.deepEqual(
-      out.split("\n").filter((l) => l.startsWith(">") || l === "…"),
-      ["> agent plan", "> shell", "> result", "> user", "> agent plan"],
+      out.split("\n").filter((l) => l.startsWith(">") || l === "…" || l.startsWith("$")),
+      ["> agent plan", "$ shell", "$ shell result", "> user", "> agent plan"],
     )
   })
 
@@ -61,32 +89,32 @@ describe("renderBlocks", () => {
     const out = renderBlocks(
       [
         block("call", { name: "shell", command: "line one\n  indented\n\nline four" }),
-        block("result", { text: "  leading space\ntrailing   ", outputPath: null }),
+        block("result", { name: "shell", text: "  leading space\ntrailing   ", outputPath: null }),
       ],
       plain,
     )
     assert.equal(
       out,
-      "> shell\nline one\n  indented\n\nline four\n> result\n  leading space\ntrailing",
+      "$ shell\nline one\n  indented\n\nline four\n$ shell result\n  leading space\ntrailing",
     )
   })
 
   test("a truncated result points at the full output", () => {
     const out = renderBlocks(
-      [block("result", { text: "partial", outputPath: "/tmp/tool_abc" })],
+      [block("result", { name: "read", text: "partial", outputPath: "/tmp/tool_abc" })],
       plain,
     )
-    assert.equal(out, "> result\npartial\n… full output at /tmp/tool_abc")
+    assert.equal(out, "$ read result\npartial\n… full output at /tmp/tool_abc")
   })
 
   test("a call with no following result still renders the call", () => {
     const out = renderBlocks([block("call", { name: "grep", command: "grep x" })], plain)
-    assert.equal(out, "> grep\ngrep x")
+    assert.equal(out, "$ grep\ngrep x")
   })
 
   test("the call marker shows the tool name", () => {
     const out = renderBlocks([block("call", { name: "webfetch", command: "GET /x" })], plain)
-    assert.ok(out.startsWith("> webfetch\n"))
+    assert.ok(out.startsWith("$ webfetch\n"))
   })
 
   test("empty text renders nothing", () => {

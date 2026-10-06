@@ -106,7 +106,7 @@ function markerAgent(c, agent) {
 }
 
 function markerTool(c, label) {
-  return c.bgMagenta(c.bold(`> ${label}`))
+  return c.bgMagenta(c.bold(`$ ${label}`))
 }
 
 function markerContinued(c) {
@@ -124,7 +124,7 @@ function renderBlock(block, c, inAgentRun) {
     const tail = block.outputPath
       ? `${text}\n${c.gray(`… full output at ${block.outputPath}`)}`
       : text
-    return [markerTool(c, "result"), tail, inAgentRun]
+    return [markerTool(c, `${block.name} result`), tail, inAgentRun]
   }
 
   const text = (block.text ?? "").trimEnd()

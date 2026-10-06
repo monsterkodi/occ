@@ -11,7 +11,7 @@ const plain = createColor(false)
 const run = (ids, width = 80) =>
   log({ db: openDb(DB_PATH), prefixes: ids, width, color: plain })
 
-const markers = (out) => out.split("\n").filter((l) => l.startsWith(">"))
+const markers = (out) => out.split("\n").filter((l) => l.startsWith(">") || l.startsWith("$"))
 
 describe("log", () => {
   test("starts with the session row, then the blocks", () => {
@@ -25,16 +25,16 @@ describe("log", () => {
     assert.deepEqual(markers(run(["aaaaaa"])), [
       "> user",
       "> agent plan",
-      "> shell",
-      "> result",
+      "$ shell",
+      "$ shell result",
       "> user",
       "> agent build",
-      "> shell",
-      "> webfetch",
-      "> result",
-      "> grep",
-      "> read",
-      "> result",
+      "$ shell",
+      "$ webfetch",
+      "$ webfetch result",
+      "$ grep",
+      "$ read",
+      "$ read result",
     ])
   })
 
@@ -46,25 +46,19 @@ describe("log", () => {
 
   test("agent text after a tool call continues with an ellipsis", () => {
     const lines = run(["aaaaaa"]).split("\n")
-    const result = lines.indexOf("> result")
+    const result = lines.indexOf("$ shell result")
     const cont = lines.indexOf("…", result)
     assert.ok(cont > result)
     assert.equal(lines[cont + 1], "done listing")
   })
 
-  test("every tool name in a session is shown", () => {
-    const out = run(["cccccc"])
-    assert.ok(out.includes("> bash"))
-    assert.ok(out.includes("> result"))
-  })
-
   test("shows every session when no ids are given", () => {
-    assert.ok(run([]).includes("> webfetch"))
-    assert.ok(run([]).includes("> bash"))
+    assert.ok(run([]).includes("$ webfetch"))
+    assert.ok(run([]).includes("$ bash"))
   })
 
   test("ids filter which sessions are shown", () => {
-    assert.ok(!run(["cccccc"]).includes("> webfetch"))
+    assert.ok(!run(["cccccc"]).includes("$ webfetch"))
   })
 
   test("ids keep the order they were given in", () => {

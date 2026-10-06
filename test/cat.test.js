@@ -21,8 +21,7 @@ describe("cat", () => {
 
   test("shows no tool calls or results at all", () => {
     const out = run(["aaaaaa"])
-    assert.ok(!out.includes("> shell"))
-    assert.ok(!out.includes("> result"))
+    assert.ok(!out.includes("$ "))
     assert.ok(!out.includes("hyprctl"))
   })
 
