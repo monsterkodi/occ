@@ -43,13 +43,15 @@ function reasoning(t) {
   return { type: "reasoning", text: t }
 }
 
-function tool(name, input) {
-  return {
-    type: "tool",
-    id: `call_${name}`,
-    name,
-    state: { status: "completed", input, metadata: { exit: 0 } },
+function tool(name, input, opts = {}) {
+  const state = { status: opts.status ?? "completed", input }
+  if (opts.error !== undefined) {
+    state.error = { type: "unknown", message: opts.error }
+  } else if (opts.result !== undefined) {
+    state.content = [{ type: "text", text: opts.result }]
   }
+  state.metadata = opts.metadata ?? { exit: 0 }
+  return { type: "tool", id: `call_${name}`, name, state }
 }
 
 function seed(db) {
@@ -74,7 +76,8 @@ function seed(db) {
     content: [
       reasoning("thinking about the greeting"),
       text("hi there"),
-      tool("shell", { command: "ls -la" }),
+      tool("shell", { command: "ls -la; echo ---; hyprctl version" }, { result: "total 48\n---\nHyprland 0.56.2" }),
+      text("done listing"),
     ],
   }))
   insertMessage.run(...msg("m3", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "user", 3, { text: "again" }))
@@ -87,7 +90,16 @@ function seed(db) {
   }))
   insertMessage.run(...msg("m6", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "assistant", 6, {
     agent: "plan",
-    content: [reasoning("only thinking"), tool("shell", { command: "true" })],
+    content: [
+      reasoning("only thinking"),
+      tool("shell", { command: "true" }, { result: "" }),
+      tool("webfetch", { url: "https://example.invalid" }, { error: "StatusCode: non 2xx status code (404)" }),
+      tool("grep", { pattern: "needle" }, { status: "running" }),
+      tool("read", { path: "/home/kodi/s/ocls/spec.txt" }, {
+        result: "name: ocls\n",
+        metadata: { truncated: 1, outputPath: "/home/kodi/.local/share/opencode/tool-output/tool_abc" },
+      }),
+    ],
   }))
   insertMessage.run(...msg("m7", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "synthetic", 7, { text: "system note" }))
 
@@ -95,6 +107,10 @@ function seed(db) {
   insertMessage.run(...msg("m9", "ses_bbbbbbbbbbbbbbbbbbbbbbb2", "user", 2, { text: "" }))
 
   insertMessage.run(...msg("m10", "ses_ccccccccccccccccccccccc3", "user", 1, { text: "one" }))
+  insertMessage.run(...msg("m11", "ses_ccccccccccccccccccccccc3", "assistant", 2, {
+    agent: "build",
+    content: [tool("bash", { command: "echo hi" }, { result: "hi\n" })],
+  }))
 }
 
 function build(name, fill) {

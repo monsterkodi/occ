@@ -1,16 +1,29 @@
-import { listSessions, getSession } from "./query.js"
-import { renderSession, renderTurns } from "./render.js"
+import { renderSessions } from "./sessions.js"
 
-export function cat({ db, prefixes = [], width = 80, color }) {
-  const sessions = listSessions(db, prefixes)
-  const blocks = []
+function mergeTurns(blocks) {
+  const merged = []
 
-  for (const session of sessions) {
-    const row = renderSession(session, width, color)
-    const { messages } = getSession(db, session.id)
-    const turns = renderTurns(messages, color)
-    blocks.push(turns ? `${row}\n${turns}` : row)
+  for (const block of blocks) {
+    const previous = merged.at(-1)
+    const sameMessage =
+      previous !== undefined &&
+      previous.kind === "turn" &&
+      block.kind === "turn" &&
+      previous.message === block.message
+
+    if (sameMessage) {
+      previous.text = `${previous.text}\n\n${block.text}`
+      continue
+    }
+
+    merged.push({ ...block })
   }
 
-  return blocks.join("\n\n")
+  return merged
+}
+
+export function cat({ db, prefixes = [], width = 80, color }) {
+  return renderSessions(db, prefixes, width, color, (blocks) =>
+    mergeTurns(blocks.filter((b) => b.kind === "turn")),
+  )
 }

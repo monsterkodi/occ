@@ -70,36 +70,77 @@ export function listSessions(db, prefixes = []) {
 }
 
 const MESSAGE_SELECT = `
-  SELECT type, data
+  SELECT seq, type, data
   FROM session_message
   WHERE session_id = ?
   ORDER BY seq ASC
 `
 
-function joinText(parts) {
-  if (!Array.isArray(parts)) return ""
-  return parts
-    .filter((p) => p && p.type === "text" && typeof p.text === "string")
-    .map((p) => p.text)
-    .join("\n\n")
+function commandOf(input) {
+  if (typeof input?.command === "string") return input.command
+  return JSON.stringify(input ?? null, null, 2)
 }
 
-function toTurn(row) {
-  const data = JSON.parse(row.data)
+function resultOf(state) {
+  const error = state?.error?.message
+  if (typeof error === "string") return error
 
-  if (row.type === "user") {
-    return {
-      role: "user",
-      agent: null,
-      text: typeof data.text === "string" ? data.text : "",
+  const content = state?.content
+  if (!Array.isArray(content)) return ""
+
+  return content
+    .filter((c) => c && c.type === "text" && typeof c.text === "string")
+    .map((c) => c.text)
+    .join("\n")
+}
+
+function toBlocks(data, type, message, blocks) {
+  if (type === "user") {
+    const text = typeof data.text === "string" ? data.text : ""
+    if (text !== "") {
+      blocks.push({ kind: "turn", role: "user", agent: null, text, message })
+    }
+    return
+  }
+
+  const agent = data.agent ?? null
+  const content = Array.isArray(data.content) ? data.content : []
+  let text = ""
+
+  const flush = () => {
+    if (text === "") return
+    blocks.push({ kind: "turn", role: "agent", agent, text, message })
+    text = ""
+  }
+
+  for (const part of content) {
+    if (!part || typeof part !== "object") continue
+
+    if (part.type === "text" && typeof part.text === "string") {
+      text = text === "" ? part.text : `${text}\n\n${part.text}`
+      continue
+    }
+
+    if (part.type !== "tool") continue
+
+    flush()
+    blocks.push({
+      kind: "call",
+      name: part.name ?? "tool",
+      command: commandOf(part.state?.input),
+    })
+
+    const result = resultOf(part.state)
+    if (result !== "") {
+      blocks.push({
+        kind: "result",
+        text: result,
+        outputPath: part.state?.metadata?.outputPath ?? null,
+      })
     }
   }
 
-  return {
-    role: "agent",
-    agent: data.agent ?? null,
-    text: joinText(data.content),
-  }
+  flush()
 }
 
 export function getSession(db, id) {
@@ -109,11 +150,10 @@ export function getSession(db, id) {
     throw new OclsError(`no session matches "${id}"`)
   }
 
-  const messages = db
-    .prepare(MESSAGE_SELECT)
-    .all(id)
-    .filter((m) => m.type === "user" || m.type === "assistant")
-    .map(toTurn)
+  const blocks = []
+  for (const message of db.prepare(MESSAGE_SELECT).all(id)) {
+    toBlocks(JSON.parse(message.data), message.type, message.seq, blocks)
+  }
 
-  return { ...row, messages }
+  return { row, blocks }
 }

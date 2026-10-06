@@ -105,31 +105,49 @@ function markerAgent(c, agent) {
   return agent ? head + c.bgGray(c.black(agent)) : head.trimEnd()
 }
 
+function markerTool(c, label) {
+  return c.bgMagenta(c.bold(`> ${label}`))
+}
+
 function markerContinued(c) {
   return c.gray("…")
 }
 
-export function renderTurns(turns, color) {
+function renderBlock(block, c, inAgentRun) {
+  if (block.kind === "call") {
+    return [markerTool(c, block.name), block.command, inAgentRun]
+  }
+
+  if (block.kind === "result") {
+    const text = block.text.trimEnd()
+    if (text === "") return [null, null, inAgentRun]
+    const tail = block.outputPath
+      ? `${text}\n${c.gray(`… full output at ${block.outputPath}`)}`
+      : text
+    return [markerTool(c, "result"), tail, inAgentRun]
+  }
+
+  const text = (block.text ?? "").trimEnd()
+  if (text === "") return [null, null, inAgentRun]
+
+  if (block.role === "user") {
+    return [markerUser(c), text, false]
+  }
+
+  return inAgentRun
+    ? [markerContinued(c), text, true]
+    : [markerAgent(c, block.agent), text, true]
+}
+
+export function renderBlocks(blocks, color) {
   const c = color ?? createColor(false)
   const lines = []
   let inAgentRun = false
 
-  for (const turn of turns) {
-    const text = (turn.text ?? "").trimEnd()
-    if (text === "") continue
-
-    let marker
-    if (turn.role === "user") {
-      marker = markerUser(c)
-      inAgentRun = false
-    } else if (inAgentRun) {
-      marker = markerContinued(c)
-    } else {
-      marker = markerAgent(c, turn.agent)
-      inAgentRun = true
-    }
-
-    lines.push(marker, text)
+  for (const block of blocks) {
+    const [marker, text, next] = renderBlock(block, c, inAgentRun)
+    inAgentRun = next
+    if (marker !== null) lines.push(marker, text)
   }
 
   return lines.join("\n")

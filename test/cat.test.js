@@ -19,16 +19,31 @@ describe("cat", () => {
     assert.equal(lines[2], "hello")
   })
 
+  test("shows no tool calls or results at all", () => {
+    const out = run(["aaaaaa"])
+    assert.ok(!out.includes("> shell"))
+    assert.ok(!out.includes("> result"))
+    assert.ok(!out.includes("hyprctl"))
+  })
+
+  test("text on both sides of a tool call joins into one turn", () => {
+    const out = run(["aaaaaa"])
+    assert.ok(out.includes("hi there\n\ndone listing"))
+    assert.ok(!out.includes("total 48"))
+  })
+
+  test("consecutive text parts in one message still join with a blank line", () => {
+    assert.ok(run(["aaaaaa"]).includes("first bit\n\nsecond bit"))
+  })
+
   test("shows every session when no ids are given", () => {
-    const out = run([])
-    assert.ok(out.includes("> user"))
-    assert.ok(out.includes("second bit"))
-    assert.equal(out.split("\n").filter((l) => l.startsWith("> user")).length, 3)
+    assert.ok(run([]).includes("> user"))
+    assert.equal(run([]).split("\n").filter((l) => l === "> user").length, 3)
   })
 
   test("ids filter which sessions are shown", () => {
     const out = run(["cccccc"])
-    assert.ok(!out.includes("hello coco"))
+    assert.ok(!out.includes("hello"))
     assert.ok(out.includes("> user"))
   })
 
