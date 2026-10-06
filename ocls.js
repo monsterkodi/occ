@@ -24,10 +24,10 @@ session table columns: id start duration turns name
 `
 
 const COMMANDS = {
-  ls,
-  cat,
-  log,
-  shell,
+  ls: { run: ls },
+  cat: { run: cat },
+  log: { run: log },
+  shell: { run: shell },
   del: { run: del, writable: true },
 }
 

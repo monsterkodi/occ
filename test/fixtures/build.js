@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite"
-import { mkdirSync, renameSync, rmSync } from "node:fs"
+import { copyFileSync, mkdirSync, renameSync, rmSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { tmpdir } from "node:os"
 import { fileURLToPath } from "node:url"
@@ -243,6 +243,15 @@ function build(name, fill) {
 
 export function buildTestDb() {
   return build("test.db", seed)
+}
+
+export function makeDataHome() {
+  const dbPath = buildTestDb()
+  const home = join(tmpdir(), "ocls-data-home", String(process.pid))
+  const target = join(home, "opencode", "opencode.db")
+  mkdirSync(join(home, "opencode"), { recursive: true })
+  copyFileSync(dbPath, target)
+  return { home, dbPath: target }
 }
 
 export function buildBadSchemaDb() {
