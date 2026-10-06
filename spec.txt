@@ -9,10 +9,21 @@ usage:
 
 ocls -h|--help               - prints help text with available commands
 ocls ls [id...]              - prints session table
-ocls del id [id...]          - delete session
 ocls cat [id...]             - shows session conversation
-ocls shell [id...]           - shows session commands
+ocls log [id...]             - shows full history including tool calls
+ocls shell [id...]           - shows shell commands with their output
+ocls del id [id...]          - deletes sessions after a confirmation prompt
 ocls dump [id...]            - dumps session to text file (uncolored)
+
+cat is log without the tool blocks; shell is log filtered to shell calls.
+
+log blocks:
+
+> user            user message
+> agent <mode>    agent message; … continues a run across tool blocks
+$ <tool>          tool call
+$ <tool> result   tool output, or the error message
+$ <tool> exit <n> nonzero exit, the only failure signal a shell call has
 
 session table columns: [id] [start] [duration] [turns] [name]
 
@@ -41,5 +52,11 @@ implementation:
   each of which appends its own content beneath the row
 - colors are on for a tty unless NO_COLOR is set
 - ocls del requires at least one id, there is no --all
+- ocls del requires a terminal, and asks "ARE YOU SURE? (yN)" after showing
+  the sessions it is about to delete; it opens the db writable with
+  PRAGMA foreign_keys ON so session_message, session_pending, session_inbox,
+  instruction_entry and instruction_state cascade
+- del is the only command that writes, so it is the only one that is not a
+  pure function: it takes an io for writing and reading the answer
 - tests in separate test folder, run against a generated fixture database
 

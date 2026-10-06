@@ -21,18 +21,80 @@ const SESSION_DDL = `
   )
 `
 
-const MESSAGE_DDL = `
+const CHILD_DDL = `
   CREATE TABLE session_message (
     id text PRIMARY KEY,
     session_id text NOT NULL,
     type text NOT NULL,
     seq integer NOT NULL,
-    data text NOT NULL
-  )
+    time_created integer NOT NULL,
+    time_updated integer NOT NULL,
+    data text NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES session_v2(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE session_pending (
+    id text PRIMARY KEY,
+    session_id text NOT NULL,
+    type text NOT NULL,
+    data text NOT NULL,
+    delivery text NOT NULL,
+    admitted_seq integer NOT NULL,
+    time_created integer NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES session_v2(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE session_inbox (
+    id text PRIMARY KEY,
+    session_id text NOT NULL,
+    type text NOT NULL,
+    payload text NOT NULL,
+    delivery text NOT NULL,
+    enqueued_seq integer NOT NULL,
+    time_created integer NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES session_v2(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE instruction_entry (
+    session_id text NOT NULL,
+    key text NOT NULL,
+    value text NOT NULL,
+    removed integer NOT NULL DEFAULT 0,
+    time_created integer NOT NULL,
+    time_updated integer NOT NULL,
+    PRIMARY KEY (session_id, key),
+    FOREIGN KEY (session_id) REFERENCES session_v2(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE instruction_state (
+    session_id text PRIMARY KEY,
+    epoch_start integer NOT NULL,
+    through_seq integer NOT NULL,
+    initial_values text NOT NULL,
+    current_values text NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES session_v2(id) ON DELETE CASCADE
+  );
 `
 
+const CHILD_TABLES = [
+  "session_message",
+  "session_pending",
+  "session_inbox",
+  "instruction_entry",
+  "instruction_state",
+]
+
+export function countRows(db, sessionId) {
+  return Object.fromEntries(
+    CHILD_TABLES.map((table) => [
+      table,
+      db.prepare(`SELECT count(*) AS c FROM ${table} WHERE session_id = ?`).get(sessionId).c,
+    ]),
+  )
+}
+
 function msg(id, sessionId, type, seq, payload) {
-  return [id, sessionId, type, seq, JSON.stringify(payload)]
+  return [id, sessionId, type, seq, BASE + seq * 1000, BASE + seq * 1000, JSON.stringify(payload)]
 }
 
 function text(t) {
@@ -56,13 +118,13 @@ function tool(name, input, opts = {}) {
 
 function seed(db) {
   db.exec(SESSION_DDL)
-  db.exec(MESSAGE_DDL)
+  db.exec(CHILD_DDL)
 
   const insertSession = db.prepare(
     "INSERT INTO session_v2 (id, project_id, parent_id, title, slug, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
   )
   const insertMessage = db.prepare(
-    "INSERT INTO session_message (id, session_id, type, seq, data) VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO session_message (id, session_id, type, seq, time_created, time_updated, data) VALUES (?, ?, ?, ?, ?, ?, ?)",
   )
 
   insertSession.run("ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "proj1", null, "First session", "witty-knight", "/home/kodi/a/coco", BASE, BASE + 60_000)
@@ -122,6 +184,45 @@ function seed(db) {
     agent: "build",
     content: [tool("shell", { command: "false" }, { result: "boom", exit: 42 })],
   }))
+
+  seedChildren(db)
+}
+
+function seedChildren(db) {
+  const a = "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1"
+  const c = "ses_ccccccccccccccccccccccc3"
+
+  db.prepare(
+    "INSERT INTO session_pending (id, session_id, type, data, delivery, admitted_seq, time_created) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ).run("p1", a, "compaction", "{}", "direct", 1, BASE)
+
+  db.prepare(
+    "INSERT INTO session_inbox (id, session_id, type, payload, delivery, enqueued_seq, time_created) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ).run("i1", a, "note", "{}", "direct", 1, BASE)
+
+  db.prepare(
+    "INSERT INTO instruction_entry (session_id, key, value, removed, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)",
+  ).run(a, "reply", "short", 0, BASE, BASE)
+
+  db.prepare(
+    "INSERT INTO instruction_state (session_id, epoch_start, through_seq, initial_values, current_values) VALUES (?, ?, ?, ?, ?)",
+  ).run(a, 0, 7, "{}", "{}")
+
+  db.prepare(
+    "INSERT INTO session_pending (id, session_id, type, data, delivery, admitted_seq, time_created) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ).run("p2", c, "compaction", "{}", "direct", 2, BASE)
+
+  db.prepare(
+    "INSERT INTO session_inbox (id, session_id, type, payload, delivery, enqueued_seq, time_created) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ).run("i2", c, "note", "{}", "direct", 2, BASE)
+
+  db.prepare(
+    "INSERT INTO instruction_entry (session_id, key, value, removed, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)",
+  ).run(c, "reply", "terse", 0, BASE, BASE)
+
+  db.prepare(
+    "INSERT INTO instruction_state (session_id, epoch_start, through_seq, initial_values, current_values) VALUES (?, ?, ?, ?, ?)",
+  ).run(c, 0, 4, "{}", "{}")
 }
 
 function build(name, fill) {

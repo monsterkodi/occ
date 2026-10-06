@@ -12,23 +12,7 @@ export class OclsError extends Error {
 
 const REQUIRED_COLUMNS = ["id", "title", "time_created", "time_updated"]
 
-export function resolveDbPath(env = process.env) {
-  const base = env.XDG_DATA_HOME || join(homedir(), ".local", "share")
-  return join(base, "opencode", "opencode.db")
-}
-
-export function openDb(path) {
-  if (!existsSync(path)) {
-    throw new OclsError(`no database at ${path}`)
-  }
-
-  let db
-  try {
-    db = new DatabaseSync(path, { readOnly: true })
-  } catch (e) {
-    throw new OclsError(`cannot open ${path}: ${e.message}`)
-  }
-
+function probe(db, path) {
   const columns = new Set(
     db.prepare("SELECT name FROM pragma_table_info('session_v2')").all().map((r) => r.name),
   )
@@ -47,6 +31,35 @@ export function openDb(path) {
       `unrecognized schema in ${path}: session_v2 is missing ${missing.join(", ")}`,
     )
   }
+}
 
+export function resolveDbPath(env = process.env) {
+  const base = env.XDG_DATA_HOME || join(homedir(), ".local", "share")
+  return join(base, "opencode", "opencode.db")
+}
+
+function connect(path, options) {
+  if (!existsSync(path)) {
+    throw new OclsError(`no database at ${path}`)
+  }
+
+  let db
+  try {
+    db = new DatabaseSync(path, options)
+  } catch (e) {
+    throw new OclsError(`cannot open ${path}: ${e.message}`)
+  }
+
+  probe(db, path)
+  return db
+}
+
+export function openDb(path) {
+  return connect(path, { readOnly: true })
+}
+
+export function openWritable(path) {
+  const db = connect(path, {})
+  db.exec("PRAGMA foreign_keys = ON")
   return db
 }

@@ -151,6 +151,18 @@ function toBlocks(data, type, message, blocks) {
   flush()
 }
 
+export function deleteSessions(db, ids) {
+  const remove = db.prepare("DELETE FROM session_v2 WHERE id = ?")
+  db.exec("BEGIN")
+  try {
+    for (const id of ids) remove.run(id)
+    db.exec("COMMIT")
+  } catch (e) {
+    db.exec("ROLLBACK")
+    throw e
+  }
+}
+
 export function getSession(db, id) {
   const [row] = db.prepare(`${SELECT} WHERE s.id = ?`).all(id)
 
