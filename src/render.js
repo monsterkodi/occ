@@ -13,170 +13,201 @@ const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
 const YEAR = 365 * DAY
 
-export function humanDuration(ms) {
-  const value = Math.max(0, ms)
-  if (value < MINUTE) return `${Math.floor(value / SECOND)}s`
-  if (value < HOUR) return `${Math.floor(value / MINUTE)}m`
-  if (value < DAY) return `${Math.floor(value / HOUR)}h`
-  if (value < YEAR) return `${Math.floor(value / DAY)}d`
-  return `${Math.floor(value / YEAR)}y`
-}
-
 const VISIBLE = /\x1b\[[0-9;]*m/g
 
-function visibleLength(text) {
-  return text.replace(VISIBLE, "").length
-}
-
-function padStart(text, width) {
-  const fill = width - visibleLength(text)
-  return fill > 0 ? " ".repeat(fill) + text : text
-}
-
-function padEnd(text, width) {
-  const fill = width - visibleLength(text)
-  return fill > 0 ? text + " ".repeat(fill) : text
-}
-
-function crop(text, width) {
-  if (width <= 0) return ""
-  if (text.length <= width) return text
-  if (width === 1) return "…"
-  return text.slice(0, width - 1) + "…"
-}
-
-function stamp(ms) {
-  const d = new Date(ms)
-  const mm = String(d.getMonth() + 1).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  const hh = String(d.getHours()).padStart(2, "0")
-  const mi = String(d.getMinutes()).padStart(2, "0")
-  return `${mm}-${dd} ${hh}:${mi}`
-}
-
 const CODES = {
-  reset: [0, 0],
-  bold: [1, 22],
-  dim: [2, 22],
-  italic: [3, 23],
-  underline: [4, 24],
-  black: [30, 39],
-  red: [31, 39],
-  green: [32, 39],
-  yellow: [33, 39],
-  blue: [34, 39],
-  magenta: [35, 39],
-  cyan: [36, 39],
-  white: [37, 39],
-  gray: [90, 39],
-  bgBlack: [40, 49],
-  bgRed: [41, 49],
-  bgGreen: [42, 49],
-  bgYellow: [43, 49],
-  bgBlue: [44, 49],
-  bgMagenta: [45, 49],
-  bgCyan: [46, 49],
-  bgWhite: [47, 49],
-  bgGray: [100, 49],
+    reset: [0, 0],
+    bold: [1, 22],
+    dim: [2, 22],
+    italic: [3, 23],
+    underline: [4, 24],
+    black: [30, 39],
+    red: [31, 39],
+    green: [32, 39],
+    yellow: [33, 39],
+    blue: [34, 39],
+    magenta: [35, 39],
+    cyan: [36, 39],
+    white: [37, 39],
+    gray: [90, 39],
+    bgBlack: [40, 49],
+    bgRed: [41, 49],
+    bgGreen: [42, 49],
+    bgYellow: [43, 49],
+    bgBlue: [44, 49],
+    bgMagenta: [45, 49],
+    bgCyan: [46, 49],
+    bgWhite: [47, 49],
+    bgGray: [100, 49],
 }
 
-function makeStyle(enabled) {
-  const style = (text) => String(text)
-  if (!enabled) {
-    for (const key of Object.keys(CODES)) style[key] = style
+export function humanDuration(ms)
+{
+    const value = Math.max(0, ms)
+    if (value < MINUTE) return `${Math.floor(value / SECOND)}s`
+    if (value < HOUR) return `${Math.floor(value / MINUTE)}m`
+    if (value < DAY) return `${Math.floor(value / HOUR)}h`
+    if (value < YEAR) return `${Math.floor(value / DAY)}d`
+    return `${Math.floor(value / YEAR)}y`
+}
+
+function visibleLength(text)
+{
+    return text.replace(VISIBLE, "").length
+}
+
+function padStart(text, width)
+{
+    const fill = width - visibleLength(text)
+    return fill > 0 ? " ".repeat(fill) + text : text
+}
+
+function padEnd(text, width)
+{
+    const fill = width - visibleLength(text)
+    return fill > 0 ? text + " ".repeat(fill) : text
+}
+
+function crop(text, width)
+{
+    if (width <= 0) return ""
+    if (text.length <= width) return text
+    if (width === 1) return "…"
+    return text.slice(0, width - 1) + "…"
+}
+
+function stamp(ms)
+{
+    const d = new Date(ms)
+    const mm = String(d.getMonth() + 1).padStart(2, "0")
+    const dd = String(d.getDate()).padStart(2, "0")
+    const hh = String(d.getHours()).padStart(2, "0")
+    const mi = String(d.getMinutes()).padStart(2, "0")
+    return `${mm}-${dd} ${hh}:${mi}`
+}
+
+function makeStyle(enabled)
+{
+    const style = (text) => String(text)
+    if (!enabled)
+    {
+        for (const key of Object.keys(CODES)) style[key] = style
+        return style
+    }
+
+    for (const [key, [open, close]] of Object.entries(CODES))
+    {
+        style[key] = (text) => `\x1b[${open}m${text}\x1b[${close}m`
+    }
     return style
-  }
-  for (const [key, [open, close]] of Object.entries(CODES)) {
-    style[key] = (text) => `\x1b[${open}m${text}\x1b[${close}m`
-  }
-  return style
 }
 
-export function createColor(enabled) {
-  return makeStyle(Boolean(enabled))
+export function createColor(enabled)
+{
+    return makeStyle(Boolean(enabled))
 }
 
-function markerUser(c) {
-  return c.bgBlue(c.bold("> user"))
+function markerUser(c)
+{
+    return c.bgBlue(c.bold("> user"))
 }
 
-function markerAgent(c, agent) {
-  const head = c.bgCyan(c.bold("> agent "))
-  return agent ? head + c.bgGray(c.black(agent)) : head.trimEnd()
+function markerAgent(c, agent)
+{
+    const head = c.bgCyan(c.bold("> agent "))
+    return agent ? head + c.bgGray(c.black(agent)) : head.trimEnd()
 }
 
-function markerTool(c, label) {
-  return c.bgMagenta(c.bold(`$ ${label}`))
+function markerTool(c, label)
+{
+    return c.bgMagenta(c.bold(`$ ${label}`))
 }
 
-function markerContinued(c) {
-  return c.gray("…")
+function markerContinued(c)
+{
+    return c.gray("…")
 }
 
-function markerExit(c, name, code) {
-  return c.bgRed(c.bold(`$ ${name} exit ${code}`))
+function markerExit(c, name, code)
+{
+    return c.bgRed(c.bold(`$ ${name} exit ${code}`))
 }
 
-function renderBlock(block, c, inAgentRun) {
-  if (block.kind === "call") {
+function renderCall(block, c, inAgentRun)
+{
     const marker = markerTool(c, block.name)
     if (inAgentRun) return [marker, block.command, true]
     return [`${markerAgent(c, block.agent)}\n${marker}`, block.command, true]
-  }
+}
 
-  if (block.kind === "exit") {
-    return [markerExit(c, block.name, block.code), "", inAgentRun]
-  }
-
-  if (block.kind === "result") {
+function renderResult(block, c, inAgentRun)
+{
     const text = block.text.trimEnd()
     if (text === "") return [null, null, inAgentRun]
+
     const tail = block.outputPath
-      ? `${text}\n${c.gray(`… full output at ${block.outputPath}`)}`
-      : text
+        ? `${text}\n${c.gray(`… full output at ${block.outputPath}`)}`
+        : text
     return [markerTool(c, `${block.name} result`), tail, inAgentRun]
-  }
-
-  const text = (block.text ?? "").trimEnd()
-  if (text === "") return [null, null, inAgentRun]
-
-  if (block.role === "user") {
-    return [markerUser(c), text, false]
-  }
-
-  return inAgentRun
-    ? [markerContinued(c), text, true]
-    : [markerAgent(c, block.agent), text, true]
 }
 
-export function renderBlocks(blocks, color) {
-  const c = color ?? createColor(false)
-  const lines = []
-  let inAgentRun = false
+function renderTurn(block, c, inAgentRun)
+{
+    const text = (block.text ?? "").trimEnd()
+    if (text === "") return [null, null, inAgentRun]
 
-  for (const block of blocks) {
-    const [marker, text, next] = renderBlock(block, c, inAgentRun)
-    inAgentRun = next
-    if (marker === null) continue
-    lines.push(marker)
-    if (text !== "") lines.push(text)
-  }
+    if (block.role === "user") return [markerUser(c), text, false]
 
-  return lines.join("\n")
+    return inAgentRun
+        ? [markerContinued(c), text, true]
+        : [markerAgent(c, block.agent), text, true]
 }
 
-export function renderSession(session, width, color) {
-  const c = color ?? createColor(false)
-  const nameWidth = Math.max(0, (width ?? 80) - FIXED_WIDTH - GAP)
-  const name = crop(session.title ?? "NULL", nameWidth)
+function renderBlock(block, c, inAgentRun)
+{
+    if (block.kind === "call") return renderCall(block, c, inAgentRun)
 
-  const cells = [
-    padEnd(c.gray(session.id.replace(/^ses_/, "").slice(0, ID_WIDTH)), ID_WIDTH),
-    padEnd(c.gray(stamp(session.time_created)), START_WIDTH),
-    padStart(c.yellow(humanDuration(session.time_updated - session.time_created)), DURATION_WIDTH),
-    padStart(c.cyan(String(session.turns ?? 0)), TURNS_WIDTH),
-    c.bold(name),
-  ]
+    if (block.kind === "exit")
+    {
+        return [markerExit(c, block.name, block.code), "", inAgentRun]
+    }
 
-  return cells.join(" ".repeat(GAP)).replace(/\s+$/, "")
+    if (block.kind === "result") return renderResult(block, c, inAgentRun)
+
+    return renderTurn(block, c, inAgentRun)
+}
+
+export function renderBlocks(blocks, color)
+{
+    const c = color ?? createColor(false)
+    const lines = []
+    let inAgentRun = false
+
+    for (const block of blocks)
+    {
+        const [marker, text, next] = renderBlock(block, c, inAgentRun)
+        inAgentRun = next
+        if (marker === null) continue
+        lines.push(marker)
+        if (text !== "") lines.push(text)
+    }
+
+    return lines.join("\n")
+}
+
+export function renderSession(session, width, color)
+{
+    const c = color ?? createColor(false)
+    const nameWidth = Math.max(0, (width ?? 80) - FIXED_WIDTH - GAP)
+    const name = crop(session.title ?? "NULL", nameWidth)
+
+    const cells = [
+        padEnd(c.gray(session.id.replace(/^ses_/, "").slice(0, ID_WIDTH)), ID_WIDTH),
+        padEnd(c.gray(stamp(session.time_created)), START_WIDTH),
+        padStart(c.yellow(humanDuration(session.time_updated - session.time_created)), DURATION_WIDTH),
+        padStart(c.cyan(String(session.turns ?? 0)), TURNS_WIDTH),
+        c.bold(name),
+    ]
+
+    return cells.join(" ".repeat(GAP)).replace(/\s+$/, "")
 }

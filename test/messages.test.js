@@ -12,118 +12,136 @@ const A = "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1"
 const C = "ses_ccccccccccccccccccccccc3"
 
 const blocks = (id) => getSession(db, id).blocks
+
 const brief = (rows) =>
-  rows.map((b) => [b.kind, b.kind === "call" ? b.name : b.text])
+    rows.map((b) => [b.kind, b.kind === "call" ? b.name : b.text])
 
-describe("getSession blocks", () => {
-  test("walks messages and parts in order", () => {
-    assert.deepEqual(brief(blocks(A)), [
-      ["turn", "hello"],
-      ["turn", "hi there"],
-      ["call", "shell"],
-      ["result", "total 48\n---\nHyprland 0.56.2"],
-      ["turn", "done listing"],
-      ["turn", "again"],
-      ["turn", "first bit\n\nsecond bit"],
-      ["turn", "no agent field"],
-      ["call", "shell"],
-      ["call", "webfetch"],
-      ["result", "StatusCode: non 2xx status code (404)"],
-      ["call", "grep"],
-      ["call", "read"],
-      ["result", "name: ocls\n"],
-    ])
-  })
+const ofKind = (id, kind) => blocks(id).filter((b) => b.kind === kind)
 
-  test("reasoning, synthetic and idle never produce blocks", () => {
-    const texts = blocks(A).map((b) => b.text ?? "").join("\n")
-    assert.ok(!texts.includes("thinking about the greeting"))
-    assert.ok(!texts.includes("only thinking"))
-    assert.ok(!texts.includes("system note"))
-  })
+describe("getSession order", () => {
+    test("walks messages and parts in order", () =>
+    {
+        assert.deepEqual(brief(blocks(A)), [
+            ["turn", "hello"],
+            ["turn", "hi there"],
+            ["call", "shell"],
+            ["result", "total 48\n---\nHyprland 0.56.2"],
+            ["turn", "done listing"],
+            ["turn", "again"],
+            ["turn", "first bit\n\nsecond bit"],
+            ["turn", "no agent field"],
+            ["call", "shell"],
+            ["call", "webfetch"],
+            ["result", "StatusCode: non 2xx status code (404)"],
+            ["call", "grep"],
+            ["call", "read"],
+            ["result", "name: ocls\n"],
+        ])
+    })
 
-  test("turn blocks carry the role and agent field", () => {
-    const turns = blocks(A).filter((b) => b.kind === "turn")
-    assert.equal(turns[0].role, "user")
-    assert.equal(turns[0].agent, null)
-    assert.equal(turns[1].role, "agent")
-    assert.equal(turns[1].agent, "plan")
-    assert.equal(turns[4].agent, "build")
-    assert.equal(turns[5].agent, null)
-  })
+    test("consecutive text parts in one message join with a blank line", () =>
+    {
+        const turn = blocks(A).find((b) => b.text === "first bit\n\nsecond bit")
+        assert.equal(turn.kind, "turn")
+    })
+})
 
-  test("consecutive text parts in one message join with a blank line", () => {
-    assert.equal(blocks(A).find((b) => b.text === "first bit\n\nsecond bit").kind, "turn")
-  })
+describe("getSession message types", () => {
+    test("reasoning, synthetic and idle never produce blocks", () =>
+    {
+        const texts = blocks(A).map((b) => b.text ?? "").join("\n")
+        assert.ok(!texts.includes("thinking about the greeting"))
+        assert.ok(!texts.includes("only thinking"))
+        assert.ok(!texts.includes("system note"))
+    })
 
-  test("a call block carries the tool name and its input command", () => {
-    const call = blocks(A).find((b) => b.kind === "call")
-    assert.equal(call.name, "shell")
-    assert.equal(call.command, "ls -la; echo ---; hyprctl version")
-  })
+    test("turn blocks carry the role and agent field", () =>
+    {
+        const turns = ofKind(A, "turn")
+        assert.equal(turns[0].role, "user")
+        assert.equal(turns[0].agent, null)
+        assert.equal(turns[1].role, "agent")
+        assert.equal(turns[1].agent, "plan")
+        assert.equal(turns[4].agent, "build")
+        assert.equal(turns[5].agent, null)
+    })
 
-  test("a tool with empty output produces no result block", () => {
-    const calls = blocks(A).filter((b) => b.kind === "call").length
-    const results = blocks(A).filter((b) => b.kind === "result").length
-    assert.equal(calls, 5)
-    assert.equal(results, 3)
-  })
+    test("call blocks carry the agent of the message they came from", () =>
+    {
+        assert.equal(ofKind(C, "call")[0].agent, "build")
+    })
 
-  test("an errored tool puts the error message where the result would be", () => {
-    const results = blocks(A).filter((b) => b.kind === "result").map((b) => b.text)
-    assert.ok(results.includes("StatusCode: non 2xx status code (404)"))
-  })
+    test("unknown session id is an error", () =>
+    {
+        assert.throws(() => getSession(db, "nope"), /no session/i)
+    })
 
-  test("a running tool produces no result block", () => {
-    const names = blocks(A).filter((b) => b.kind === "call").map((b) => b.name)
-    assert.ok(names.includes("grep"))
-    const results = blocks(A).filter((b) => b.kind === "result").map((b) => b.text)
-    assert.ok(!results.some((t) => t === undefined))
-    assert.equal(results.length, 3)
-  })
+    test("the row is the same one listSessions returns", () =>
+    {
+        const [fromList] = listSessions(db, ["aaaaaa"])
+        const { row } = getSession(db, A)
 
-  test("a truncated result carries its full output path", () => {
-    const truncated = blocks(A).find((b) => b.kind === "result" && b.outputPath)
-    assert.equal(truncated.outputPath, "/home/kodi/.local/share/opencode/tool-output/tool_abc")
-  })
+        assert.equal(row.id, fromList.id)
+        assert.equal(row.title, fromList.title)
+        assert.equal(row.turns, fromList.turns)
+        assert.equal(row.time_created, BASE)
+    })
+})
 
-  test("a non-truncated result has no output path", () => {
-    const full = blocks(A).find((b) => b.kind === "result" && b.text.startsWith("total 48"))
-    assert.equal(full.outputPath, null)
-  })
+describe("getSession tool blocks", () => {
+    test("a call block carries the tool name and its input command", () =>
+    {
+        const call = ofKind(A, "call")[0]
+        assert.equal(call.name, "shell")
+        assert.equal(call.command, "ls -la; echo ---; hyprctl version")
+    })
 
-  test("every call block carries its tool name", () => {
-    const names = blocks(C).filter((b) => b.kind === "call").map((b) => b.name)
-    assert.deepEqual(names, ["shell", "shell", "shell"])
-  })
+    test("a tool with empty output produces no result block", () =>
+    {
+        assert.equal(ofKind(A, "call").length, 5)
+        assert.equal(ofKind(A, "result").length, 3)
+    })
 
-  test("a nonzero exit produces an exit block naming the tool", () => {
-    const exits = blocks(C).filter((b) => b.kind === "exit")
-    assert.deepEqual(exits, [{ kind: "exit", name: "shell", code: 42 }])
-  })
+    test("an errored tool puts the error message where the result would be", () =>
+    {
+        const texts = ofKind(A, "result").map((b) => b.text)
+        assert.ok(texts.includes("StatusCode: non 2xx status code (404)"))
+    })
 
-  test("a zero exit produces no exit block", () => {
-    assert.equal(
-      blocks(A).filter((b) => b.kind === "exit").length,
-      0,
-    )
-  })
+    test("a running tool produces no result block", () =>
+    {
+        const names = ofKind(A, "call").map((b) => b.name)
+        assert.ok(names.includes("grep"))
+        assert.equal(ofKind(A, "result").length, 3)
+    })
 
-  test("call blocks carry the agent of the message they came from", () => {
-    const call = blocks(C).find((b) => b.kind === "call")
-    assert.equal(call.agent, "build")
-  })
+    test("every call block carries its tool name", () =>
+    {
+        assert.deepEqual(ofKind(C, "call").map((b) => b.name), ["shell", "shell", "shell"])
+    })
 
-  test("unknown session id is an error", () => {
-    assert.throws(() => getSession(db, "nope"), /no session/i)
-  })
+    test("a nonzero exit produces an exit block naming the tool", () =>
+    {
+        assert.deepEqual(ofKind(C, "exit"), [{ kind: "exit", name: "shell", code: 42 }])
+    })
 
-  test("the row is the same one listSessions returns", () => {
-    const [fromList] = listSessions(db, ["aaaaaa"])
-    const { row } = getSession(db, A)
-    assert.equal(row.id, fromList.id)
-    assert.equal(row.title, fromList.title)
-    assert.equal(row.turns, fromList.turns)
-    assert.equal(row.time_created, BASE)
-  })
+    test("a zero exit produces no exit block", () =>
+    {
+        assert.equal(ofKind(A, "exit").length, 0)
+    })
+
+    test("a truncated result carries its full output path", () =>
+    {
+        const truncated = ofKind(A, "result").find((b) => b.outputPath)
+        assert.equal(
+            truncated.outputPath,
+            "/home/kodi/.local/share/opencode/tool-output/tool_abc",
+        )
+    })
+
+    test("a non-truncated result has no output path", () =>
+    {
+        const full = ofKind(A, "result").find((b) => b.text.startsWith("total 48"))
+        assert.equal(full.outputPath, null)
+    })
 })

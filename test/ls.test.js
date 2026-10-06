@@ -8,27 +8,30 @@ import { createColor } from "../src/render.js"
 const { DB_PATH } = fixtures()
 
 const plain = createColor(false)
+
 const run = (args, width = 80) =>
-  ls({ db: openDb(DB_PATH), prefixes: args, width, color: plain })
+    ls({ db: openDb(DB_PATH), prefixes: args, width, color: plain })
 
 describe("ls", () => {
-  test("no ids lists every session, one row each", () => {
-    const lines = run([]).split("\n")
-    assert.equal(lines.length, 3)
-  })
+    test("no ids lists every session, one row each", () =>
+    {
+        assert.equal(run([]).split("\n").length, 3)
+    })
 
-  test("ids filter the rows", () => {
-    const lines = run(["bbbbbb"]).split("\n")
-    assert.equal(lines.length, 1)
-    assert.ok(lines[0].startsWith("bbbbbb"))
-  })
+    test("ids filter the rows", () =>
+    {
+        const lines = run(["bbbbbb"]).split("\n")
+        assert.equal(lines.length, 1)
+        assert.ok(lines[0].startsWith("bbbbbb"))
+    })
 
-  test("unknown id surfaces the error", () => {
-    assert.throws(() => run(["zzzzzz"]), /no session/i)
-  })
+    test("unknown id surfaces the error", () =>
+    {
+        assert.throws(() => run(["zzzzzz"]), /no session/i)
+    })
 
-  test("output ends without a trailing blank line", () => {
-    const out = run([])
-    assert.ok(!out.endsWith("\n"))
-  })
+    test("output ends without a trailing blank line", () =>
+    {
+        assert.ok(!run([]).endsWith("\n"))
+    })
 })

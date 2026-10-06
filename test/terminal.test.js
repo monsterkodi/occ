@@ -2,20 +2,28 @@ import { test, describe } from "node:test"
 import assert from "node:assert/strict"
 import { createTerminal } from "../src/terminal.js"
 
-describe("createTerminal", () => {
-  test("writes through to the writer it was given", () => {
+const sink = () =>
+{
     const chunks = []
-    const terminal = createTerminal({ write: (s) => chunks.push(s) }, false)
-    terminal.write("hello")
-    assert.deepEqual(chunks, ["hello"])
-  })
+    return { chunks, write: (text) => chunks.push(text) }
+}
 
-  test("reports interactivity as given", () => {
-    assert.equal(createTerminal({ write() {} }, true).interactive, true)
-    assert.equal(createTerminal({ write() {} }, false).interactive, false)
-  })
+describe("createTerminal", () => {
+    test("writes through to the writer it was given", () =>
+    {
+        const out = sink()
+        createTerminal(out, false).write("hello")
+        assert.deepEqual(out.chunks, ["hello"])
+    })
 
-  test("defaults to non-interactive when stdin is not a terminal", () => {
-    assert.equal(createTerminal({ write() {} }).interactive, false)
-  })
+    test("reports interactivity as given", () =>
+    {
+        assert.equal(createTerminal(sink(), true).interactive, true)
+        assert.equal(createTerminal(sink(), false).interactive, false)
+    })
+
+    test("defaults to non-interactive when stdin is not a terminal", () =>
+    {
+        assert.equal(createTerminal(sink()).interactive, false)
+    })
 })
