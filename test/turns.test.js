@@ -25,10 +25,57 @@ describe("renderTurns", () => {
         "you made a mistake",
         "> agent plan",
         "i check for mistake on disk",
-        "> agent build",
+        "…",
         "what should i build?",
       ].join("\n"),
     )
+  })
+
+  test("a second agent turn continues with an ellipsis", () => {
+    const out = renderTurns(
+      [
+        { role: "agent", agent: "build", text: "checking" },
+        { role: "agent", agent: "build", text: "found it" },
+        { role: "agent", agent: "build", text: "so that is why" },
+      ],
+      plain,
+    )
+    assert.equal(out, "> agent build\nchecking\n…\nfound it\n…\nso that is why")
+  })
+
+  test("a user turn starts a new run, so the next agent gets a marker", () => {
+    const out = renderTurns(
+      [
+        { role: "agent", agent: "build", text: "one" },
+        { role: "user", agent: null, text: "and now?" },
+        { role: "agent", agent: "build", text: "two" },
+      ],
+      plain,
+    )
+    assert.equal(out, "> agent build\none\n> user\nand now?\n> agent build\ntwo")
+  })
+
+  test("an empty agent turn does not break the run", () => {
+    const out = renderTurns(
+      [
+        { role: "agent", agent: "build", text: "one" },
+        { role: "agent", agent: "build", text: "" },
+        { role: "agent", agent: "build", text: "two" },
+      ],
+      plain,
+    )
+    assert.equal(out, "> agent build\none\n…\ntwo")
+  })
+
+  test("the continuation marker is one character, no padding", () => {
+    const out = renderTurns(
+      [
+        { role: "agent", agent: "build", text: "one" },
+        { role: "agent", agent: "build", text: "two" },
+      ],
+      plain,
+    )
+    assert.equal(out.split("\n")[2], "…")
   })
 
   test("turn text starts at the left margin", () => {

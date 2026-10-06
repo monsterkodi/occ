@@ -105,15 +105,30 @@ function markerAgent(c, agent) {
   return agent ? head + c.bgGray(c.black(agent)) : head.trimEnd()
 }
 
+function markerContinued(c) {
+  return c.gray("…")
+}
+
 export function renderTurns(turns, color) {
   const c = color ?? createColor(false)
   const lines = []
+  let inAgentRun = false
 
   for (const turn of turns) {
     const text = (turn.text ?? "").trimEnd()
     if (text === "") continue
-    const marker =
-      turn.role === "user" ? markerUser(c) : markerAgent(c, turn.agent)
+
+    let marker
+    if (turn.role === "user") {
+      marker = markerUser(c)
+      inAgentRun = false
+    } else if (inAgentRun) {
+      marker = markerContinued(c)
+    } else {
+      marker = markerAgent(c, turn.agent)
+      inAgentRun = true
+    }
+
     lines.push(marker, text)
   }
 
