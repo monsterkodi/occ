@@ -9,7 +9,7 @@ const onlyShell = (blocks) =>
             b.name === SHELL,
     )
 
-export function shell({ db, prefixes = [], width = 80, color })
+export function shell({ db, prefixes = [], width = 80, style })
 {
-    return renderSessions(db, prefixes, width, color, onlyShell)
+    return renderSessions(db, prefixes, width, style, onlyShell)
 }

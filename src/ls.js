@@ -1,9 +1,9 @@
 import { listSessions } from "./query.js"
 import { renderSession } from "./render.js"
 
-export function ls({ db, prefixes = [], width = 80, color })
+export function ls({ db, prefixes = [], width = 80, style })
 {
     return listSessions(db, prefixes)
-        .map((session) => renderSession(session, width, color))
+        .map((session) => renderSession(session, width, style))
         .join("\n")
 }

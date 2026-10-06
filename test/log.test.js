@@ -3,14 +3,14 @@ import assert from "node:assert/strict"
 import { fixtures } from "./fixtures/build.js"
 import { openDb } from "../src/db.js"
 import { log } from "../src/log.js"
-import { createColor } from "../src/render.js"
+import { createStyle } from "../src/style.js"
 
 const { DB_PATH } = fixtures()
 
-const plain = createColor(false)
+const plain = createStyle(false)
 
 const run = (ids, width = 80) =>
-    log({ db: openDb(DB_PATH), prefixes: ids, width, color: plain })
+    log({ db: openDb(DB_PATH), prefixes: ids, width, style: plain })
 
 const markers = (out) =>
     out.split("\n").filter((l) => l.startsWith(">") || l.startsWith("$"))

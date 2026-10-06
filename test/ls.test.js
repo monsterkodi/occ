@@ -3,14 +3,14 @@ import assert from "node:assert/strict"
 import { fixtures } from "./fixtures/build.js"
 import { openDb } from "../src/db.js"
 import { ls } from "../src/ls.js"
-import { createColor } from "../src/render.js"
+import { createStyle } from "../src/style.js"
 
 const { DB_PATH } = fixtures()
 
-const plain = createColor(false)
+const plain = createStyle(false)
 
 const run = (args, width = 80) =>
-    ls({ db: openDb(DB_PATH), prefixes: args, width, color: plain })
+    ls({ db: openDb(DB_PATH), prefixes: args, width, style: plain })
 
 describe("ls", () => {
     test("no ids lists every session, one row each", () =>

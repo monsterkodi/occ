@@ -3,9 +3,9 @@ import assert from "node:assert/strict"
 import { buildTestDb, countRows } from "./fixtures/build.js"
 import { openWritable, OclsError } from "../src/db.js"
 import { del } from "../src/del.js"
-import { createColor } from "../src/render.js"
+import { createStyle } from "../src/style.js"
 
-const plain = createColor(false)
+const plain = createStyle(false)
 const A = "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1"
 const C = "ses_ccccccccccccccccccccccc3"
 
@@ -32,7 +32,7 @@ const run = (ids, answer = "y", width = 80) =>
 
     try
     {
-        const result = del({ db, prefixes: ids, width, color: plain, io: terminal })
+        const result = del({ db, prefixes: ids, width, style: plain, io: terminal })
         return { ...result, text: terminal.output }
     }
     finally
@@ -56,7 +56,7 @@ const withDb = (fn) =>
 }
 
 const deleteA = (db, answer = "y") =>
-    del({ db, prefixes: ["aaaaaa"], width: 80, color: plain, io: io(answer) })
+    del({ db, prefixes: ["aaaaaa"], width: 80, style: plain, io: io(answer) })
 
 const rowCount = (db, id) =>
     db.prepare("SELECT count(*) AS c FROM session_v2 WHERE id = ?").get(id).c
@@ -100,7 +100,7 @@ describe("del guards", () => {
     {
         withDb((db) =>
             assert.throws(
-                () => del({ db, prefixes: ["aaaaaa"], width: 80, color: plain, io: io("y", false) }),
+                () => del({ db, prefixes: ["aaaaaa"], width: 80, style: plain, io: io("y", false) }),
                 (e) => e instanceof OclsError && /terminal/i.test(e.message),
             ))
     })

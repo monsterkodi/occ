@@ -51,6 +51,8 @@ implementation:
 - renderSession() renders the session row and is reused by every command,
   each of which appends its own content beneath the row
 - colors are on for a tty unless NO_COLOR is set
+- every color decision lives in ROLES in src/style.js, grouped as row, turn,
+  tool and del; changing the look means editing that table and nothing else
 - ocls del requires at least one id, there is no --all
 - ocls del requires a terminal, and asks "ARE YOU SURE? (yN)" after showing
   the sessions it is about to delete; it opens the db writable with

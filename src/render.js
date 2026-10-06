@@ -1,3 +1,5 @@
+import { createStyle } from "./style.js"
+
 const ID_WIDTH = 6
 const START_WIDTH = 11
 const DURATION_WIDTH = 4
@@ -14,32 +16,6 @@ const DAY = 24 * HOUR
 const YEAR = 365 * DAY
 
 const VISIBLE = /\x1b\[[0-9;]*m/g
-
-const CODES = {
-    reset: [0, 0],
-    bold: [1, 22],
-    dim: [2, 22],
-    italic: [3, 23],
-    underline: [4, 24],
-    black: [30, 39],
-    red: [31, 39],
-    green: [32, 39],
-    yellow: [33, 39],
-    blue: [34, 39],
-    magenta: [35, 39],
-    cyan: [36, 39],
-    white: [37, 39],
-    gray: [90, 39],
-    bgBlack: [40, 49],
-    bgRed: [41, 49],
-    bgGreen: [42, 49],
-    bgYellow: [43, 49],
-    bgBlue: [44, 49],
-    bgMagenta: [45, 49],
-    bgCyan: [46, 49],
-    bgWhite: [47, 49],
-    bgGray: [100, 49],
-}
 
 export function humanDuration(ms)
 {
@@ -86,106 +62,66 @@ function stamp(ms)
     return `${mm}-${dd} ${hh}:${mi}`
 }
 
-function makeStyle(enabled)
+function markerAgent(style, agent)
 {
-    const style = (text) => String(text)
-    if (!enabled)
-    {
-        for (const key of Object.keys(CODES)) style[key] = style
-        return style
-    }
-
-    for (const [key, [open, close]] of Object.entries(CODES))
-    {
-        style[key] = (text) => `\x1b[${open}m${text}\x1b[${close}m`
-    }
-    return style
+    return agent
+        ? style.turn.agent("> agent ") + style.turn.mode(agent)
+        : style.turn.agent("> agent")
 }
 
-export function createColor(enabled)
+function renderCall(block, style, inAgentRun)
 {
-    return makeStyle(Boolean(enabled))
-}
-
-function markerUser(c)
-{
-    return c.bgBlue(c.bold("> user"))
-}
-
-function markerAgent(c, agent)
-{
-    const head = c.bgCyan(c.bold("> agent "))
-    return agent ? head + c.bgGray(c.black(agent)) : head.trimEnd()
-}
-
-function markerTool(c, label)
-{
-    return c.bgMagenta(c.bold(`$ ${label}`))
-}
-
-function markerContinued(c)
-{
-    return c.gray("…")
-}
-
-function markerExit(c, name, code)
-{
-    return c.bgRed(c.bold(`$ ${name} exit ${code}`))
-}
-
-function renderCall(block, c, inAgentRun)
-{
-    const marker = markerTool(c, block.name)
+    const marker = style.tool.call(`$ ${block.name}`)
     if (inAgentRun) return [marker, block.command, true]
-    return [`${markerAgent(c, block.agent)}\n${marker}`, block.command, true]
+    return [`${markerAgent(style, block.agent)}\n${marker}`, block.command, true]
 }
 
-function renderResult(block, c, inAgentRun)
+function renderResult(block, style, inAgentRun)
 {
     const text = block.text.trimEnd()
     if (text === "") return [null, null, inAgentRun]
 
     const tail = block.outputPath
-        ? `${text}\n${c.gray(`… full output at ${block.outputPath}`)}`
+        ? `${text}\n${style.tool.note(`… full output at ${block.outputPath}`)}`
         : text
-    return [markerTool(c, `${block.name} result`), tail, inAgentRun]
+    return [style.tool.result(`$ ${block.name} result`), tail, inAgentRun]
 }
 
-function renderTurn(block, c, inAgentRun)
+function renderTurn(block, style, inAgentRun)
 {
     const text = (block.text ?? "").trimEnd()
     if (text === "") return [null, null, inAgentRun]
 
-    if (block.role === "user") return [markerUser(c), text, false]
+    if (block.role === "user") return [style.turn.user("> user"), text, false]
 
     return inAgentRun
-        ? [markerContinued(c), text, true]
-        : [markerAgent(c, block.agent), text, true]
+        ? [style.turn.continue("…"), text, true]
+        : [markerAgent(style, block.agent), text, true]
 }
 
-function renderBlock(block, c, inAgentRun)
+function renderBlock(block, style, inAgentRun)
 {
-    if (block.kind === "call") return renderCall(block, c, inAgentRun)
+    if (block.kind === "call") return renderCall(block, style, inAgentRun)
 
     if (block.kind === "exit")
     {
-        return [markerExit(c, block.name, block.code), "", inAgentRun]
+        return [style.tool.exit(`$ ${block.name} exit ${block.code}`), "", inAgentRun]
     }
 
-    if (block.kind === "result") return renderResult(block, c, inAgentRun)
+    if (block.kind === "result") return renderResult(block, style, inAgentRun)
 
-    return renderTurn(block, c, inAgentRun)
+    return renderTurn(block, style, inAgentRun)
 }
 
-export function renderBlocks(blocks, color)
+export function renderBlocks(blocks, style)
 {
-    const c = color ?? createColor(false)
+    const s = style ?? createStyle(false)
     const lines = []
     let inAgentRun = false
 
     for (const block of blocks)
     {
-        const [marker, text, next] = renderBlock(block, c, inAgentRun)
+        const [marker, text, next] = renderBlock(block, s, inAgentRun)
         inAgentRun = next
         if (marker === null) continue
         lines.push(marker)
@@ -195,18 +131,18 @@ export function renderBlocks(blocks, color)
     return lines.join("\n")
 }
 
-export function renderSession(session, width, color)
+export function renderSession(session, width, style)
 {
-    const c = color ?? createColor(false)
+    const s = style ?? createStyle(false)
     const nameWidth = Math.max(0, (width ?? 80) - FIXED_WIDTH - GAP)
     const name = crop(session.title ?? "NULL", nameWidth)
 
     const cells = [
-        padEnd(c.gray(session.id.replace(/^ses_/, "").slice(0, ID_WIDTH)), ID_WIDTH),
-        padEnd(c.gray(stamp(session.time_created)), START_WIDTH),
-        padStart(c.yellow(humanDuration(session.time_updated - session.time_created)), DURATION_WIDTH),
-        padStart(c.cyan(String(session.turns ?? 0)), TURNS_WIDTH),
-        c.bold(name),
+        padEnd(s.row.id(session.id.replace(/^ses_/, "").slice(0, ID_WIDTH)), ID_WIDTH),
+        padEnd(s.row.start(stamp(session.time_created)), START_WIDTH),
+        padStart(s.row.duration(humanDuration(session.time_updated - session.time_created)), DURATION_WIDTH),
+        padStart(s.row.turns(String(session.turns ?? 0)), TURNS_WIDTH),
+        s.row.name(name),
     ]
 
     return cells.join(" ".repeat(GAP)).replace(/\s+$/, "")

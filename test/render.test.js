@@ -1,9 +1,10 @@
 import { test, describe } from "node:test"
 import assert from "node:assert/strict"
-import { humanDuration, renderSession, createColor } from "../src/render.js"
+import { humanDuration, renderSession } from "../src/render.js"
+import { createStyle } from "../src/style.js"
 
-const plain = createColor(false)
-const colored = createColor(true)
+const plain = createStyle(false)
+const colored = createStyle(true)
 
 const session = {
     id: "ses_aaaaaaaaaaaa",

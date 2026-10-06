@@ -25,9 +25,9 @@ function mergeTurns(blocks)
     return merged
 }
 
-export function cat({ db, prefixes = [], width = 80, color })
+export function cat({ db, prefixes = [], width = 80, style })
 {
-    return renderSessions(db, prefixes, width, color, (blocks) =>
+    return renderSessions(db, prefixes, width, style, (blocks) =>
         mergeTurns(blocks.filter((b) => b.kind === "turn")),
     )
 }

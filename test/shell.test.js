@@ -3,14 +3,14 @@ import assert from "node:assert/strict"
 import { fixtures } from "./fixtures/build.js"
 import { openDb } from "../src/db.js"
 import { shell } from "../src/shell.js"
-import { createColor } from "../src/render.js"
+import { createStyle } from "../src/style.js"
 
 const { DB_PATH } = fixtures()
 
-const plain = createColor(false)
+const plain = createStyle(false)
 
 const run = (ids, width = 80) =>
-    shell({ db: openDb(DB_PATH), prefixes: ids, width, color: plain })
+    shell({ db: openDb(DB_PATH), prefixes: ids, width, style: plain })
 
 describe("shell blocks", () => {
     test("starts with the session row, then the commands", () =>

@@ -3,14 +3,14 @@ import assert from "node:assert/strict"
 import { fixtures } from "./fixtures/build.js"
 import { openDb } from "../src/db.js"
 import { cat } from "../src/cat.js"
-import { createColor } from "../src/render.js"
+import { createStyle } from "../src/style.js"
 
 const { DB_PATH } = fixtures()
 
-const plain = createColor(false)
+const plain = createStyle(false)
 
 const run = (ids, width = 80) =>
-    cat({ db: openDb(DB_PATH), prefixes: ids, width, color: plain })
+    cat({ db: openDb(DB_PATH), prefixes: ids, width, style: plain })
 
 describe("cat", () => {
     test("starts with the session row, then the turns", () =>

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { resolveDbPath, openDb, openWritable } from "./src/db.js"
-import { createColor } from "./src/render.js"
+import { createStyle } from "./src/style.js"
 import { createTerminal } from "./src/terminal.js"
 import { ls } from "./src/ls.js"
 import { cat } from "./src/cat.js"
@@ -60,10 +60,8 @@ function main(argv)
     try
     {
         const width = process.stdout.columns || 80
-        const color = createColor(
-            Boolean(process.stdout.isTTY) && !process.env.NO_COLOR,
-        )
-        const out = handler({ db, prefixes: ids, width, color, io: createTerminal() })
+        const style = createStyle(Boolean(process.stdout.isTTY) && !process.env.NO_COLOR)
+        const out = handler({ db, prefixes: ids, width, style, io: createTerminal() })
 
         if (typeof out === "string" && out) process.stdout.write(out + "\n")
         return 0

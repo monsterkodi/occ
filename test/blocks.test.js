@@ -1,9 +1,10 @@
 import { test, describe } from "node:test"
 import assert from "node:assert/strict"
-import { renderBlocks, createColor } from "../src/render.js"
+import { renderBlocks } from "../src/render.js"
+import { createStyle } from "../src/style.js"
 
-const plain = createColor(false)
-const colored = createColor(true)
+const plain = createStyle(false)
+const colored = createStyle(true)
 
 const block = (kind, extra) => ({ kind, ...extra })
 
