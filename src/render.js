@@ -96,6 +96,30 @@ export function createColor(enabled) {
   return makeStyle(Boolean(enabled))
 }
 
+function markerUser(c) {
+  return c.bgBlue(c.bold("> user"))
+}
+
+function markerAgent(c, agent) {
+  const head = c.bgCyan(c.bold("> agent "))
+  return agent ? head + c.bgGray(c.black(agent)) : head.trimEnd()
+}
+
+export function renderTurns(turns, color) {
+  const c = color ?? createColor(false)
+  const lines = []
+
+  for (const turn of turns) {
+    const text = (turn.text ?? "").trimEnd()
+    if (text === "") continue
+    const marker =
+      turn.role === "user" ? markerUser(c) : markerAgent(c, turn.agent)
+    lines.push(marker, text)
+  }
+
+  return lines.join("\n")
+}
+
 export function renderSession(session, width, color) {
   const c = color ?? createColor(false)
   const nameWidth = Math.max(0, (width ?? 80) - FIXED_WIDTH - GAP)

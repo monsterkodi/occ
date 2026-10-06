@@ -68,3 +68,52 @@ export function listSessions(db, prefixes = []) {
   }
   return found
 }
+
+const MESSAGE_SELECT = `
+  SELECT type, data
+  FROM session_message
+  WHERE session_id = ?
+  ORDER BY seq ASC
+`
+
+function joinText(parts) {
+  if (!Array.isArray(parts)) return ""
+  return parts
+    .filter((p) => p && p.type === "text" && typeof p.text === "string")
+    .map((p) => p.text)
+    .join("\n\n")
+}
+
+function toTurn(row) {
+  const data = JSON.parse(row.data)
+
+  if (row.type === "user") {
+    return {
+      role: "user",
+      agent: null,
+      text: typeof data.text === "string" ? data.text : "",
+    }
+  }
+
+  return {
+    role: "agent",
+    agent: data.agent ?? null,
+    text: joinText(data.content),
+  }
+}
+
+export function getSession(db, id) {
+  const [row] = db.prepare(`${SELECT} WHERE s.id = ?`).all(id)
+
+  if (!row) {
+    throw new OclsError(`no session matches "${id}"`)
+  }
+
+  const messages = db
+    .prepare(MESSAGE_SELECT)
+    .all(id)
+    .filter((m) => m.type === "user" || m.type === "assistant")
+    .map(toTurn)
+
+  return { ...row, messages }
+}

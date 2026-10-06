@@ -35,6 +35,23 @@ function msg(id, sessionId, type, seq, payload) {
   return [id, sessionId, type, seq, JSON.stringify(payload)]
 }
 
+function text(t) {
+  return { type: "text", text: t }
+}
+
+function reasoning(t) {
+  return { type: "reasoning", text: t }
+}
+
+function tool(name, input) {
+  return {
+    type: "tool",
+    id: `call_${name}`,
+    name,
+    state: { status: "completed", input, metadata: { exit: 0 } },
+  }
+}
+
 function seed(db) {
   db.exec(SESSION_DDL)
   db.exec(MESSAGE_DDL)
@@ -52,13 +69,32 @@ function seed(db) {
   insertSession.run("ses_ddddddddddddddddddddddd4", "proj1", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "Child session", "quiet-fox", "/home/kodi/a/coco", BASE + 360_000, BASE + 420_000)
 
   insertMessage.run(...msg("m1", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "user", 1, { text: "hello" }))
-  insertMessage.run(...msg("m2", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "user", 2, { text: "again" }))
-  insertMessage.run(...msg("m3", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "synthetic", 3, { text: "system note" }))
+  insertMessage.run(...msg("m2", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "assistant", 2, {
+    agent: "plan",
+    content: [
+      reasoning("thinking about the greeting"),
+      text("hi there"),
+      tool("shell", { command: "ls -la" }),
+    ],
+  }))
+  insertMessage.run(...msg("m3", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "user", 3, { text: "again" }))
+  insertMessage.run(...msg("m4", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "assistant", 4, {
+    agent: "build",
+    content: [text("first bit"), text("second bit")],
+  }))
+  insertMessage.run(...msg("m5", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "assistant", 5, {
+    content: [text("no agent field")],
+  }))
+  insertMessage.run(...msg("m6", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "assistant", 6, {
+    agent: "plan",
+    content: [reasoning("only thinking"), tool("shell", { command: "true" })],
+  }))
+  insertMessage.run(...msg("m7", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1", "synthetic", 7, { text: "system note" }))
 
-  insertMessage.run(...msg("m4", "ses_bbbbbbbbbbbbbbbbbbbbbbb2", "idle", 1, { outcome: "prompt-input" }))
-  insertMessage.run(...msg("m5", "ses_bbbbbbbbbbbbbbbbbbbbbbb2", "user", 2, { text: "" }))
+  insertMessage.run(...msg("m8", "ses_bbbbbbbbbbbbbbbbbbbbbbb2", "idle", 1, { outcome: "prompt-input" }))
+  insertMessage.run(...msg("m9", "ses_bbbbbbbbbbbbbbbbbbbbbbb2", "user", 2, { text: "" }))
 
-  insertMessage.run(...msg("m6", "ses_ccccccccccccccccccccccc3", "user", 1, { text: "one" }))
+  insertMessage.run(...msg("m10", "ses_ccccccccccccccccccccccc3", "user", 1, { text: "one" }))
 }
 
 function build(name, fill) {

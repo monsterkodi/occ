@@ -2,6 +2,7 @@
 import { resolveDbPath, openDb } from "./src/db.js"
 import { createColor } from "./src/render.js"
 import { ls } from "./src/ls.js"
+import { cat } from "./src/cat.js"
 import { OclsError } from "./src/db.js"
 
 const HELP = `
@@ -10,12 +11,14 @@ ocls - list, dump and modify opencode v2 sessions
 usage:
   ocls -h|--help         print this help text
   ocls ls [id...]        print session table
+  ocls cat [id...]       show session conversation
 
 session table columns: id start duration turns name
 `
 
 const COMMANDS = {
   ls,
+  cat,
 }
 
 function usage() {
