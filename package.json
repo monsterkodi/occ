@@ -1,0 +1,12 @@
+{
+  "name": "ocls",
+  "version": "0.1.0",
+  "description": "list opencode v2 sessions",
+  "type": "module",
+  "bin": {
+    "ocls": "./ocls.js"
+  },
+  "scripts": {
+    "test": "node --test test/"
+  }
+}
