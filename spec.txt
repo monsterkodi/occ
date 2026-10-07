@@ -3,7 +3,7 @@ name: occ
 folder: ~/s/occ
 language: javascript
 dependencies: none
-purpose: list, dump and modify opencode v2 sessions
+purpose: list, log and delete opencode v2 sessions
 focus: ease of use; colored, nicely layouted and human readable output
 usage:
 
@@ -13,7 +13,6 @@ occ cat [id...]             - shows session conversation
 occ log [id...]             - shows full history including tool calls
 occ shell [id...]           - shows shell commands with their output
 occ del id [id...]          - deletes sessions after a confirmation prompt
-occ dump [id...]            - dumps session to text file (uncolored)
 
 cat is log without the tool blocks; shell is log filtered to shell calls.
 
