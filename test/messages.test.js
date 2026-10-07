@@ -35,7 +35,7 @@ describe("getSession order", () => {
             ["result", "StatusCode: non 2xx status code (404)"],
             ["call", "grep"],
             ["call", "read"],
-            ["result", "name: ocls\n"],
+            ["result", "name: occ\n"],
         ])
     })
 

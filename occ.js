@@ -10,15 +10,15 @@ import { del } from "./src/del.js"
 import { OclsError } from "./src/db.js"
 
 const HELP = `
-ocls - list, dump and modify opencode v2 sessions
+occ - list, dump and modify opencode v2 sessions
 
 usage:
-  ocls -h|--help         print this help text
-  ocls ls [id...]        print session table
-  ocls cat [id...]       show session conversation
-  ocls log [id...]       show session history including tool calls
-  ocls shell [id...]     show shell commands with their output
-  ocls del id [id...]    delete sessions, asks for confirmation
+  occ -h|--help         print this help text
+  occ ls [id...]        print session table
+  occ cat [id...]       show session conversation
+  occ log [id...]       show session history including tool calls
+  occ shell [id...]     show shell commands with their output
+  occ del id [id...]    delete sessions, asks for confirmation
 
 session table columns: id start duration turns name
 `
@@ -80,7 +80,7 @@ catch (e)
 {
     if (e instanceof OclsError)
     {
-        process.stderr.write(`ocls: ${e.message}\n`)
+        process.stderr.write(`occ: ${e.message}\n`)
         process.exitCode = 1
     }
     else

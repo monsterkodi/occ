@@ -1,19 +1,19 @@
 
-name: ocls
-folder: ~/s/ocls
+name: occ
+folder: ~/s/occ
 language: javascript
 dependencies: none
 purpose: list, dump and modify opencode v2 sessions
 focus: ease of use; colored, nicely layouted and human readable output
 usage:
 
-ocls -h|--help               - prints help text with available commands
-ocls ls [id...]              - prints session table
-ocls cat [id...]             - shows session conversation
-ocls log [id...]             - shows full history including tool calls
-ocls shell [id...]           - shows shell commands with their output
-ocls del id [id...]          - deletes sessions after a confirmation prompt
-ocls dump [id...]            - dumps session to text file (uncolored)
+occ -h|--help               - prints help text with available commands
+occ ls [id...]              - prints session table
+occ cat [id...]             - shows session conversation
+occ log [id...]             - shows full history including tool calls
+occ shell [id...]           - shows shell commands with their output
+occ del id [id...]          - deletes sessions after a confirmation prompt
+occ dump [id...]            - dumps session to text file (uncolored)
 
 cat is log without the tool blocks; shell is log filtered to shell calls.
 
@@ -61,8 +61,8 @@ implementation:
 - c.fg("#rrggbb", text) and c.bg("#rrggbb", text) take an exact 24-bit color,
   accept #rgb shorthand, and nest inside and around the named colors; a
   malformed color throws StyleError rather than silently not applying
-- ocls del requires at least one id, there is no --all
-- ocls del requires a terminal, and asks "ARE YOU SURE? (yN)" after showing
+- occ del requires at least one id, there is no --all
+- occ del requires a terminal, and asks "ARE YOU SURE? (yN)" after showing
   the sessions it is about to delete; it opens the db writable with
   PRAGMA foreign_keys ON so session_message, session_pending, session_inbox,
   instruction_entry and instruction_state cascade

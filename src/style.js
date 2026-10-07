@@ -30,7 +30,7 @@ const TRUE_COLOR = { foreground: [38, 39], background: [48, 49] }
 
 const ROLES = {
     row: {
-        id:       (c) => (text) => c.bg("#111", c.fg("#666", text)),
+        id:       (c) => (text) => c.bg("#111", c.fg("#ff0", text)),
         start:    (c) => (text) => c.bg("#111", c.fg("#55a", text)),
         duration: (c) => (text) => c.bg("#111", c.fg("#88f", text)),
         turns:    (c) => (text) => c.bg("#111", c.red(text)),

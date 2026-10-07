@@ -8,15 +8,15 @@ import { makeDataHome } from "./fixtures/build.js"
 
 const run = promisify(execFile)
 const root = join(dirname(fileURLToPath(import.meta.url)), "..")
-const ocls = join(root, "ocls.js")
+const occ = join(root, "occ.js")
 
 const { home } = makeDataHome()
 
 const READ_COMMANDS = ["ls", "cat", "log", "shell"]
 
-function oclsRun(args, env = {})
+function occRun(args, env = {})
 {
-    return run(process.execPath, [ocls, ...args], {
+    return run(process.execPath, [occ, ...args], {
         env: { ...process.env, XDG_DATA_HOME: home, NO_COLOR: "1", ...env },
     })
 }
@@ -36,26 +36,26 @@ describe("cli read commands", () => {
     {
         test(`${command} runs and prints something`, async () =>
         {
-            const { stdout } = await oclsRun([command, "aaaaaa"])
+            const { stdout } = await occRun([command, "aaaaaa"])
             assert.match(stdout, /aaaaaa/)
         })
 
         test(`${command} with no ids runs`, async () =>
         {
-            const { stdout } = await oclsRun([command])
+            const { stdout } = await occRun([command])
             assert.ok(stdout.trim().length > 0)
         })
     }
 
     test("every command in the help table is dispatchable", async () =>
     {
-        const { stdout } = await oclsRun(["--help"])
-        const listed = [...stdout.matchAll(/^ {2}ocls (\w+)/gm)].map((m) => m[1])
+        const { stdout } = await occRun(["--help"])
+        const listed = [...stdout.matchAll(/^ {2}occ (\w+)/gm)].map((m) => m[1])
         assert.ok(listed.includes("ls"))
 
         for (const command of listed.filter((c) => c !== "del"))
         {
-            const { stdout: out } = await oclsRun([command, "aaaaaa"])
+            const { stdout: out } = await occRun([command, "aaaaaa"])
             assert.ok(out.trim().length > 0, `${command} printed nothing`)
         }
     })
@@ -64,36 +64,36 @@ describe("cli read commands", () => {
 describe("cli help", () => {
     test("help exits zero", async () =>
     {
-        const { stdout } = await oclsRun(["--help"])
+        const { stdout } = await occRun(["--help"])
         assert.match(stdout, /session table columns/)
     })
 
     test("no arguments prints help", async () =>
     {
-        const { stdout } = await oclsRun([])
+        const { stdout } = await occRun([])
         assert.match(stdout, /usage:/)
     })
 
     test("del is listed in the help text", async () =>
     {
-        const { stdout } = await oclsRun(["--help"])
-        assert.match(stdout, /ocls del id \[id\.\.\.\]/)
+        const { stdout } = await occRun(["--help"])
+        assert.match(stdout, /occ del id \[id\.\.\.\]/)
     })
 
     test("an unknown command fails with a message", async () =>
     {
-        await assert.rejects(() => oclsRun(["frobnicate"]), rejectsWith(/unknown command "frobnicate"/))
+        await assert.rejects(() => occRun(["frobnicate"]), rejectsWith(/unknown command "frobnicate"/))
     })
 })
 
 describe("cli del", () => {
     test("is dispatched and reaches its own guard", async () =>
     {
-        await assert.rejects(() => oclsRun(["del"]), rejectsWith(/at least one session id/))
+        await assert.rejects(() => occRun(["del"]), rejectsWith(/at least one session id/))
     })
 
     test("refuses without a terminal", async () =>
     {
-        await assert.rejects(() => oclsRun(["del", "aaaaaa"]), rejectsWith(/needs a terminal/))
+        await assert.rejects(() => occRun(["del", "aaaaaa"]), rejectsWith(/needs a terminal/))
     })
 })

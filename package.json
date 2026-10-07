@@ -1,10 +1,10 @@
 {
-  "name": "ocls",
+  "name": "occ",
   "version": "0.1.0",
-  "description": "list opencode v2 sessions",
+  "description": "opencode companion. lists, dumps and deletes opencode sessions",
   "type": "module",
   "bin": {
-    "ocls": "./ocls.js"
+    "occ": "./occ.js"
   },
   "scripts": {
     "test": "node --test test/"

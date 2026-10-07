@@ -138,7 +138,7 @@ function seedSessions(db)
 
     insert.run(A, "proj1", null, "First session", "witty-knight", "/home/kodi/a/coco", BASE, BASE + 60_000)
     insert.run("ses_bbbbbbbbbbbbbbbbbbbbbbb2", "proj1", null, null, "happy-meadow", "/home/kodi/.config", BASE + 120_000, BASE + 180_000)
-    insert.run(C, "proj1", null, "A rather long session title that will certainly need to be cropped at the right edge", "brave-otter", "/home/kodi/s/ocls", BASE + 240_000, BASE + 300_000)
+    insert.run(C, "proj1", null, "A rather long session title that will certainly need to be cropped at the right edge", "brave-otter", "/home/kodi/s/occ", BASE + 240_000, BASE + 300_000)
     insert.run("ses_ddddddddddddddddddddddd4", "proj1", A, "Child session", "quiet-fox", "/home/kodi/a/coco", BASE + 360_000, BASE + 420_000)
 }
 
@@ -178,8 +178,8 @@ function seedMessages(db)
             tool("shell", { command: "true" }, { result: "" }),
             tool("webfetch", { url: "https://example.invalid" }, { error: "StatusCode: non 2xx status code (404)" }),
             tool("grep", { pattern: "needle" }, { status: "running" }),
-            tool("read", { path: "/home/kodi/s/ocls/spec.txt" }, {
-                result: "name: ocls\n",
+            tool("read", { path: "/home/kodi/s/occ/spec.txt" }, {
+                result: "name: occ\n",
                 metadata: { truncated: 1, outputPath: "/home/kodi/.local/share/opencode/tool-output/tool_abc" },
             }),
         ],
@@ -247,7 +247,7 @@ function seed(db)
 
 function build(name, fill)
 {
-    const dir = join(tmpdir(), "ocls-fixtures", String(process.pid))
+    const dir = join(tmpdir(), "occ-fixtures", String(process.pid))
     mkdirSync(dir, { recursive: true })
 
     const final = join(dir, name)
@@ -294,7 +294,7 @@ export function buildMissingColumnDb()
 export function makeDataHome()
 {
     const source = buildTestDb()
-    const home = join(tmpdir(), "ocls-data-home", String(process.pid))
+    const home = join(tmpdir(), "occ-data-home", String(process.pid))
     const target = join(home, "opencode", "opencode.db")
 
     mkdirSync(join(home, "opencode"), { recursive: true })
