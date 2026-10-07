@@ -10,7 +10,7 @@ import { del } from "./src/del.js"
 import { OclsError } from "./src/db.js"
 
 const HELP = `
-occ - list, dump and modify opencode v2 sessions
+occ - list, dump and delete opencode sessions
 
 usage:
   occ -h|--help         print this help text
