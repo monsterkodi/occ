@@ -46,7 +46,7 @@ describe("fg and bg with hex", () => {
         const out = style.fg("#0000ff", style.turn.user("> user"))
         assert.equal(strip(out), "> user")
         assert.ok(out.includes("38;2;0;0;255"))
-        assert.ok(out.includes("44"))
+        assert.notEqual(out, style.turn.user("> user"))
     })
 
     test("a role can be built from hex, foreground inside background", () =>

@@ -110,7 +110,7 @@ describe("del confirmation", () => {
     test("shows a warning, the sessions, and the question", () =>
     {
         const { text } = run(["aaaaaa"])
-        assert.match(text, /WARNING! ABOUT TO DELETE THESE SESSIONS/)
+        assert.match(text, /DELETE SESSIONS/)
         assert.match(text, /aaaaaa.*First session/s)
         assert.match(text, /ARE YOU SURE\? \(yN\)/)
     })
@@ -118,7 +118,7 @@ describe("del confirmation", () => {
     test("the warning comes before the session list", () =>
     {
         const { text } = run(["aaaaaa"])
-        assert.ok(text.indexOf("WARNING!") < text.indexOf("aaaaaa"))
+        assert.ok(text.indexOf("DELETE SESSIONS") < text.indexOf("aaaaaa"))
         assert.ok(text.indexOf("aaaaaa") < text.indexOf("ARE YOU SURE"))
     })
 

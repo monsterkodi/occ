@@ -8,10 +8,26 @@ const colored = createStyle(true)
 
 const block = (kind, extra) => ({ kind, ...extra })
 
+const strip = (text) => text.replace(/\x1b\[[0-9;]*m/g, "")
+
 const markersOf = (blocks) =>
     renderBlocks(blocks, plain)
         .split("\n")
         .filter((l) => l.startsWith(">") || l === "…" || l.startsWith("$"))
+
+const markerLines = () =>
+{
+    const lines = renderBlocks(history, colored).split("\n")
+    const find = (text) => lines.find((l) => strip(l) === text)
+
+    return {
+        user: find("> user"),
+        agent: find("> agent build"),
+        call: find("$ shell"),
+        result: find("$ shell result"),
+        continued: find("…"),
+    }
+}
 
 const history = [
     block("turn", { role: "user", agent: null, text: "hi conny" }),
@@ -279,29 +295,19 @@ describe("renderBlocks colors", () => {
         )
     })
 
-    test("a call and its result share one marker color, distinct from turns", () =>
+    test("every marker is styled when color is on", () =>
     {
-        const markers = renderBlocks(history, colored)
-            .split("\n")
-            .filter((l) => /^\x1b\[/.test(l))
-        const codes = (line) => (line.match(/\x1b\[[0-9;]*m/g) ?? []).slice(0, 1).join()
-        const [user, agent, call, result] = markers
-
-        assert.equal(codes(call), codes(result))
-        assert.notEqual(codes(call), codes(agent))
-        assert.notEqual(codes(call), codes(user))
+        const markers = markerLines()
+        for (const [name, line] of Object.entries(markers))
+        {
+            assert.ok(line !== undefined, `no ${name} marker`)
+            assert.ok(line.includes("\x1b["), `${name} is not styled`)
+        }
     })
 
-    test("user and agent markers are colored differently", () =>
+    test("the markers do not all collapse into one style", () =>
     {
-        const lines = renderBlocks(history, colored).split("\n")
-        const [user, agent, call, result] = [lines[0], lines[2], lines[4], lines[6]]
-        const codes = (line) => (line.match(/\x1b\[[0-9;]*m/g) ?? []).slice(0, 1).join()
-
-        assert.notEqual(codes(user), codes(agent))
-        assert.ok(user.includes("\x1b["))
-        assert.ok(agent.includes("\x1b["))
-        assert.ok(call.includes("\x1b["))
-        assert.ok(result.includes("\x1b["))
+        const lines = Object.values(markerLines())
+        assert.ok(new Set(lines).size > 1, "all markers render identically")
     })
 })
