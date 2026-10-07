@@ -30,26 +30,26 @@ const TRUE_COLOR = { foreground: [38, 39], background: [48, 49] }
 
 const ROLES = {
     row: {
-        id: (c) => c.gray,
-        start: (c) => c.gray,
-        duration: (c) => c.yellow,
-        turns: (c) => c.cyan,
-        name: (c) => c.bold,
+        id:       (c) => (text) => c.bg("#111", c.fg("#666", text)),
+        start:    (c) => (text) => c.bg("#111", c.fg("#aaf", text)),
+        duration: (c) => (text) => c.bg("#111", c.fg("#88f", text)),
+        turns:    (c) => (text) => c.bg("#111", c.red(text)),
+        name:     (c) => (text) => c.bg("#222", c.bold(text)),
     },
     turn: {
-        user: (c) => (text) => c.bgBlue(c.bold(text)),
-        agent: (c) => (text) => c.bgCyan(c.bold(text)),
-        mode: (c) => (text) => c.bgGray(c.black(text)),
+        user:     (c) => (text) => c.bgBlue(c.bold(text)),
+        agent:    (c) => (text) => c.bgCyan(c.bold(text)),
+        mode:     (c) => (text) => c.bgGray(c.black(text)),
         continue: (c) => c.gray,
     },
     tool: {
-        call: (c) => (text) => c.bgMagenta(c.bold(text)),
-        result: (c) => (text) => c.bgMagenta(c.bold(text)),
-        exit: (c) => (text) => c.bgRed(c.bold(text)),
-        note: (c) => c.gray,
+        call:     (c) => (text) => c.bgMagenta(c.bold(text)),
+        result:   (c) => (text) => c.bgMagenta(c.bold(text)),
+        exit:     (c) => (text) => c.bgRed(c.bold(text)),
+        note:     (c) => c.gray,
     },
     del: {
-        warning: (c) => (text) => c.bgRed(c.bold(c.yellow(text))),
+        warning:  (c) => (text) => c.bgRed(c.bold(c.yellow(text))),
         question: (c) => c.bold,
     },
 }
