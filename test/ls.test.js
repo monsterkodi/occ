@@ -25,6 +25,18 @@ describe("ls", () => {
         assert.ok(lines[0].trimStart().startsWith("bbbbbb"))
     })
 
+    test("a title argument selects rows too", () =>
+    {
+        const lines = run(["ocls"]).split("\n")
+        assert.equal(lines.length, 1)
+        assert.ok(lines[0].includes("Coco - ocls"))
+    })
+
+    test("ids and titles can be mixed", () =>
+    {
+        assert.equal(run(["ocls", "bbbbbb"]).split("\n").length, 2)
+    })
+
     test("unknown id surfaces the error", () =>
     {
         assert.throws(() => run(["zzzzzz"]), /no session/i)

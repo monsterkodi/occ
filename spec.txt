@@ -48,6 +48,16 @@ no table header is printed; renderSession() is the shared row renderer
 
 [id..] if provided, filters sessions by ids; defaults to all sessions (except for del)
 
+an argument is first tried as a session id prefix; if no id matches, it is
+tried as a case insensitive substring of the title. one argument can match
+several sessions, so `occ ls conny` prints every Conny session. arguments may
+be mixed freely, and a session matched twice is listed once. a term matching
+nothing in either is an error, as is an id prefix matching more than one
+session; the latter never falls through to a title search.
+
+occ del accepts title arguments too, but refuses any argument shorter than
+three characters, since a single letter can match a quarter of the history.
+
 implementation:
 
 - data retrieval (src/db.js, src/query.js) separated from render code

@@ -39,29 +39,40 @@ function likeEscape(text)
     return text.replace(/[\\%_]/g, (c) => `\\${c}`)
 }
 
+const ID_MATCH = "s.id LIKE 'ses_' || ? || '%' ESCAPE '\\'"
+
+const TITLE_MATCH = "lower(coalesce(s.title, '')) LIKE '%' || ? || '%' ESCAPE '\\'"
+
 function resolveOne(db, prefix)
 {
     const needle = likeEscape(normalize(prefix))
-    const rows = db
-        .prepare(
-            `${SELECT}
-             WHERE s.id LIKE 'ses_' || ? || '%' ESCAPE '\\' AND ${CHILD_FILTER}`,
-        )
+
+    const byId = db
+        .prepare(`${SELECT} WHERE ${ID_MATCH} AND ${CHILD_FILTER}`)
         .all(needle)
 
-    if (rows.length === 0)
+    if (byId.length > 1)
+    {
+        throw new OclsError(
+            `prefix "${prefix}" matches ${byId.length} sessions, use 6 or more characters`,
+        )
+    }
+
+    if (byId.length === 1)
+    {
+        return byId
+    }
+
+    const byTitle = db
+        .prepare(`${SELECT} WHERE ${TITLE_MATCH} AND ${CHILD_FILTER} ${ORDER}`)
+        .all(needle)
+
+    if (byTitle.length === 0)
     {
         throw new OclsError(`no session matches "${prefix}"`)
     }
 
-    if (rows.length > 1)
-    {
-        throw new OclsError(
-            `prefix "${prefix}" matches ${rows.length} sessions, use 6 or more characters`,
-        )
-    }
-
-    return rows[0]
+    return byTitle
 }
 
 function commandOf(input)
@@ -160,11 +171,13 @@ export function listSessions(db, prefixes = [])
     const found = []
     for (const prefix of prefixes)
     {
-        const row = resolveOne(db, prefix)
-        if (!seen.has(row.id))
+        for (const row of resolveOne(db, prefix))
         {
-            seen.add(row.id)
-            found.push(row)
+            if (!seen.has(row.id))
+            {
+                seen.add(row.id)
+                found.push(row)
+            }
         }
     }
     return found

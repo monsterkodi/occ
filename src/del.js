@@ -4,6 +4,8 @@ import { OclsError } from "./db.js"
 
 const WARNING = " DELETE SESSIONS "
 
+const MIN_ARGUMENT = 3
+
 const AFFIRMATIVE = new Set(["y", "yes"])
 
 export function del({ db, prefixes = [], width = 80, style, io })
@@ -11,6 +13,14 @@ export function del({ db, prefixes = [], width = 80, style, io })
     if (prefixes.length === 0)
     {
         throw new OclsError("del needs at least one session id")
+    }
+
+    const tooShort = prefixes.filter((prefix) => prefix.length < MIN_ARGUMENT)
+    if (tooShort.length > 0)
+    {
+        throw new OclsError(
+            `del needs arguments of at least ${MIN_ARGUMENT} characters: ${tooShort.join(", ")}`,
+        )
     }
 
     if (!io.interactive)

@@ -136,10 +136,10 @@ function seedSessions(db)
         "INSERT INTO session_v2 (id, project_id, parent_id, title, slug, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     )
 
-    insert.run(A, "proj1", null, "First session", "witty-knight", "/home/kodi/a/coco", BASE, BASE + 60_000)
+    insert.run(A, "proj1", null, "Coco - ocls", "witty-knight", "/home/kodi/a/coco", BASE, BASE + 60_000)
     insert.run("ses_bbbbbbbbbbbbbbbbbbbbbbb2", "proj1", null, null, "happy-meadow", "/home/kodi/.config", BASE + 120_000, BASE + 180_000)
-    insert.run(C, "proj1", null, "A rather long session title that will certainly need to be cropped at the right edge", "brave-otter", "/home/kodi/s/occ", BASE + 240_000, BASE + 300_000)
-    insert.run("ses_ddddddddddddddddddddddd4", "proj1", A, "Child session", "quiet-fox", "/home/kodi/a/coco", BASE + 360_000, BASE + 420_000)
+    insert.run(C, "proj1", null, "Conny - hyprsession", "brave-otter", "/home/kodi/s/occ", BASE + 240_000, BASE + 300_000)
+    insert.run("ses_ddddddddddddddddddddddd4", "proj1", A, "Bert - child", "quiet-fox", "/home/kodi/a/coco", BASE + 360_000, BASE + 420_000)
 }
 
 function seedMessages(db)

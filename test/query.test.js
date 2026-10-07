@@ -10,6 +10,9 @@ const db = openDb(DB_PATH)
 
 const ids = () => listSessions(db, []).map((s) => s.id)
 
+const A = "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1"
+const C = "ses_ccccccccccccccccccccccc3"
+
 describe("listSessions filtering", () => {
     test("returns every top-level session, oldest update first", () =>
     {
@@ -43,6 +46,65 @@ describe("listSessions filtering", () => {
             listSessions(db, ["ccccccc", "aaaaaaa"]).map((s) => s.id),
             ["ses_ccccccccccccccccccccccc3", "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1"],
         )
+    })
+
+    test("matches a title substring, case insensitive", () =>
+    {
+        assert.deepEqual(listSessions(db, ["ocls"]).map((s) => s.id), [A])
+        assert.deepEqual(listSessions(db, ["OCLS"]).map((s) => s.id), [A])
+        assert.deepEqual(listSessions(db, ["Coco"]).map((s) => s.id), [A])
+    })
+
+    test("matches anywhere in a title, not only the start", () =>
+    {
+        assert.deepEqual(listSessions(db, ["hyprsession"]).map((s) => s.id), [C])
+        assert.deepEqual(listSessions(db, ["hypr"]).map((s) => s.id), [C])
+    })
+
+    test("an id still wins over a title", () =>
+    {
+        assert.deepEqual(listSessions(db, ["aaaaaaa"]).map((s) => s.id), [A])
+    })
+
+    test("ids and titles can be mixed, in the order given", () =>
+    {
+        assert.deepEqual(
+            listSessions(db, ["conny", "aaaaaaa"]).map((s) => s.id),
+            [C, A],
+        )
+        assert.deepEqual(
+            listSessions(db, ["aaaaaaa", "conny"]).map((s) => s.id),
+            [A, C],
+        )
+    })
+
+    test("overlapping title arguments list a session once", () =>
+    {
+        assert.deepEqual(listSessions(db, ["ocls", "coco"]).map((s) => s.id), [A])
+    })
+
+    test("title search never finds a child session", () =>
+    {
+        assert.throws(() => listSessions(db, ["child"]), /no session/i)
+    })
+
+    test("an ambiguous id prefix does not fall through to titles", () =>
+    {
+        assert.throws(
+            () => listSessions(db, ["ses_"]),
+            /matches \d+ sessions/i,
+        )
+    })
+
+    test("sql wildcards in an argument stay literal", () =>
+    {
+        assert.throws(() => listSessions(db, ["%"]), /no session/i)
+        assert.throws(() => listSessions(db, ["_"]), /no session/i)
+    })
+
+    test("a term matching nothing is an error", () =>
+    {
+        assert.throws(() => listSessions(db, ["zzzzzz"]), /no session/i)
     })
 
     test("unknown prefix is an error", () =>

@@ -91,6 +91,41 @@ describe("del guards", () => {
         )
     })
 
+    test("an argument shorter than three characters is refused", () =>
+    {
+        for (const short of ["a", "ab"])
+        {
+            assert.throws(
+                () => run([short]),
+                (e) => e instanceof OclsError && /at least 3 characters/i.test(e.message),
+                `"${short}" should be refused`,
+            )
+        }
+    })
+
+    test("the refusal names the arguments it rejected", () =>
+    {
+        assert.throws(
+            () => run(["ab", "ocls", "cd"]),
+            (e) => e.message.includes("ab") && e.message.includes("cd"),
+        )
+    })
+
+    test("nothing is deleted when an argument is too short", () =>
+    {
+        withDb((db) =>
+        {
+            assert.throws(() =>
+                del({ db, prefixes: ["ab"], width: 80, style: plain, io: io("y") }))
+            assert.equal(rowCount(db, A), 1)
+        })
+    })
+
+    test("a three character title argument is accepted", () =>
+    {
+        assert.deepEqual(run(["oco"], "y").deleted, [A])
+    })
+
     test("an unknown id errors before the warning", () =>
     {
         assert.throws(() => run(["zzzzzz"]), /no session/i)
@@ -111,7 +146,7 @@ describe("del confirmation", () => {
     {
         const { text } = run(["aaaaaa"])
         assert.match(text, /DELETE SESSIONS/)
-        assert.match(text, /aaaaaa.*First session/s)
+        assert.match(text, /aaaaaa.*Coco - ocls/s)
         assert.match(text, /ARE YOU SURE\? \(yN\)/)
     })
 
@@ -146,6 +181,25 @@ describe("del confirmation", () => {
 })
 
 describe("del deletion", () => {
+    test("accepts a title argument and deletes what it matched", () =>
+    {
+        withDb((db) =>
+        {
+            del({ db, prefixes: ["ocls"], width: 80, style: plain, io: io("y") })
+            assert.equal(rowCount(db, A), 0)
+            assert.equal(rowCount(db, C), 1)
+        })
+    })
+
+    test("accepts a mix of ids and titles", () =>
+    {
+        withDb((db) =>
+        {
+            del({ db, prefixes: ["aaaaaaa", "ocls"], width: 80, style: plain, io: io("y") })
+            assert.equal(rowCount(db, A), 0)
+        })
+    })
+
     test("removes the session row", () =>
     {
         withDb((db) =>

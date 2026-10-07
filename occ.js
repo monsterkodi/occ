@@ -21,6 +21,8 @@ usage:
   occ del id [id...]    delete sessions, asks for confirmation
 
 session table columns: id start duration turns name
+
+[id...] is a session id prefix, or a fragment of a session title
 `
 
 const COMMANDS = {

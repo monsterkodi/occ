@@ -59,6 +59,22 @@ describe("cli read commands", () => {
             assert.ok(out.trim().length > 0, `${command} printed nothing`)
         }
     })
+
+    test("a title argument works end to end", async () =>
+    {
+        const { stdout } = await occRun(["ls", "ocls"])
+        assert.match(stdout, /aaaaaa/)
+        assert.match(stdout, /Coco - ocls/)
+    })
+
+    test("every read command accepts a title argument", async () =>
+    {
+        for (const command of READ_COMMANDS)
+        {
+            const { stdout } = await occRun([command, "ocls"])
+            assert.match(stdout, /aaaaaa/, `${command} did not resolve a title`)
+        }
+    })
 })
 
 describe("cli help", () => {
