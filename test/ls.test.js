@@ -22,7 +22,7 @@ describe("ls", () => {
     {
         const lines = run(["bbbbbb"]).split("\n")
         assert.equal(lines.length, 1)
-        assert.ok(lines[0].startsWith("bbbbbb"))
+        assert.ok(lines[0].trimStart().startsWith("bbbbbb"))
     })
 
     test("unknown id surfaces the error", () =>

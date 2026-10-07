@@ -16,7 +16,7 @@ describe("shell blocks", () => {
     test("starts with the session row, then the commands", () =>
     {
         const lines = run(["cccccc"]).split("\n")
-        assert.ok(lines[0].startsWith("cccccc "))
+        assert.ok(lines[0].trimStart().startsWith("cccccc "))
         assert.ok(lines.includes("$ shell"))
     })
 
@@ -87,7 +87,7 @@ describe("shell selection", () => {
     test("sessions are separated by a blank line", () =>
     {
         const lines = run(["aaaaaa", "cccccc"]).split("\n")
-        const secondRow = lines.findIndex((l) => l.startsWith("cccccc "))
+        const secondRow = lines.findIndex((l) => l.trimStart().startsWith("cccccc "))
         assert.equal(lines[secondRow - 1], "")
     })
 

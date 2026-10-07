@@ -33,7 +33,12 @@ session table columns: [id] [start] [duration] [turns] [name]
 [turns] padded number (width 4)
 [name] unpadded, but cropped with ellipsis at right edge of terminal
 
-columns are separated by two spaces; the fixed part is 33 characters wide
+columns are separated by one space of padding on each side, which belongs to
+the cell it pads, so a background color covers the gaps and reaches the right
+edge of the terminal
+the fixed columns are 33 characters wide in total
+the name column is padded to the terminal edge, so rows carry trailing spaces
+even with colors off
 turns counts user messages that carry text; synthetic and idle messages do not count
 sessions with a parent_id (child sessions) are never listed
 a session without a title shows NULL

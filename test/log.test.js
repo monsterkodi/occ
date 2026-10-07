@@ -19,7 +19,7 @@ describe("log blocks", () => {
     test("starts with the session row, then the blocks", () =>
     {
         const lines = run(["aaaaaa"]).split("\n")
-        assert.ok(lines[0].startsWith("aaaaaa "))
+        assert.ok(lines[0].trimStart().startsWith("aaaaaa "))
         assert.equal(lines[1], "> user")
         assert.equal(lines[2], "hello")
     })
@@ -78,7 +78,7 @@ describe("log selection", () => {
     test("sessions are separated by a blank line", () =>
     {
         const lines = run(["aaaaaa", "cccccc"]).split("\n")
-        const secondRow = lines.findIndex((l) => l.startsWith("cccccc "))
+        const secondRow = lines.findIndex((l) => l.trimStart().startsWith("cccccc "))
         assert.equal(lines[secondRow - 1], "")
     })
 

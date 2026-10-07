@@ -16,7 +16,7 @@ describe("cat", () => {
     test("starts with the session row, then the turns", () =>
     {
         const lines = run(["aaaaaa"]).split("\n")
-        assert.ok(lines[0].startsWith("aaaaaa "))
+        assert.ok(lines[0].trimStart().startsWith("aaaaaa "))
         assert.equal(lines[1], "> user")
         assert.equal(lines[2], "hello")
     })
@@ -65,7 +65,7 @@ describe("cat selection", () => {
     test("sessions are separated by a blank line, not a rule", () =>
     {
         const lines = run(["aaaaaa", "cccccc"]).split("\n")
-        const secondRow = lines.findIndex((l) => l.startsWith("cccccc "))
+        const secondRow = lines.findIndex((l) => l.trimStart().startsWith("cccccc "))
         assert.equal(lines[secondRow - 1], "")
     })
 
