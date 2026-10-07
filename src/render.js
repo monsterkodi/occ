@@ -2,7 +2,7 @@ import { createStyle } from "./style.js"
 
 const ID_WIDTH = 6
 const START_WIDTH = 11
-const DURATION_WIDTH = 4
+const DURATION_WIDTH = 6
 const TURNS_WIDTH = 4
 const PADDING = 1
 
@@ -10,20 +10,11 @@ const COLUMN_WIDTH = ID_WIDTH + START_WIDTH + DURATION_WIDTH + TURNS_WIDTH
 
 export const FIXED_WIDTH = COLUMN_WIDTH + (2 * PADDING) * 4
 
-const SECOND = 1000
-const MINUTE = 60 * SECOND
-const HOUR = 60 * MINUTE
-const DAY = 24 * HOUR
-const YEAR = 365 * DAY
+const MINUTE = 60_000
 
-export function humanDuration(ms)
+export function durationMinutes(ms)
 {
-    const value = Math.max(0, ms)
-    //if (value < MINUTE) return `${Math.floor(value / SECOND)}s`
-    if (value < HOUR * 16) return `${Math.floor(value / MINUTE)}m`
-    // if (value < DAY) return `${Math.floor(value / HOUR)}h`
-    if (value < YEAR) return `${Math.floor(value / DAY)}d`
-    return `${Math.floor(value / YEAR)}y`
+    return String(Math.floor(Math.max(0, ms) / MINUTE))
 }
 
 function crop(text, width)
@@ -130,7 +121,7 @@ export function renderSession(session, width, style)
     const s = style ?? createStyle(false)
     const nameWidth = Math.max(0, (width ?? 80) - FIXED_WIDTH - (2 * PADDING))
     const name = crop(session.title ?? "NULL", nameWidth)
-    const duration = humanDuration(session.time_updated - session.time_created)
+    const duration = durationMinutes(session.time_updated - session.time_created)
 
     const cells = [
         s.row.id(padded(session.id.replace(/^ses_/, "").slice(0, ID_WIDTH), ID_WIDTH)),

@@ -1,6 +1,6 @@
 import { test, describe } from "node:test"
 import assert from "node:assert/strict"
-import { humanDuration, renderSession } from "../src/render.js"
+import { durationMinutes, renderSession } from "../src/render.js"
 import { createStyle } from "../src/style.js"
 
 const plain = createStyle(false)
@@ -19,35 +19,41 @@ const strip = (text) => text.replace(/\x1b\[[0-9;]*m/g, "")
 const row = (over = {}, width = 80, color = plain) =>
     renderSession({ ...session, ...over }, width, color)
 
-describe("humanDuration", () => {
-    test("ends in a single unit letter, max 4 chars", () =>
+describe("durationMinutes", () => {
+    test("is whole minutes, with no unit", () =>
     {
         const cases = [
-            [0, "0m"],
-            [999, "0m"],
-            [45_000, "0m"],
-            [59_999, "0m"],
-            [60_000, "1m"],
-            [18 * 60_000, "18m"],
-            [59 * 60_000, "59m"],
-            [3_599_000, "59m"],
-            [3_600_000, "60m"],
-            [4 * 3_600_000, "240m"],
-            [15 * 3_600_000, "900m"],
-            [16 * 3_600_000 - 1, "959m"],
-            [24 * 3_600_000, "1d"],
-            [360 * 86_400_000, "360d"],
-            [365 * 86_400_000, "1y"],
-            [800 * 86_400_000, "2y"],
+            [0, "0"],
+            [999, "0"],
+            [59_999, "0"],
+            [60_000, "1"],
+            [60_000 + 59_999, "1"],
+            [90_000, "1"],
+            [18 * 60_000, "18"],
+            [59 * 60_000, "59"],
+            [3_600_000, "60"],
+            [24 * 3_600_000, "1440"],
+            [365 * 86_400_000, "525600"],
         ]
 
         for (const [ms, expected] of cases)
         {
-            const out = humanDuration(ms)
+            const out = durationMinutes(ms)
             assert.equal(out, expected, `${ms}ms`)
-            assert.match(out, /^[\d]+[smhdy]$/)
-            assert.ok(out.length <= 4, `${out} is longer than 4 chars`)
+            assert.match(out, /^\d+$/)
         }
+    })
+
+    test("a negative span reads as zero", () =>
+    {
+        assert.equal(durationMinutes(-5000), "0")
+    })
+
+    test("six digits covers just under two years", () =>
+    {
+        const minute = 60_000
+        assert.equal(durationMinutes(999_999 * minute).length, 6)
+        assert.equal(durationMinutes(1_000_000 * minute).length, 7)
     })
 })
 
@@ -75,11 +81,18 @@ describe("renderSession", () => {
         assert.equal(out.length, 80)
     })
 
-    test("the fixed columns are 33 wide and do not move with the terminal", () =>
+    test("the fixed columns are 34 wide and do not move with the terminal", () =>
     {
-        const fixed = (text) => strip(row({ title: "z" }, text)).slice(0, 33)
+        const fixed = (text) => strip(row({ title: "z" }, text)).slice(0, 35)
         assert.equal(fixed(40), fixed(120))
-        assert.equal(fixed(80).length, 33)
+        assert.equal(fixed(80).length, 35)
+    })
+
+    test("the duration column holds six digits of minutes", () =>
+    {
+        const minute = 60_000
+        const out = strip(row({ time_updated: 1791283494422 + 999_999 * minute }))
+        assert.match(out, /\s999999\s/)
     })
 
     test("the name column fills to the terminal edge", () =>
@@ -97,13 +110,13 @@ describe("renderSession", () => {
 
     test("the row fills the terminal, or falls back to its minimum width", () =>
     {
-        for (const width of [36, 40, 60, 120])
+        for (const width of [38, 40, 60, 120])
         {
             const out = strip(row({ title: "y".repeat(200) }, width))
             assert.ok(out.length <= width, `width ${width} produced ${out.length}`)
         }
 
-        assert.equal(strip(row({}, 20)).length, 35)
+        assert.equal(strip(row({}, 20)).length, 37)
         assert.equal(strip(row({}, 80)).length, 80)
     })
 })
