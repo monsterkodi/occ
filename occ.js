@@ -40,13 +40,15 @@ function usage()
 
 function main(argv)
 {
-    const [command, ...ids] = argv
+    const [given, ...ids] = argv
 
-    if (!command || command === "-h" || command === "--help" || command === "help")
+    if (given === "-h" || given === "--help" || given === "help")
     {
         process.stdout.write(usage() + "\n")
         return 0
     }
+
+    const command = argv.length === 0 ? "ls" : given
 
     const entry = COMMANDS[command]
     if (!entry)

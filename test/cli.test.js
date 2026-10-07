@@ -84,10 +84,17 @@ describe("cli help", () => {
         assert.match(stdout, /session table columns/)
     })
 
-    test("no arguments prints help", async () =>
+    test("no arguments falls back to ls", async () =>
     {
         const { stdout } = await occRun([])
-        assert.match(stdout, /usage:/)
+        const { stdout: listed } = await occRun(["ls"])
+        assert.equal(stdout, listed)
+        assert.doesNotMatch(stdout, /usage:/)
+    })
+
+    test("an empty argument is still a command lookup", async () =>
+    {
+        await assert.rejects(() => occRun([""]), rejectsWith(/unknown command/))
     })
 
     test("del is listed in the help text", async () =>

@@ -8,6 +8,7 @@ focus: ease of use; colored, nicely layouted and human readable output
 usage:
 
 occ -h|--help               - prints help text with available commands
+occ                          - same as occ ls
 occ ls [id...]              - prints session table
 occ cat [id...]             - shows session conversation
 occ log [id...]             - shows full history including tool calls
