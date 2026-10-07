@@ -53,6 +53,9 @@ implementation:
 - colors are on for a tty unless NO_COLOR is set
 - every color decision lives in ROLES in src/style.js, grouped as row, turn,
   tool and del; changing the look means editing that table and nothing else
+- c.fg("#rrggbb", text) and c.bg("#rrggbb", text) take an exact 24-bit color,
+  accept #rgb shorthand, and nest inside and around the named colors; a
+  malformed color throws StyleError rather than silently not applying
 - ocls del requires at least one id, there is no --all
 - ocls del requires a terminal, and asks "ARE YOU SURE? (yN)" after showing
   the sessions it is about to delete; it opens the db writable with

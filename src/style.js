@@ -26,6 +26,8 @@ const CODES = {
 
 const PLAIN = (text) => String(text)
 
+const TRUE_COLOR = { foreground: [38, 39], background: [48, 49] }
+
 const ROLES = {
     row: {
         id: (c) => c.gray,
@@ -52,9 +54,59 @@ const ROLES = {
     },
 }
 
+export class StyleError extends Error
+{
+    constructor(message)
+    {
+        super(message)
+        this.name = "StyleError"
+    }
+}
+
+function parseHex(hex)
+{
+    if (typeof hex !== "string")
+    {
+        throw new StyleError(`color must be a string, got ${typeof hex}`)
+    }
+
+    const digits = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim())
+    if (digits === null)
+    {
+        throw new StyleError(
+            `invalid color "${hex}", expected #rgb or #rrggbb with hex digits`,
+        )
+    }
+
+    const value = digits[1].length === 3
+        ? [...digits[1]].map((d) => d + d).join("")
+        : digits[1]
+
+    return [
+        Number.parseInt(value.slice(0, 2), 16),
+        Number.parseInt(value.slice(2, 4), 16),
+        Number.parseInt(value.slice(4, 6), 16),
+    ]
+}
+
+function makeHexStyle(enabled, layer)
+{
+    const [open, close] = TRUE_COLOR[layer]
+
+    if (!enabled)
+    {
+        return (hex, text) => PLAIN(text)
+    }
+
+    return (hex, text) => {
+        const [r, g, b] = parseHex(hex)
+        return `\x1b[${open};2;${r};${g};${b}m${text}\x1b[${close}m`
+    }
+}
+
 function makePalette(enabled)
 {
-    const palette = { ...PLAIN }
+    const palette = { ...PLAIN, fg: makeHexStyle(enabled, "foreground"), bg: makeHexStyle(enabled, "background") }
 
     if (!enabled)
     {
@@ -73,7 +125,12 @@ function makePalette(enabled)
 export function createStyle(enabled)
 {
     const palette = makePalette(Boolean(enabled))
-    const style = { enabled: Boolean(enabled) }
+    const style = {
+        enabled: Boolean(enabled),
+        palette,
+        fg: palette.fg,
+        bg: palette.bg,
+    }
 
     for (const [group, entries] of Object.entries(ROLES))
     {

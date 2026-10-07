@@ -6,11 +6,13 @@ const strip = (text) => text.replace(/\x1b\[[0-9;]*m/g, "")
 
 const groups = ["row", "turn", "tool", "del"]
 
+const HEX = new Set(["fg", "bg"])
+
 function walk(style, prefix = "", found = [])
 {
     for (const [key, value] of Object.entries(style))
     {
-        if (key === "enabled") continue
+        if (key === "enabled" || key === "palette" || HEX.has(key)) continue
         const path = prefix ? `${prefix}.${key}` : key
         if (typeof value === "function") found.push(path)
         else walk(value, path, found)
