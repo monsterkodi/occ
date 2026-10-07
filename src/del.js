@@ -2,7 +2,7 @@ import { listSessions, deleteSessions } from "./query.js"
 import { renderSession } from "./render.js"
 import { OclsError } from "./db.js"
 
-const WARNING = "WARNING! ABOUT TO DELETE THESE SESSIONS"
+const WARNING = " DELETE SESSIONS "
 
 const AFFIRMATIVE = new Set(["y", "yes"])
 
@@ -24,7 +24,7 @@ export function del({ db, prefixes = [], width = 80, style, io })
         .join("\n")
 
     io.write(`${style.del.warning(WARNING)}\n\n${table}\n\n`)
-    io.write(`${style.del.question("ARE YOU SURE? (yN) ")}`)
+    io.write(`${style.del.question(" ARE YOU SURE? (yN) ")}`)
 
     const answer = (io.readAnswer() ?? "").trim().toLowerCase()
     if (!AFFIRMATIVE.has(answer))

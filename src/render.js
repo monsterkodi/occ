@@ -19,9 +19,9 @@ const YEAR = 365 * DAY
 export function humanDuration(ms)
 {
     const value = Math.max(0, ms)
-    if (value < MINUTE) return `${Math.floor(value / SECOND)}s`
-    if (value < HOUR) return `${Math.floor(value / MINUTE)}m`
-    if (value < DAY) return `${Math.floor(value / HOUR)}h`
+    //if (value < MINUTE) return `${Math.floor(value / SECOND)}s`
+    if (value < HOUR * 16) return `${Math.floor(value / MINUTE)}m`
+    // if (value < DAY) return `${Math.floor(value / HOUR)}h`
     if (value < YEAR) return `${Math.floor(value / DAY)}d`
     return `${Math.floor(value / YEAR)}y`
 }
