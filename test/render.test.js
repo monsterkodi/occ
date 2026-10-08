@@ -17,8 +17,8 @@ const session = {
 
 const strip = (text) => text.replace(/\x1b\[[0-9;]*m/g, "")
 
-const row = (over = {}, width = 80, color = plain) =>
-    renderSession({ ...session, ...over }, width, color)
+const row = (over = {}, width = 80, color = plain, options = undefined) =>
+    renderSession({ ...session, ...over }, width, color, options)
 
 describe("durationMinutes", () => {
     test("is whole minutes, with no unit", () =>
@@ -144,6 +144,47 @@ describe("renderSession", () => {
 
         assert.equal(strip(row({}, 20)).length, 37)
         assert.equal(strip(row({}, 80)).length, 80)
+    })
+})
+
+describe("renderSession repeatDate", () => {
+    // day of the month-day part, from a stamp the row rendered
+    const dateOf = (text) => /^ (\w{6} +)(\d\d-\d\d)/.exec(strip(text))?.[2]
+
+    const day = (month, date, hours, minutes) =>
+        new Date(2026, month - 1, date, hours, minutes, 0, 0).getTime()
+
+    test("a repeated date renders as spaces, the time stays", () =>
+    {
+        const out = row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: true })
+        assert.match(strip(out), /^ aaaaaa + {5}\d\d:\d\d /, JSON.stringify(strip(out).slice(0, 24)))
+    })
+
+    test("the date is printed when repeatDate is not set", () =>
+    {
+        const out = row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: false })
+        assert.equal(dateOf(out), "10-07")
+    })
+
+    test("the row keeps its width and its cell positions with a repeated date", () =>
+    {
+        const blanked = row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: true })
+        const shown = row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: false })
+
+        assert.equal(blanked.length, shown.length)
+        assert.equal(strip(blanked).length, 80)
+        assert.equal(strip(blanked).slice(21), strip(shown).slice(21))
+    })
+
+    test("colors wrap the blanked date like any other cell", () =>
+    {
+        const custom = createStyle(true)
+        const background = (text) => `\x1b[44m${text}\x1b[49m`
+        custom.row.last = background
+
+        const out = row({ time_last: day(10, 7, 11, 0) }, 80, custom, { repeatDate: true })
+        assert.ok(out.includes("\x1b[44m"), "the cell lost its background")
+        assert.equal(strip(out).length, 80)
     })
 })
 

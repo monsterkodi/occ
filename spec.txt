@@ -30,6 +30,9 @@ session table columns: [id] [last] [duration] [turns] [name]
 [id] session id without the ses_ prefix, cropped to 6 characters (width 6)
 [last] the time of the newest message of the session, or the session update
              time when it has no messages; month-day hour:minute (width 11)
+             in a full listing a row repeating the previous row's date leaves
+             the date blank and prints only the hour:minute; the column keeps
+             its width either way
 [duration] the minutes from the creation time to [last], no unit,
              right-aligned (width 6, which covers just under two years)
 [turns] padded number (width 4)
@@ -46,6 +49,8 @@ sessions with a parent_id (child sessions) are never listed
 a session without a title shows NULL
 rows are ordered by [last] ascending, so the session last talked into is last; a
 session with no messages sorts on its update time
+the blanked-date form is used only by a bare occ ls; occ ls with arguments
+prints every date, since those rows come back in the order they were named
 terminal width falls back to 80 when stdout is not a tty
 no table header is printed; renderSession() is the shared row renderer
 
