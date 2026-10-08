@@ -8,6 +8,14 @@ const SELECT = `
     s.title,
     s.time_created,
     s.time_updated,
+    coalesce(
+      (
+        SELECT max(m.time_created)
+        FROM session_message m
+        WHERE m.session_id = s.id
+      ),
+      s.time_updated
+    ) AS time_last,
     (
       SELECT count(*)
       FROM session_message m
@@ -20,7 +28,7 @@ const SELECT = `
 
 const CHILD_FILTER = "s.parent_id IS NULL"
 
-const ORDER = "ORDER BY s.time_updated ASC, s.time_created ASC, s.id ASC"
+const ORDER = "ORDER BY time_last ASC, s.time_created ASC, s.id ASC"
 
 const MESSAGE_SELECT = `
   SELECT seq, type, data

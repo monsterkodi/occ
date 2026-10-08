@@ -1,12 +1,12 @@
 import { createStyle } from "./style.js"
 
 const ID_WIDTH = 6
-const START_WIDTH = 11
+const LAST_WIDTH = 11
 const DURATION_WIDTH = 6
 const TURNS_WIDTH = 4
 const PADDING = 1
 
-const COLUMN_WIDTH = ID_WIDTH + START_WIDTH + DURATION_WIDTH + TURNS_WIDTH
+const COLUMN_WIDTH = ID_WIDTH + LAST_WIDTH + DURATION_WIDTH + TURNS_WIDTH
 
 export const FIXED_WIDTH = COLUMN_WIDTH + (2 * PADDING) * 4
 
@@ -116,16 +116,21 @@ export function renderBlocks(blocks, style)
     return lines.join("\n")
 }
 
+function lastOf(session)
+{
+    return session.time_last ?? session.time_updated
+}
+
 export function renderSession(session, width, style)
 {
     const s = style ?? createStyle(false)
     const nameWidth = Math.max(0, (width ?? 80) - FIXED_WIDTH - (2 * PADDING))
     const name = crop(session.title ?? "NULL", nameWidth)
-    const duration = durationMinutes(session.time_updated - session.time_created)
+    const duration = durationMinutes(lastOf(session) - session.time_created)
 
     const cells = [
         s.row.id(padded(session.id.replace(/^ses_/, "").slice(0, ID_WIDTH), ID_WIDTH)),
-        s.row.start(padded(stamp(session.time_created), START_WIDTH)),
+        s.row.last(padded(stamp(lastOf(session)), LAST_WIDTH)),
         s.row.duration(paddedRight(duration, DURATION_WIDTH)),
         s.row.turns(paddedRight(String(session.turns ?? 0), TURNS_WIDTH)),
         s.row.name(padded(name, nameWidth)),

@@ -11,6 +11,7 @@ const session = {
     title: "First session",
     time_created: 1791283494422,
     time_updated: 1791283494422 + 60_000,
+    time_last: 1791283494422 + 60_000,
     turns: 2,
 }
 
@@ -63,9 +64,21 @@ describe("renderSession", () => {
         assert.match(strip(row()), /^ aaaaaa /)
     })
 
-    test("start is month-day hour:minute, 11 chars", () =>
+    test("last is month-day hour:minute, 11 chars", () =>
     {
         assert.match(strip(row()), /^ aaaaaa +\d\d-\d\d \d\d:\d\d /)
+    })
+
+    test("last reads the time of the last turn, not the start", () =>
+    {
+        const out = strip(row({ time_last: 1791283494422 + 24 * 3_600_000 }))
+        assert.ok(out.startsWith(" aaaaaa  10-07 12:44 "), JSON.stringify(out.slice(0, 24)))
+    })
+
+    test("a session without a last turn falls back to its update time", () =>
+    {
+        const out = strip(row({ time_last: undefined }))
+        assert.ok(out.startsWith(" aaaaaa  10-06 12:45 "), JSON.stringify(out.slice(0, 24)))
     })
 
     test("null title prints NULL", () =>
@@ -76,7 +89,7 @@ describe("renderSession", () => {
     test("every cell is inset by one space on each side", () =>
     {
         const out = strip(row({ title: "zz" }))
-        assert.ok(out.startsWith(" aaaaaa  10-06 12:44 "), JSON.stringify(out.slice(0, 24)))
+        assert.ok(out.startsWith(" aaaaaa  10-06 12:45 "), JSON.stringify(out.slice(0, 24)))
         assert.ok(out.includes("zz  "), JSON.stringify(out.slice(0, 40)))
         assert.equal(out.length, 80)
     })
@@ -91,8 +104,21 @@ describe("renderSession", () => {
     test("the duration column holds six digits of minutes", () =>
     {
         const minute = 60_000
-        const out = strip(row({ time_updated: 1791283494422 + 999_999 * minute }))
+        const out = strip(row({ time_last: 1791283494422 + 999_999 * minute }))
         assert.match(out, /\s999999\s/)
+    })
+
+    test("duration measures to the last message, not the update time", () =>
+    {
+        const minute = 60_000
+        const out = strip(row({ time_last: 1791283494422 + 5 * minute }))
+        assert.match(out, /\s5\s/), JSON.stringify(out.slice(0, 32))
+    })
+
+    test("a session without a last turn measures to its update time", () =>
+    {
+        const out = strip(row({ time_last: undefined }))
+        assert.match(out, /\s1\s/), JSON.stringify(out.slice(0, 32))
     })
 
     test("the name column fills to the terminal edge", () =>
@@ -128,7 +154,7 @@ describe("renderSession padding", () => {
     {
         const custom = createStyle(true)
         custom.row.id = background
-        custom.row.start = background
+        custom.row.last = background
 
         const out = row({}, 80, custom)
         assert.ok(out.startsWith("\x1b[44m aaaaaa "), JSON.stringify(out.slice(0, 20)))
@@ -137,7 +163,7 @@ describe("renderSession padding", () => {
     test("no space between two cells is left unstyled", () =>
     {
         const custom = createStyle(true)
-        for (const key of ["id", "start", "duration", "turns", "name"])
+        for (const key of ["id", "last", "duration", "turns", "name"])
         {
             custom.row[key] = background
         }
@@ -155,7 +181,7 @@ describe("renderSession padding", () => {
     test("a fully backgrounded row has the same visible text as a plain one", () =>
     {
         const custom = createStyle(true)
-        for (const key of ["id", "start", "duration", "turns", "name"])
+        for (const key of ["id", "last", "duration", "turns", "name"])
         {
             custom.row[key] = background
         }

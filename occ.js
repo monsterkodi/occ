@@ -20,7 +20,7 @@ usage:
   occ shell [id...]     show shell commands with their output
   occ del id [id...]    delete sessions, asks for confirmation
 
-session table columns: id start duration turns name
+session table columns: id last duration turns name
 
 [id...] is a session id prefix, or a fragment of a session title
 `

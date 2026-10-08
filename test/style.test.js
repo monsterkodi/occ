@@ -46,7 +46,7 @@ describe("createStyle", () => {
     {
         const style = createStyle(true)
         for (const group of groups) assert.ok(style[group], `missing group ${group}`)
-        assert.deepEqual(Object.keys(style.row), ["id", "start", "duration", "turns", "name"])
+        assert.deepEqual(Object.keys(style.row), ["id", "last", "duration", "turns", "name"])
         assert.deepEqual(Object.keys(style.turn), ["user", "agent", "mode", "continue"])
         assert.deepEqual(Object.keys(style.tool), ["call", "result", "exit", "note"])
         assert.deepEqual(Object.keys(style.del), ["warning", "question"])

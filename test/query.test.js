@@ -1,5 +1,6 @@
 import { test, describe } from "node:test"
 import assert from "node:assert/strict"
+import { DatabaseSync } from "node:sqlite"
 import { fixtures, BASE } from "./fixtures/build.js"
 import { openDb } from "../src/db.js"
 import { listSessions, OclsError } from "../src/query.js"
@@ -14,12 +15,12 @@ const A = "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1"
 const C = "ses_ccccccccccccccccccccccc3"
 
 describe("listSessions filtering", () => {
-    test("returns every top-level session, oldest update first", () =>
+    test("returns every top-level session, oldest last message first", () =>
     {
         assert.deepEqual(ids(), [
-            "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1",
             "ses_bbbbbbbbbbbbbbbbbbbbbbb2",
             "ses_ccccccccccccccccccccccc3",
+            "ses_aaaaaaaaaaaaaaaaaaaaaaaaa1",
         ])
     })
 
@@ -124,6 +125,50 @@ describe("listSessions filtering", () => {
     })
 })
 
+describe("listSessions ordering", () => {
+    test("follows the last message, not the update time", () =>
+    {
+        const rows = listSessions(db, [])
+        const byId = Object.fromEntries(rows.map((s) => [s.id, s]))
+
+        // ses_a… has the newest message but the oldest update time, ses_c… the reverse
+        assert.ok(byId[A].time_last > byId[C].time_last)
+        assert.ok(byId[A].time_updated < byId[C].time_updated)
+        assert.equal(rows.at(-1).id, A)
+    })
+
+    test("a session with no messages sorts on its update time", () =>
+    {
+        const empty = new DatabaseSync(":memory:")
+        empty.exec(`
+          CREATE TABLE session_v2 (
+            id text PRIMARY KEY, parent_id text, title text,
+            time_created integer NOT NULL, time_updated integer NOT NULL
+          );
+          CREATE TABLE session_message (
+            id text PRIMARY KEY, session_id text NOT NULL, type text NOT NULL,
+            seq integer NOT NULL, time_created integer NOT NULL, data text NOT NULL
+          );
+        `)
+        const insert = empty.prepare(
+            "INSERT INTO session_v2 (id, parent_id, title, time_created, time_updated) VALUES (?, ?, ?, ?, ?)",
+        )
+        insert.run("ses_1111111111111111111111a", null, "Old, touched late", BASE, BASE + 9 * 3_600_000)
+        insert.run("ses_2222222222222222222222b", null, "New, touched early", BASE, BASE + 60_000)
+
+        const message = empty.prepare(
+            "INSERT INTO session_message (id, session_id, type, seq, time_created, data) VALUES (?, ?, ?, ?, ?, ?)",
+        )
+        message.run("m1", "ses_2222222222222222222222b", "user", 1, BASE + 5 * 3_600_000, '{"text":"hi"}')
+
+        assert.deepEqual(listSessions(empty, []).map((s) => s.id), [
+            "ses_2222222222222222222222b",
+            "ses_1111111111111111111111a",
+        ])
+        empty.close()
+    })
+})
+
 describe("listSessions row data", () => {
     test("counts turns from user messages with text only", () =>
     {
@@ -139,5 +184,37 @@ describe("listSessions row data", () => {
         assert.equal(second.title, null)
         assert.equal(second.time_created, BASE + 120_000)
         assert.equal(second.time_updated, BASE + 180_000)
+    })
+
+    test("time_last is the time of the newest message", () =>
+    {
+        const byId = Object.fromEntries(listSessions(db, []).map((s) => [s.id, s.time_last]))
+        assert.equal(byId[A], BASE + 7 * 1000)
+        assert.equal(byId["ses_bbbbbbbbbbbbbbbbbbbbbbb2"], BASE + 2 * 1000)
+        assert.equal(byId[C], BASE + 4 * 1000)
+    })
+
+    test("time_last falls back to the update time of a session with no messages", () =>
+    {
+        const empty = new DatabaseSync(":memory:")
+        empty.exec(`
+          CREATE TABLE session_v2 (
+            id text PRIMARY KEY, parent_id text, title text,
+            time_created integer NOT NULL, time_updated integer NOT NULL
+          );
+          CREATE TABLE session_message (
+            id text PRIMARY KEY, session_id text NOT NULL, type text NOT NULL,
+            seq integer NOT NULL, time_created integer NOT NULL, data text NOT NULL
+          );
+        `)
+        empty
+            .prepare(
+                "INSERT INTO session_v2 (id, parent_id, title, time_created, time_updated) VALUES (?, ?, ?, ?, ?)",
+            )
+            .run("ses_eeeeeeeeeeeeeeeeeeeeeee5", null, "Empty", BASE, BASE + 42)
+
+        const [row] = listSessions(empty, [])
+        assert.equal(row.time_last, BASE + 42)
+        empty.close()
     })
 })

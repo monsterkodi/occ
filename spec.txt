@@ -25,12 +25,13 @@ $ <tool>          tool call
 $ <tool> result   tool output, or the error message
 $ <tool> exit <n> nonzero exit, the only failure signal a shell call has
 
-session table columns: [id] [start] [duration] [turns] [name]
+session table columns: [id] [last] [duration] [turns] [name]
 
 [id] session id without the ses_ prefix, cropped to 6 characters (width 6)
-[start] month-day hour:minute (width 11)
-[duration] the session length in whole minutes, no unit, right-aligned
-             (width 6, which covers just under two years)
+[last] the time of the newest message of the session, or the session update
+             time when it has no messages; month-day hour:minute (width 11)
+[duration] the minutes from the creation time to [last], no unit,
+             right-aligned (width 6, which covers just under two years)
 [turns] padded number (width 4)
 [name] unpadded, but cropped with ellipsis at right edge of terminal
 
@@ -43,7 +44,8 @@ even with colors off
 turns counts user messages that carry text; synthetic and idle messages do not count
 sessions with a parent_id (child sessions) are never listed
 a session without a title shows NULL
-rows are ordered by time_updated ascending, so the most recent session is last
+rows are ordered by [last] ascending, so the session last talked into is last; a
+session with no messages sorts on its update time
 terminal width falls back to 80 when stdout is not a tty
 no table header is printed; renderSession() is the shared row renderer
 
