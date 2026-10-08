@@ -31,8 +31,8 @@ session table columns: [id] [last] [duration] [turns] [name]
 [last] the time of the newest message of the session, or the session update
              time when it has no messages; month-day hour:minute (width 11)
              in a full listing a row repeating the previous row's date leaves
-             the date blank and prints only the hour:minute; the column keeps
-             its width either way
+             the date and its separating space blank, so the hour:minute stays
+             in the same column; the column keeps its width either way
 [duration] the minutes from the creation time to [last], no unit,
              right-aligned (width 6, which covers just under two years)
 [turns] padded number (width 4)

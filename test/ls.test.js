@@ -62,6 +62,7 @@ const rows = [
 
 const dateOf = (line) => /^ \w{6} +(\d\d-\d\d)/.exec(line)?.[1]
 const timeOf = (line) => /^ \w{6} +(?:\d\d-\d\d)? *(\d\d:\d\d)/.exec(line)?.[1]
+const at_ = (line, text) => line.indexOf(text)
 
 const stamp = (ms) =>
 {
@@ -94,6 +95,14 @@ describe("ls date grouping", () => {
         {
             assert.equal(line.length, 80, JSON.stringify(line))
         }
+    })
+
+    test("the hour is in the same column on blanked and dated rows", () =>
+    {
+        const lines = runOn(daysDb()).split("\n")
+
+        assert.equal(at_(lines[1], "12:00"), at_(lines[0], "11:00"))
+        assert.equal(at_(lines[3], "14:00"), at_(lines[2], "08:00"))
     })
 
     test("ids are listed with every date shown", () =>

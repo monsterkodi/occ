@@ -133,7 +133,7 @@ export function renderSession(session, width, style, { repeatDate = false } = {}
     const name = crop(session.title ?? "NULL", nameWidth)
     const duration = durationMinutes(lastOf(session) - session.time_created)
     const when = parts(lastOf(session))
-    const shown = repeatDate ? `     ${when.time}` : `${when.date} ${when.time}`
+    const shown = repeatDate ? `      ${when.time}` : `${when.date} ${when.time}`
 
     const cells = [
         s.row.id(padded(session.id.replace(/^ses_/, "").slice(0, ID_WIDTH), ID_WIDTH)),

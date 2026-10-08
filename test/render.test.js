@@ -154,10 +154,18 @@ describe("renderSession repeatDate", () => {
     const day = (month, date, hours, minutes) =>
         new Date(2026, month - 1, date, hours, minutes, 0, 0).getTime()
 
-    test("a repeated date renders as spaces, the time stays", () =>
+    test("a repeated date renders as spaces, the time stays in its column", () =>
     {
         const out = row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: true })
-        assert.match(strip(out), /^ aaaaaa + {5}\d\d:\d\d /, JSON.stringify(strip(out).slice(0, 24)))
+        assert.match(strip(out), /^ aaaaaa + {6}\d\d:\d\d /, JSON.stringify(strip(out).slice(0, 24)))
+    })
+
+    test("the hour sits in the same column with and without a date", () =>
+    {
+        const blanked = strip(row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: true }))
+        const shown = strip(row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: false }))
+
+        assert.equal(blanked.indexOf("11:00"), shown.indexOf("11:00"))
     })
 
     test("the date is printed when repeatDate is not set", () =>
@@ -174,6 +182,7 @@ describe("renderSession repeatDate", () => {
         assert.equal(blanked.length, shown.length)
         assert.equal(strip(blanked).length, 80)
         assert.equal(strip(blanked).slice(21), strip(shown).slice(21))
+        assert.equal(strip(blanked), strip(shown).replace("10-07", "     "))
     })
 
     test("colors wrap the blanked date like any other cell", () =>
