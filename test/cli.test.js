@@ -8,7 +8,7 @@ import { makeDataHome } from "./fixtures/build.js"
 
 const run = promisify(execFile)
 const root = join(dirname(fileURLToPath(import.meta.url)), "..")
-const occ = join(root, "occ.js")
+const occ = join(root, "occ")
 
 const { home } = makeDataHome()
 
