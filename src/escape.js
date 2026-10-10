@@ -1,0 +1,13 @@
+// Tool output is whatever the tool printed, so it can carry bytes that break
+// downstream text handling: a nul makes grep and rg call the stream binary, and
+// the C0 controls are invisible in a terminal. They are shown as \xNN instead.
+// Tab, newline and the escape byte are kept, since those carry layout and color.
+const CONTROL = /[\0-\x08\x0b-\x1a\x1c-\x1f\x7f]/g
+
+export function escapeControl(text)
+{
+    return String(text).replace(
+        CONTROL,
+        (c) => "\\x" + c.charCodeAt(0).toString(16).padStart(2, "0"),
+    )
+}

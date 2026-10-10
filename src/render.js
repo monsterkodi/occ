@@ -1,4 +1,5 @@
 import { createStyle } from "./style.js"
+import { escapeControl } from "./escape.js"
 
 const ID_WIDTH = 6
 const LAST_WIDTH = 11
@@ -62,24 +63,24 @@ function markerAgent(style, agent)
 function renderCall(block, style, inAgentRun)
 {
     const marker = style.tool.call(`$ ${block.name}`)
-    if (inAgentRun) return [marker, block.command, true]
-    return [`${markerAgent(style, block.agent)}\n${marker}`, block.command, true]
+    if (inAgentRun) return [marker, escapeControl(block.command), true]
+    return [`${markerAgent(style, block.agent)}\n${marker}`, escapeControl(block.command), true]
 }
 
 function renderResult(block, style, inAgentRun)
 {
-    const text = block.text.trimEnd()
+    const text = escapeControl(block.text).trimEnd()
     if (text === "") return [null, null, inAgentRun]
 
     const tail = block.outputPath
-        ? `${text}\n${style.tool.note(`… full output at ${block.outputPath}`)}`
+        ? `${text}\n${style.tool.note(`… full output at ${escapeControl(block.outputPath)}`)}`
         : text
     return [style.tool.result(`$ ${block.name} result`), tail, inAgentRun]
 }
 
 function renderTurn(block, style, inAgentRun)
 {
-    const text = (block.text ?? "").trimEnd()
+    const text = escapeControl(block.text ?? "").trimEnd()
     if (text === "") return [null, null, inAgentRun]
 
     if (block.role === "user") return [style.turn.user("> user"), text, false]
@@ -130,7 +131,7 @@ export function renderSession(session, width, style, { repeatDate = false } = {}
 {
     const s = style ?? createStyle(false)
     const nameWidth = Math.max(0, (width ?? 80) - FIXED_WIDTH - (2 * PADDING))
-    const name = crop(session.title ?? "NULL", nameWidth)
+    const name = crop(escapeControl(session.title ?? "NULL"), nameWidth)
     const duration = durationMinutes(lastOf(session) - session.time_created)
     const when = parts(lastOf(session))
     const shown = repeatDate ? `      ${when.time}` : `${when.date} ${when.time}`

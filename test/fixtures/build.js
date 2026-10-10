@@ -210,6 +210,46 @@ function seedMessages(db)
     }))
 }
 
+export const CONTROL_TITLE = "Nul\0 in\ttitle"
+
+export const CONTROL_RESULT = [
+    "<anonymous_script>:1",
+    "\0\0\0 \b\x10\0\x040\0\0",
+    "",
+    'SyntaxError: Unexpected token \'\\0\', "\\0\\0\\0 \\b\\x10\\0\\040\\0\\0" is not valid JSON',
+    "tab\there",
+    "color\x1b[31mred\x1b[39m",
+].join("\n")
+
+export const CONTROL_SESSION = "ses_eeeeeeeeeeeeeeeeeeeeeee5"
+
+function seedControlBytes(db)
+{
+    db.exec(SESSION_DDL)
+    db.exec(CHILD_DDL)
+
+    db.prepare(
+        "INSERT INTO session_v2 (id, project_id, parent_id, title, slug, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    ).run(CONTROL_SESSION, "proj1", null, CONTROL_TITLE, "wild-otter", "/home/kodi/s/occ", BASE, BASE + 60_000)
+
+    db.prepare(
+        "INSERT INTO session_message (id, session_id, type, seq, time_created, time_updated, data) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    ).run(
+        "c1",
+        CONTROL_SESSION,
+        "assistant",
+        1,
+        BASE,
+        BASE,
+        JSON.stringify({
+            agent: "build",
+            content: [
+                tool("shell", { command: "printf '\\000'" }, { result: CONTROL_RESULT }),
+            ],
+        }),
+    )
+}
+
 function seedChildren(db)
 {
     const pending = db.prepare(
@@ -291,6 +331,11 @@ export function buildMissingColumnDb()
     })
 }
 
+export function buildControlBytesDb()
+{
+    return build("control-bytes.db", seedControlBytes)
+}
+
 export function makeDataHome()
 {
     const source = buildTestDb()
@@ -312,6 +357,7 @@ export function fixtures()
             DB_PATH: buildTestDb(),
             BAD_SCHEMA_DB_PATH: buildBadSchemaDb(),
             MISSING_COLUMN_DB_PATH: buildMissingColumnDb(),
+            CONTROL_DB_PATH: buildControlBytesDb(),
         }
     }
 
