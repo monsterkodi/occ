@@ -5,7 +5,7 @@
   "type": "module",
   "license": "Unlicense",
   "bin": {
-    "occ": "./occ.js"
+    "occ": "./occ"
   },
   "scripts": {
     "test": "node --test test/"
