@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "description": "opencode companion. lists, dumps and deletes opencode sessions",
   "type": "module",
+  "license": "Unlicense",
   "bin": {
     "occ": "./occ.js"
   },
   "scripts": {
     "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
