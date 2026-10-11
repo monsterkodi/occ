@@ -16,9 +16,7 @@ reads the opencode database directly with `node:sqlite`.
 ## Deleting
 
 `del` is the only command that writes. It names the sessions it is about to
-delete, needs a terminal to answer `ARE YOU SURE? (yN)` on, and opens the
-database with foreign keys on so messages, pending state and instruction
-entries cascade.
+delete, needs a terminal to answer `ARE YOU SURE? (yN)` on.
 
 ## Install
 
