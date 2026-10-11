@@ -23,9 +23,9 @@ usage:
   occ resume sess         resume a session in opencode
   occ del sess [sess...]  delete sessions, asks for confirmation
 
-sess is a fragment of a session id or session title
+sess: a fragment of a session id or session title
 
-session table columns: id datetime minutes turns title
+table: id datetime minutes turns title
 
 `
 

@@ -1,7 +1,7 @@
 {
   "name": "occ",
-  "version": "0.1.0",
-  "description": "opencode companion. lists, dumps and deletes opencode sessions",
+  "version": "1.0.0",
+  "description": "opencode companion. lists, dumps and deletes opencode v2 sessions",
   "type": "module",
   "license": "Unlicense",
   "bin": {
