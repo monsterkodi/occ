@@ -1,22 +1,18 @@
 # occ
 
-Opencode sessions as plain text: list, dump and delete them. No dependencies;
-reads the opencode database directly with `node:sqlite`.
+list, dump and delete opencode v2 sessions
 
-    occ ls [id...]        session table
-    occ cat [id...]       the conversation
-    occ log [id...]       the conversation plus tool calls
-    occ shell [id...]     just the shell calls and their output
-    occ del id [id...]    delete, after a confirmation
+    occ ls [id...]        print session table
+    occ cat [id...]       show session conversation
+    occ log [id...]       show session history including tool calls
+    occ shell [id...]     show shell commands with their output
+    occ del id [id...]    delete sessions, asks for confirmation
+
+session table columns: id datetime minutes turns title
 
 ## Example
 
 ![example](img/example.png)
-
-## Deleting
-
-`del` is the only command that writes. It names the sessions it is about to
-delete, needs a terminal to answer `ARE YOU SURE? (yN)` on.
 
 ## Install
 
