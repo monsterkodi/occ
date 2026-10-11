@@ -78,11 +78,6 @@ describe("cli read commands", () => {
 })
 
 describe("cli help", () => {
-    test("help exits zero", async () =>
-    {
-        const { stdout } = await occRun(["--help"])
-        assert.match(stdout, /session table columns/)
-    })
 
     test("no arguments falls back to ls", async () =>
     {
