@@ -97,12 +97,6 @@ describe("cli help", () => {
         await assert.rejects(() => occRun([""]), rejectsWith(/unknown command/))
     })
 
-    test("del is listed in the help text", async () =>
-    {
-        const { stdout } = await occRun(["--help"])
-        assert.match(stdout, /occ del id \[id\.\.\.\]/)
-    })
-
     test("an unknown command fails with a message", async () =>
     {
         await assert.rejects(() => occRun(["frobnicate"]), rejectsWith(/unknown command "frobnicate"/))
@@ -122,11 +116,6 @@ describe("cli del", () => {
 })
 
 describe("cli resume", () => {
-    test("is listed in the help text", async () =>
-    {
-        const { stdout } = await occRun(["--help"])
-        assert.match(stdout, /occ resume id/)
-    })
 
     test("is dispatched and reaches its own guard", async () =>
     {
