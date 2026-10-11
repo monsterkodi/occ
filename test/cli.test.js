@@ -50,7 +50,7 @@ describe("cli read commands", () => {
     test("every command in the help table is dispatchable", async () =>
     {
         const { stdout } = await occRun(["--help"])
-        const listed = [...stdout.matchAll(/^ {2}occ (\w+)/gm)].map((m) => m[1])
+        const listed = [...stdout.matchAll(/^\s+occ (\w+)/gm)].map((m) => m[1])
         assert.ok(listed.includes("ls"))
 
         for (const command of listed.filter((c) => !["del", "resume"].includes(c)))

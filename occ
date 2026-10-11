@@ -10,24 +10,25 @@ import { del } from "./src/del.js"
 import { resume } from "./src/resume.js"
 import { OclsError } from "./src/db.js"
 
-const HELP = `
+function usage()
+{
+    return `
+    occ - list, dump and delete opencode v2 sessions
 
-occ - list, dump and delete opencode v2 sessions
+    usage:
 
-usage:
+      occ ls [sess...]        show session table
+      occ cat [sess...]       show session conversation
+      occ log [sess...]       show session history including tool calls
+      occ shell [sess...]     show shell commands with their output
+      occ resume sess         resume a session in opencode
+      occ del sess [sess...]  delete sessions, asks for confirmation
 
-  occ ls [sess...]        show session table
-  occ cat [sess...]       show session conversation
-  occ log [sess...]       show session history including tool calls
-  occ shell [sess...]     show shell commands with their output
-  occ resume sess         resume a session in opencode
-  occ del sess [sess...]  delete sessions, asks for confirmation
+    sess: a fragment of a session id or session title
 
-sess: a fragment of a session id or session title
-
-table: id datetime minutes turns title
-
-`
+    table: id datetime minutes turns title
+    `
+}
 
 const COMMANDS = {
     ls: { run: ls },
@@ -36,11 +37,6 @@ const COMMANDS = {
     shell: { run: shell },
     resume: { run: resume },
     del: { run: del, writable: true },
-}
-
-function usage()
-{
-    return HELP.trim()
 }
 
 async function main(argv)
