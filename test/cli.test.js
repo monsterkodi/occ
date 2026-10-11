@@ -53,7 +53,7 @@ describe("cli read commands", () => {
         const listed = [...stdout.matchAll(/^ {2}occ (\w+)/gm)].map((m) => m[1])
         assert.ok(listed.includes("ls"))
 
-        for (const command of listed.filter((c) => c !== "del"))
+        for (const command of listed.filter((c) => !["del", "resume"].includes(c)))
         {
             const { stdout: out } = await occRun([command, "aaaaaa"])
             assert.ok(out.trim().length > 0, `${command} printed nothing`)
@@ -118,5 +118,23 @@ describe("cli del", () => {
     test("refuses without a terminal", async () =>
     {
         await assert.rejects(() => occRun(["del", "aaaaaa"]), rejectsWith(/needs a terminal/))
+    })
+})
+
+describe("cli resume", () => {
+    test("is listed in the help text", async () =>
+    {
+        const { stdout } = await occRun(["--help"])
+        assert.match(stdout, /occ resume id/)
+    })
+
+    test("is dispatched and reaches its own guard", async () =>
+    {
+        await assert.rejects(() => occRun(["resume"]), rejectsWith(/exactly one session id/))
+    })
+
+    test("refuses without a terminal", async () =>
+    {
+        await assert.rejects(() => occRun(["resume", "aaaaaa"]), rejectsWith(/needs a terminal/))
     })
 })

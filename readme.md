@@ -6,6 +6,7 @@ list, dump and delete opencode v2 sessions
     occ cat [id...]       show session conversation
     occ log [id...]       show session history including tool calls
     occ shell [id...]     show shell commands with their output
+    occ resume id         resume a session in opencode
     occ del id [id...]    delete sessions, asks for confirmation
 
 session table columns: id datetime minutes turns title

@@ -23,7 +23,7 @@ function daysDb()
     const db = new DatabaseSync(":memory:")
     db.exec(`
       CREATE TABLE session_v2 (
-        id text PRIMARY KEY, parent_id text, title text,
+        id text PRIMARY KEY, parent_id text, title text, directory text,
         time_created integer NOT NULL, time_updated integer NOT NULL
       );
       CREATE TABLE session_message (
@@ -33,7 +33,7 @@ function daysDb()
     `)
 
     const insert = db.prepare(
-        "INSERT INTO session_v2 (id, parent_id, title, time_created, time_updated) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO session_v2 (id, parent_id, title, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)",
     )
     const message = db.prepare(
         "INSERT INTO session_message (id, session_id, type, seq, time_created, data) VALUES (?, ?, ?, ?, ?, ?)",
@@ -53,7 +53,7 @@ const rows = [
     {
         const id = `ses_${tag}${"0".repeat(21)}`
         const last = at(month, date, hours)
-        insert.run(id, null, title, last - 3_600_000, last)
+        insert.run(id, null, title, "/home/kodi/a/coco", last - 3_600_000, last)
         message.run(`m_${tag}`, id, "user", 1, last, JSON.stringify({ text: "hi" }))
     }
 

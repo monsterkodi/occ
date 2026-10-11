@@ -6,6 +6,7 @@ const SELECT = `
   SELECT
     s.id,
     s.title,
+    s.directory,
     s.time_created,
     s.time_updated,
     coalesce(

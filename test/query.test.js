@@ -29,6 +29,13 @@ describe("listSessions filtering", () => {
         assert.ok(!ids().includes("ses_ddddddddddddddddddddddd4"))
     })
 
+    test("carries the directory the session runs in", () =>
+    {
+        const byId = (id) => listSessions(db, [id])[0]
+        assert.equal(byId(A).directory, "/home/kodi/a/coco")
+        assert.equal(byId("ses_bbbbbbbbbbbbbbbbbbbbbbb2").directory, "/home/kodi/.config")
+    })
+
     test("filters by a 6-character prefix", () =>
     {
         const found = listSessions(db, ["cccccc"])
@@ -142,7 +149,7 @@ describe("listSessions ordering", () => {
         const empty = new DatabaseSync(":memory:")
         empty.exec(`
           CREATE TABLE session_v2 (
-            id text PRIMARY KEY, parent_id text, title text,
+            id text PRIMARY KEY, parent_id text, title text, directory text,
             time_created integer NOT NULL, time_updated integer NOT NULL
           );
           CREATE TABLE session_message (
@@ -151,10 +158,10 @@ describe("listSessions ordering", () => {
           );
         `)
         const insert = empty.prepare(
-            "INSERT INTO session_v2 (id, parent_id, title, time_created, time_updated) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO session_v2 (id, parent_id, title, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)",
         )
-        insert.run("ses_1111111111111111111111a", null, "Old, touched late", BASE, BASE + 9 * 3_600_000)
-        insert.run("ses_2222222222222222222222b", null, "New, touched early", BASE, BASE + 60_000)
+        insert.run("ses_1111111111111111111111a", null, "Old, touched late", "/home/kodi/a/coco", BASE, BASE + 9 * 3_600_000)
+        insert.run("ses_2222222222222222222222b", null, "New, touched early", "/home/kodi/a/coco", BASE, BASE + 60_000)
 
         const message = empty.prepare(
             "INSERT INTO session_message (id, session_id, type, seq, time_created, data) VALUES (?, ?, ?, ?, ?, ?)",
@@ -199,7 +206,7 @@ describe("listSessions row data", () => {
         const empty = new DatabaseSync(":memory:")
         empty.exec(`
           CREATE TABLE session_v2 (
-            id text PRIMARY KEY, parent_id text, title text,
+            id text PRIMARY KEY, parent_id text, title text, directory text,
             time_created integer NOT NULL, time_updated integer NOT NULL
           );
           CREATE TABLE session_message (
@@ -209,9 +216,9 @@ describe("listSessions row data", () => {
         `)
         empty
             .prepare(
-                "INSERT INTO session_v2 (id, parent_id, title, time_created, time_updated) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO session_v2 (id, parent_id, title, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)",
             )
-            .run("ses_eeeeeeeeeeeeeeeeeeeeeee5", null, "Empty", BASE, BASE + 42)
+            .run("ses_eeeeeeeeeeeeeeeeeeeeeee5", null, "Empty", "/home/kodi/a/coco", BASE, BASE + 42)
 
         const [row] = listSessions(empty, [])
         assert.equal(row.time_last, BASE + 42)

@@ -12,7 +12,7 @@ export class OclsError extends Error
     }
 }
 
-const REQUIRED_COLUMNS = ["id", "title", "time_created", "time_updated"]
+const REQUIRED_COLUMNS = ["id", "title", "directory", "time_created", "time_updated"]
 
 function probe(db, path)
 {
