@@ -1,0 +1,78 @@
+###
+███████    ███████
+███   ███  ███   ███
+███   ███  ███████
+███   ███  ███   ███
+███████    ███████
+###
+
+#  the database: where it is, and refusing to guess when it is not what we
+#  expect.
+#
+#  opencode owns this file and can change its shape under us. Rather than fail
+#  later with a missing column halfway through a listing, every open probes the
+#  schema first and throws OclsError with a message that says what is wrong.
+
+import sqlite from 'node:sqlite'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+
+class OclsError extends Error
+
+    @: message ->
+        super message
+        @name = 'OclsError'
+
+REQUIRED_COLUMNS = ['id' 'title' 'directory' 'time_created' 'time_updated']
+
+probe = (db, p) ->
+
+    rows = db.prepare("SELECT name FROM pragma_table_info('session_v2')").all()
+    columns = new Set rows.map((r) -> r.name)
+
+    if columns.size == 0
+        db.close()
+        throw new OclsError "unrecognized schema in #{p}: table session_v2 not found, opencode may have changed its storage format"
+
+    missing = REQUIRED_COLUMNS.filter (c) -> not columns.has c
+
+    if missing.length > 0
+        db.close()
+        throw new OclsError "unrecognized schema in #{p}: session_v2 is missing #{missing.join(', ')}"
+
+resolveDbPath = (env=process.env) ->
+
+    #  `if x then x else y`, not `x ? y`: this was `||` in the javascript, and an
+    #  XDG_DATA_HOME set to the empty string means unset, not "the root".
+
+    base = if env.XDG_DATA_HOME then env.XDG_DATA_HOME else path.join(os.homedir(), '.local', 'share')
+    path.join base, 'opencode', 'opencode.db'
+
+connect = (p, options) ->
+
+    if not fs.existsSync p
+        throw new OclsError "no database at #{p}"
+
+    db = undefined
+    try
+        db = new sqlite.DatabaseSync p, options
+    catch e
+        throw new OclsError "cannot open #{p}: #{e.message}"
+
+    probe db, p
+    db
+
+openDb = (p) -> connect p, {readOnly: true}
+
+openWritable = (p) ->
+
+    db = connect p, {}
+    db.exec 'PRAGMA foreign_keys = ON'
+    db
+
+export
+    OclsError: OclsError
+    resolveDbPath: resolveDbPath
+    openDb: openDb
+    openWritable: openWritable
