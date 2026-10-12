@@ -1,0 +1,163 @@
+###
+████████   ████████  ███████  ██████  ██   ██
+███        ███       ███   ███ ██  ██ ██  ██
+██████     ███████   ███████  ██████   ██  ██
+███        ███       ███   ███ ██   ██ ██   ██
+███        ████████  ███████  ██   ██  ███████
+###
+
+#  fg and bg take a hex colour, #rgb or #rrggbb, and are the only thing here
+#  that validates: with colour off nothing is applied, so nothing is checked.
+
+import test from 'node:test'
+import assert from 'node:assert/strict'
+
+use ../style
+
+strip = (text) -> text.replace /\x1b\[[0-9;]*m/g, ''
+
+lit = style.createStyle true
+plain = style.createStyle false
+
+test.describe 'fg and bg with hex' ->
+
+    test 'fg emits a 24-bit foreground sequence' ->
+
+        assert.equal lit.fg('#0000ff', 'x'), "\u001b[38;2;0;0;255mx\u001b[39m"
+
+    test 'bg emits a 24-bit background sequence' ->
+
+        assert.equal lit.bg('#ff0000', 'x'), "\u001b[48;2;255;0;0mx\u001b[49m"
+
+    test 'three digit shorthand expands to pairs' ->
+
+        assert.equal lit.fg('#00f', 'x'), lit.fg('#0000ff', 'x')
+        assert.equal lit.bg('#f00', 'x'), lit.bg('#ff0000', 'x')
+
+    test 'uppercase and a missing hash are accepted' ->
+
+        assert.equal lit.fg('#0000FF', 'x'), lit.fg('#0000ff', 'x')
+        assert.equal lit.fg('00ff00', 'x'), lit.fg('#00ff00', 'x')
+
+    test 'four digits are rejected as neither rgb nor rrggbb' ->
+
+        assert.throws(-> lit.fg('#00FF', 'x'), style.StyleError)
+
+    test 'nesting preserves the visible text' ->
+
+        out = lit.bg '#ff0000', lit.fg('#ffff00', 'hi')
+        assert.equal strip(out), 'hi'
+
+    test 'fg nests inside another role' ->
+
+        out = lit.fg '#0000ff', lit.turn.user('> user')
+
+        assert.equal strip(out), '> user'
+        assert.ok out.includes '38;2;0;0;255'
+        assert.notEqual out, lit.turn.user('> user')
+
+    test 'a role can be built from hex, foreground inside background' ->
+
+        c = (text) -> lit.bg('#1e40af', lit.fg('#ffffff', lit.turn.user(text)))
+
+        assert.equal strip(c('> user')), '> user'
+        assert.ok (c('> user')).includes '48;2;30;64;175'
+
+###
+ ███████   ███████   ███       ███████   ███   ███  ████████          ███████   ████████  ████████
+███       ███   ███  ███      ███   ███  ███   ███  ███   ███        ███   ███  ███       ███     
+███       ███   ███  ███      ███   ███  ███   ███  ███████          ███   ███  ██████    ██████  
+███       ███   ███  ███      ███   ███  ███   ███  ███   ███        ███   ███  ███       ███     
+ ███████   ███████   ███████   ███████    ███████   ███   ███         ███████   ███       ███     
+###
+
+test.describe 'fg and bg when color is off' ->
+
+    test 'fg returns the text, not the hex' ->
+
+        assert.equal plain.fg('#0000ff', 'hello'), 'hello'
+
+    test 'bg returns the text, not the hex' ->
+
+        assert.equal plain.bg('#ff0000', 'hello'), 'hello'
+
+    test 'no escape codes are emitted' ->
+
+        assert.equal strip(plain.fg('#0000ff', 'x')), 'x'
+        assert.equal strip(plain.bg('#ff0000', 'x')), 'x'
+
+    test 'a role using fg does not leak the hex when color is off' ->
+
+        name = (text) -> plain.fg('#00ff00', text)
+        assert.equal name('name'), 'name'
+
+###
+████████    ███████   ███      ████████  █████████  █████████  ████████
+███   ███  ███   ███  ███      ███          ███        ███     ███     
+████████   █████████  ███      ███████      ███        ███     ███████ 
+███        ███   ███  ███      ███          ███        ███     ███     
+███        ███   ███  ███████  ████████     ███        ███     ████████
+###
+
+test.describe 'palette' ->
+
+    test 'exposes the named codes alongside fg and bg' ->
+
+        assert.equal typeof(lit.palette.bold), 'function'
+        assert.equal typeof(lit.palette.gray), 'function'
+        assert.equal typeof(lit.palette.fg), 'function'
+        assert.equal typeof(lit.palette.bg), 'function'
+
+    test 'fg composes with a named code the way a role author writes it' ->
+
+        out = lit.fg '#0000ff', lit.palette.bold('hi')
+
+        assert.equal strip(out), 'hi'
+        assert.ok out.includes '38;2;0;0;255'
+        assert.ok out.includes "\u001b[1m"
+
+    test 'bg composes with fg for a foreground on a background' ->
+
+        out = lit.bg '#ff0000', lit.fg('#ffff00', 'hi')
+
+        assert.equal strip(out), 'hi'
+        assert.ok out.includes '48;2;255;0;0'
+        assert.ok out.includes '38;2;255;255;0'
+
+    test 'the palette follows the color setting too' ->
+
+        assert.equal plain.palette.bold('hi'), 'hi'
+        assert.notEqual lit.palette.bold('hi'), 'hi'
+
+###
+███   ███  ████████  ███   ███        ███   ███   ███████   ███      ███  ███████     ███████   █████████  ███   ███████   ███   ███
+███   ███  ███        ███ ███         ███   ███  ███   ███  ███      ███  ███   ███  ███   ███     ███     ███  ███   ███  ████  ███
+█████████  ███████     █████           ███ ███   █████████  ███      ███  ███   ███  █████████     ███     ███  ███   ███  ███ █ ███
+███   ███  ███        ███ ███            ███     ███   ███  ███      ███  ███   ███  ███   ███     ███     ███  ███   ███  ███  ████
+███   ███  ████████  ███   ███            █      ███   ███  ███████  ███  ███████    ███   ███     ███     ███   ███████   ███   ███
+###
+
+test.describe 'hex validation' ->
+
+    bad = ['#12345' '#1234567' '#gggggg' 'blue' '' '#']
+
+    for value in bad
+        test "rejects #{JSON.stringify(value)}" ->
+            assert.throws(-> lit.fg(value, 'x'), style.StyleError)
+
+    test 'rejects a non-string' ->
+
+        assert.throws(-> lit.fg(255, 'x'), style.StyleError)
+        assert.throws(-> lit.bg(null, 'x'), style.StyleError)
+
+    test 'rejects eight digit hex with a message mentioning alpha' ->
+
+        assert.throws(-> lit.fg('#0000ffff', 'x'), /hex|rgb/i)
+
+    test 'the error names the offending value' ->
+
+        assert.throws(-> lit.fg('#zzzzzz', 'x'), /#zzzzzz/)
+
+    test 'nothing is validated while color is off, since nothing is applied' ->
+
+        assert.equal plain.fg('nope', 'x'), 'x'
