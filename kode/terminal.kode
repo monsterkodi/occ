@@ -1,0 +1,45 @@
+###
+█████████  ████████  ████████   ██     ██  ███  ███   ███   ███████   ███
+   ███     ███       ███   ███  ███   ███  ███  ████  ███  ███   ███  ███
+   ███     ███████   ███████    █████████  ███  ███ █ ███  █████████  ███
+   ███     ███       ███   ███  ███ █ ███  ███  ███  ████  ███   ███  ███
+   ███     ████████  ███   ███  ███   ███  ███  ███   ███  ███   ███  ███████
+###
+
+#  the terminal kit talks to, and the tty it asks when it needs an answer.
+#
+#  del has to read a confirmation, and stdout may be a pipe at that moment — so
+#  the answer comes from /dev/tty rather than from the stream kit has been
+#  writing to.
+
+import fs from 'node:fs'
+
+readLineFromTty = ->
+
+    fd = fs.openSync '/dev/tty', 'r'
+    buffer = Buffer.alloc 1024
+    line = ''
+
+    try
+        while true
+            read = fs.readSync fd, buffer, 0, buffer.length, null
+            if read == 0 then break
+            line += buffer.toString('utf8', 0, read)
+            if line.includes('\n') then break
+    catch err
+        throw err
+    finally
+        fs.closeSync fd
+
+    line.split('\n')[0] ? ''
+
+createTerminal = (out=process.stdout, interactive=Boolean(process.stdin.isTTY)) ->
+
+    write = (text) -> out.write text
+    readAnswer = -> readLineFromTty()
+
+    interactive: interactive
+    write: write
+    readAnswer: readAnswer
+
+export createTerminal
