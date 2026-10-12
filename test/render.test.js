@@ -64,21 +64,21 @@ describe("renderSession", () => {
         assert.match(strip(row()), /^ aaaaaa /)
     })
 
-    test("last is month-day hour:minute, 11 chars", () =>
+    test("last is day.month hour:minute, 11 chars", () =>
     {
-        assert.match(strip(row()), /^ aaaaaa +\d\d-\d\d \d\d:\d\d /)
+        assert.match(strip(row()), /^ aaaaaa +\d\d\.\d\d \d\d:\d\d /)
     })
 
     test("last reads the time of the last turn, not the start", () =>
     {
         const out = strip(row({ time_last: 1791283494422 + 24 * 3_600_000 }))
-        assert.ok(out.startsWith(" aaaaaa  10-07 12:44 "), JSON.stringify(out.slice(0, 24)))
+        assert.ok(out.startsWith(" aaaaaa  07.10 12:44 "), JSON.stringify(out.slice(0, 24)))
     })
 
     test("a session without a last turn falls back to its update time", () =>
     {
         const out = strip(row({ time_last: undefined }))
-        assert.ok(out.startsWith(" aaaaaa  10-06 12:45 "), JSON.stringify(out.slice(0, 24)))
+        assert.ok(out.startsWith(" aaaaaa  06.10 12:45 "), JSON.stringify(out.slice(0, 24)))
     })
 
     test("null title prints NULL", () =>
@@ -89,7 +89,7 @@ describe("renderSession", () => {
     test("every cell is inset by one space on each side", () =>
     {
         const out = strip(row({ title: "zz" }))
-        assert.ok(out.startsWith(" aaaaaa  10-06 12:45 "), JSON.stringify(out.slice(0, 24)))
+        assert.ok(out.startsWith(" aaaaaa  06.10 12:45 "), JSON.stringify(out.slice(0, 24)))
         assert.ok(out.includes("zz  "), JSON.stringify(out.slice(0, 40)))
         assert.equal(out.length, 80)
     })
@@ -148,8 +148,8 @@ describe("renderSession", () => {
 })
 
 describe("renderSession repeatDate", () => {
-    // day of the month-day part, from a stamp the row rendered
-    const dateOf = (text) => /^ (\w{6} +)(\d\d-\d\d)/.exec(strip(text))?.[2]
+    // day of the day.month part, from a stamp the row rendered
+    const dateOf = (text) => /^ (\w{6} +)(\d\d\.\d\d)/.exec(strip(text))?.[2]
 
     const day = (month, date, hours, minutes) =>
         new Date(2026, month - 1, date, hours, minutes, 0, 0).getTime()
@@ -171,7 +171,7 @@ describe("renderSession repeatDate", () => {
     test("the date is printed when repeatDate is not set", () =>
     {
         const out = row({ time_last: day(10, 7, 11, 0) }, 80, plain, { repeatDate: false })
-        assert.equal(dateOf(out), "10-07")
+        assert.equal(dateOf(out), "07.10")
     })
 
     test("the row keeps its width and its cell positions with a repeated date", () =>
@@ -182,7 +182,7 @@ describe("renderSession repeatDate", () => {
         assert.equal(blanked.length, shown.length)
         assert.equal(strip(blanked).length, 80)
         assert.equal(strip(blanked).slice(21), strip(shown).slice(21))
-        assert.equal(strip(blanked), strip(shown).replace("10-07", "     "))
+        assert.equal(strip(blanked), strip(shown).replace("07.10", "     "))
     })
 
     test("colors wrap the blanked date like any other cell", () =>

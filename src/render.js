@@ -31,7 +31,7 @@ function parts(ms)
     const d = new Date(ms)
     const pad = (n) => String(n).padStart(2, "0")
     return {
-        date: `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        date: `${pad(d.getDate())}.${pad(d.getMonth() + 1)}`,
         time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
     }
 }

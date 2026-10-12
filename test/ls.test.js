@@ -60,15 +60,15 @@ const rows = [
     return db
 }
 
-const dateOf = (line) => /^ \w{6} +(\d\d-\d\d)/.exec(line)?.[1]
-const timeOf = (line) => /^ \w{6} +(?:\d\d-\d\d)? *(\d\d:\d\d)/.exec(line)?.[1]
+const dateOf = (line) => /^ \w{6} +(\d\d\.\d\d)/.exec(line)?.[1]
+const timeOf = (line) => /^ \w{6} +(?:\d\d\.\d\d)? *(\d\d:\d\d)/.exec(line)?.[1]
 const at_ = (line, text) => line.indexOf(text)
 
 const stamp = (ms) =>
 {
     const d = new Date(ms)
     const pad = (n) => String(n).padStart(2, "0")
-    return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 describe("ls date grouping", () => {
@@ -76,11 +76,11 @@ describe("ls date grouping", () => {
     {
         const lines = runOn(daysDb()).split("\n")
 
-        assert.equal(dateOf(lines[0]), "10-07")
+        assert.equal(dateOf(lines[0]), "07.10")
         assert.equal(dateOf(lines[1]), undefined)
-        assert.equal(dateOf(lines[2]), "10-11")
+        assert.equal(dateOf(lines[2]), "11.10")
         assert.equal(dateOf(lines[3]), undefined)
-        assert.equal(dateOf(lines[4]), "10-13")
+        assert.equal(dateOf(lines[4]), "13.10")
     })
 
     test("the time is still printed on a blanked row", () =>
@@ -108,19 +108,19 @@ describe("ls date grouping", () => {
     test("ids are listed with every date shown", () =>
     {
         const lines = runOn(daysDb(), ["2222", "4444"]).split("\n")
-        assert.deepEqual(lines.map(dateOf), ["10-07", "10-11"])
+        assert.deepEqual(lines.map(dateOf), ["07.10", "11.10"])
     })
 
     test("a title argument lists with every date shown", () =>
     {
         const lines = runOn(daysDb(), ["same day"]).split("\n")
-        assert.deepEqual(lines.map(dateOf), ["10-07", "10-07"])
+        assert.deepEqual(lines.map(dateOf), ["07.10", "07.10"])
     })
 
     test("one row only shows its date", () =>
     {
         const [line] = runOn(daysDb(), ["1111"]).split("\n")
-        assert.equal(dateOf(line), "10-07")
+        assert.equal(dateOf(line), "07.10")
     })
 
     test("a session with no messages groups on its update time", () =>
@@ -136,10 +136,10 @@ describe("ls date grouping", () => {
             new Date(2026, 9, 7, 12, 30, 0, 0).getTime(),
         )
 
-        // sorts between the two 10-07 sessions, on its update time of 12:30
+        // sorts between the two 07.10 sessions, on its update time of 12:30
         const lines = runOn(db).split("\n")
         assert.deepEqual(lines.map(timeOf), ["11:00", "12:00", "12:30", "08:00", "14:00", "01:00"])
-        assert.deepEqual(lines.map(dateOf), ["10-07", undefined, undefined, "10-11", undefined, "10-13"])
+        assert.deepEqual(lines.map(dateOf), ["07.10", undefined, undefined, "11.10", undefined, "13.10"])
         db.close()
     })
 
@@ -209,7 +209,7 @@ describe("ls", () => {
         checked.forEach((session) =>
         {
             const i = sessions.indexOf(session)
-            const [, minutes] = /^ \w{6} +(?:\d\d-\d\d)? *\d\d:\d\d +(\d+) /.exec(rows[i])
+            const [, minutes] = /^ \w{6} +(?:\d\d\.\d\d)? *\d\d:\d\d +(\d+) /.exec(rows[i])
             const start = new Date(session.time_last - Number(minutes) * 60_000)
 
             assert.ok(
