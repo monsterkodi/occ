@@ -5,12 +5,11 @@
   "type": "module",
   "license": "Unlicense",
   "bin": {
-    "occ": "./occ"
+    "occ": "./bin/occ"
   },
   "scripts": {
     "build": "node ${KODE:-../ked/js/kode/kode.js} -o js kode/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test kode/test/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test/fixtures kode/test/fixtures/*.kode",
-    "test": "node --test test/",
-    "test:kode": "node --test 'js/test/*.test.js'"
+    "test": "node --test 'js/test/*.test.js'"
   },
   "engines": {
     "node": ">=24"

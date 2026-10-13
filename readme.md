@@ -2,6 +2,13 @@
 
 list, dump and delete opencode v2 sessions
 
+The source is [Kode](../ked), not javascript: `kode/` holds it and `js/` is
+generated from it. To rebuild after changing a `.kode` file:
+
+    pnpm run build     # KODE=/path/to/kode.js if the compiler is elsewhere
+
+    pnpm test          # runs the generated suite in js/test
+
     occ ls [sess...]        print session table
     occ cat [sess...]       show session conversation
     occ log [sess...]       show session history including tool calls
