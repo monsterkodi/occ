@@ -1,0 +1,34 @@
+###
+███████  ███████  ████    ███ ███       ████    ███  ███
+███   ███ ███   ███ ████    ███ ███       ████    ███ ███
+███████  ███████  ███ ████    ███ ███       ███ ████████ ███
+███   ███ ███   ███ ████    ███ ███       ███ ███   ███ ███
+███   ███ ███████  ███  ████   ███  ███████  ███    ███  ███████
+###
+
+#  `occ shell` — only the commands, with their output.
+#
+#  Filtered by name rather than by kind: opencode's other tools have calls and
+#  results too, and what this command is for is seeing what ran in a shell.
+
+use ./sessions
+
+SHELL = 'shell'
+
+onlyShell = (blocks) ->
+
+    blocks.filter (b) ->
+        (b.kind == 'call' or b.kind == 'result' or b.kind == 'exit') and b.name == SHELL
+
+shell = (opt) ->
+
+    database = opt.db
+    prefixes = opt.prefixes ? []
+    width = opt.width ? 80
+    sty = opt.style
+
+    #  sessions.kode exports one thing, so `use ./sessions` binds the function.
+
+    sessions database, prefixes, width, sty, onlyShell
+
+export shell

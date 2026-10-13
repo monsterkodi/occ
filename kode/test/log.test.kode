@@ -1,0 +1,134 @@
+###
+███       ███████    ███████ 
+███      ███   ███  ███      
+███      ███   ███  ███  ████
+███      ███   ███  ███   ███
+███████   ███████    ███████ 
+###
+
+import test from 'node:test'
+import assert from 'node:assert/strict'
+
+use ./fixtures/build
+use ../db
+use ../log
+use ../style
+
+#  log is the console builtin as well, so the module is called something else
+#  here — otherwise `log {db: …}` prints the argument.
+
+history = log
+
+DB_PATH = build.fixtures().DB_PATH
+
+plain = style.createStyle false
+
+run = (ids, width=80) ->
+
+    database = db.openDb DB_PATH
+    history {db: database, prefixes: ids, width, style: plain}
+
+markers = (out) -> out.split('\n').filter (l) -> l.startsWith('>') or l.startsWith '$'
+
+###
+███       ███████    ███████         ███████    ███       ███████    ███████  ███   ███   ███████
+███      ███   ███  ███              ███   ███  ███      ███   ███  ███       ███  ███   ███     
+███      ███   ███  ███  ████        ███████    ███      ███   ███  ███       ███████    ███████ 
+███      ███   ███  ███   ███        ███   ███  ███      ███   ███  ███       ███  ███        ███
+███████   ███████    ███████         ███████    ███████   ███████    ███████  ███   ███  ███████ 
+###
+
+test.describe 'log blocks' ->
+
+    test 'starts with the session row, then the blocks' ->
+
+        lines = run(['aaaaaa']).split('\n')
+
+        assert.ok lines[0].trimStart().startsWith('aaaaaa ')
+        assert.equal lines[1], '> user'
+        assert.equal lines[2], 'hello'
+
+    test 'shows tool calls and results inline, in order' ->
+
+        assert.deepEqual markers(run(['aaaaaa'])), [
+            '> user'
+            '> agent plan'
+            '$ shell'
+            '$ shell result'
+            '> user'
+            '> agent build'
+            '$ shell'
+            '$ webfetch'
+            '$ webfetch result'
+            '$ grep'
+            '$ read'
+            '$ read result'
+        ]
+
+    test 'an assistant message with no agent field continues the run' ->
+
+        lines = run(['aaaaaa']).split('\n')
+        assert.equal lines[lines.indexOf('no agent field') - 1], '…'
+
+    test 'agent text after a tool call continues with an ellipsis' ->
+
+        lines = run(['aaaaaa']).split('\n')
+        cont = lines.indexOf '…', lines.indexOf '$ shell result'
+
+        assert.ok cont > lines.indexOf '$ shell result'
+        assert.equal lines[cont + 1], 'done listing'
+
+###
+███       ███████    ███████          ███████  ████████  ███      ████████   ███████  █████████  ███   ███████   ███   ███
+███      ███   ███  ███              ███       ███       ███      ███       ███          ███     ███  ███   ███  ████  ███
+███      ███   ███  ███  ████        ███████   ███████   ███      ███████   ███          ███     ███  ███   ███  ███ █ ███
+███      ███   ███  ███   ███             ███  ███       ███      ███       ███          ███     ███  ███   ███  ███  ████
+███████   ███████    ███████         ███████   ████████  ███████  ████████   ███████     ███     ███   ███████   ███   ███
+###
+
+test.describe 'log selection' ->
+
+    test 'shows every session when no ids are given' ->
+
+        every = run []
+        assert.ok every.includes '$ webfetch'
+        assert.ok every.includes '$ shell'
+
+    test 'ids filter which sessions are shown' ->
+
+        assert.ok not run(['cccccc']).includes '$ webfetch'
+
+    test 'ids keep the order they were given in' ->
+
+        out = run ['bbbbbb', 'aaaaaa']
+        assert.ok out.indexOf('bbbbbb') < out.indexOf('aaaaaa')
+
+    test 'sessions are separated by a blank line' ->
+
+        lines = run(['aaaaaa', 'cccccc']).split('\n')
+        secondRow = lines.findIndex (l) -> l.trimStart().startsWith 'cccccc '
+
+        assert.equal lines[secondRow - 1], ''
+
+    test 'a session with no renderable blocks prints only its row' ->
+
+        assert.equal run(['bbbbbb']), run(['bbbbbb']).split('\n')[0]
+
+###
+███       ███████    ███████         ████████  ████████   ████████    ███████   ████████    ███████
+███      ███   ███  ███              ███       ███   ███  ███   ███  ███   ███  ███   ███  ███     
+███      ███   ███  ███  ████        ███████   ███████    ███████    ███   ███  ███████    ███████ 
+███      ███   ███  ███   ███        ███       ███   ███  ███   ███  ███   ███  ███   ███       ███
+███████   ███████    ███████         ████████  ███   ███  ███   ███   ███████   ███   ███  ███████ 
+###
+
+test.describe 'log errors' ->
+
+    test 'unknown id surfaces the error' ->
+
+        assert.throws(-> run(['zzzzzz']), /no\x20session/i)
+
+    test 'output ends without a trailing blank line' ->
+
+        out = run ['aaaaaa']
+        assert.ok not out.endsWith '\n'

@@ -1,0 +1,30 @@
+###
+ ███████  ████████   ███████   ███████  ███   ███████   ███   ███   ███████
+███       ███       ███       ███       ███  ███   ███  ████  ███  ███
+███████   ███████   ███████   ███████   ███  ███   ███  ███ █ ███  ███████
+     ███  ███            ███       ███  ███  ███   ███  ███  ████       ███
+███████   ████████  ███████   ███████   ███   ███████   ███   ███  ███████
+###
+
+#  one session rendered as a row and its blocks: the shape ls, cat, log and
+#  shell all share, each filtering the blocks differently.
+
+use ./query
+use ./render
+
+renderSessions = (database, prefixes, width, sty, filter) ->
+
+    chunks = []
+
+    for session in query.listSessions(database, prefixes)
+
+        res = query.getSession database, session.id
+
+        head = render.renderSession res.row, width, sty
+        body = render.renderBlocks filter(res.blocks), sty
+
+        chunks.push if body == '' then head else "#{head}\n#{body}"
+
+    chunks.join '\n\n'
+
+export renderSessions

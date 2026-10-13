@@ -1,0 +1,39 @@
+###
+ ███████   ███████  ███████   ███████  ███    ███ ███████
+███   ███  ███   ███ ███   ███ ███   ███ ██████
+████████   ███████  ███████   ███   ███ ███   ███
+███   ███  ███   ███ ███   ███ ███   ███ ██████
+███   ███  ███████  ███████    ███████   ███    ███
+###
+
+#  `occ ls` — the session table, one row each.
+#
+#  The date column only repeats across rows when the listing is the whole
+#  table; with arguments the rows come back in the order they were named, and
+#  blanking a date against a row that is not above it would be a lie.
+
+use ./query
+use ./render
+
+renderRows = (sessions, width, sty, groupByDate) ->
+
+    previous = null
+
+    rows = sessions.map (session) ->
+        day = render.dayKey(session.time_last ? session.time_updated)
+        repeatDate = groupByDate and day == previous
+        previous = day
+        render.renderSession session, width, sty, {repeatDate}
+
+    rows.join '\n'
+
+ls = (opt) ->
+
+    database = opt.db
+    prefixes = opt.prefixes ? []
+    width = opt.width ? 80
+    sty = opt.style
+
+    renderRows query.listSessions(database, prefixes), width, sty, prefixes.length == 0
+
+export ls

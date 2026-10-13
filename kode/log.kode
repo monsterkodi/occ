@@ -1,0 +1,27 @@
+###
+███   ███  ██   ██ ▄▄▄  ██████  ▄▄▄       ███
+███   ███  ██   ██  ██▀ ██   ██  ██▀       ███
+███   ███  ███████  ██  ██████  ██         ███
+███   ███  ██   ██  ██  ██      ██         ███
+███████   ██   ██  ██  ██████  ███████    ███
+###
+
+#  `occ log` — the history, tools and all, the same blocks as cat without the
+#  merging: this is what actually happened, one block at a time.
+
+use ./sessions
+
+log = (opt) ->
+
+    database = opt.db
+    prefixes = opt.prefixes ? []
+    width = opt.width ? 80
+    sty = opt.style
+
+    everyBlock = (blocks) -> blocks
+
+    #  sessions.kode exports one thing, so `use ./sessions` binds the function.
+
+    sessions database, prefixes, width, sty, everyBlock
+
+export log
