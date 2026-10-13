@@ -1,9 +1,9 @@
 ###
- ███████   ███████  ███████   ███████  ███    ███ ███████
-███   ███  ███   ███ ███   ███ ███   ███ ██████
-████████   ███████  ███████   ███   ███ ███   ███
-███   ███  ███   ███ ███   ███ ███   ███ ██████
-███   ███  ███████  ███████    ███████   ███    ███
+     ███████   ███████   █████████  
+    ███       ███   ███     ███     
+    ███       █████████     ███     
+    ███       ███   ███     ███     
+     ███████  ███   ███     ███     
 ###
 
 #  `occ cat` — the conversation, tools and all.
@@ -47,8 +47,6 @@ cat = (opt) ->
 
         spoken = blocks.filter (b) -> b.kind == 'turn'
         mergeTurns spoken
-
-    #  sessions.kode exports one thing, so `use ./sessions` binds the function.
 
     sessions database, prefixes, width, sty, turns
 

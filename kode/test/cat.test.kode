@@ -1,9 +1,9 @@
 ###
- ███████   ███████   █████████
-███       ███   ███     ███   
-███       █████████     ███   
-███       ███   ███     ███   
- ███████  ███   ███     ███   
+     ███████   ███████   █████████
+    ███       ███   ███     ███   
+    ███       █████████     ███   
+    ███       ███   ███     ███   
+     ███████  ███   ███     ███   
 ###
 
 import test from 'node:test'
@@ -22,7 +22,6 @@ run = (ids, width=80) ->
 
     database = db.openDb DB_PATH
     cat {db: database, prefixes: ids, width, style: plain}
-
 
 #  the conversation: turns only, no tool blocks
 
@@ -53,14 +52,6 @@ test.describe 'cat' ->
     test 'consecutive text parts in one message still join with a blank line' ->
 
         assert.ok (run ['aaaaaa']).includes "first bit\n\nsecond bit"
-
-###
- ███████   ███████   █████████         ███████  ████████  ███      ████████   ███████  █████████  ███   ███████   ███   ███
-███       ███   ███     ███           ███       ███       ███      ███       ███          ███     ███  ███   ███  ████  ███
-███       █████████     ███           ███████   ███████   ███      ███████   ███          ███     ███  ███   ███  ███ █ ███
-███       ███   ███     ███                ███  ███       ███      ███       ███          ███     ███  ███   ███  ███  ████
- ███████  ███   ███     ███           ███████   ████████  ███████  ████████   ███████     ███     ███   ███████   ███   ███
-###
 
 test.describe 'cat selection' ->
 
@@ -94,14 +85,6 @@ test.describe 'cat selection' ->
     test 'a session with no renderable turns prints only its row' ->
 
         assert.equal run(['bbbbbb']), run(['bbbbbb']).split('\n')[0]
-
-###
- ███████   ███████   █████████        ████████  ████████   ████████    ███████   ████████    ███████
-███       ███   ███     ███           ███       ███   ███  ███   ███  ███   ███  ███   ███  ███     
-███       █████████     ███           ███████   ███████    ███████    ███   ███  ███████    ███████ 
-███       ███   ███     ███           ███       ███   ███  ███   ███  ███   ███  ███   ███       ███
- ███████  ███   ███     ███           ████████  ███   ███  ███   ███   ███████   ███   ███  ███████ 
-###
 
 test.describe 'cat errors' ->
 

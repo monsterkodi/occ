@@ -1,9 +1,9 @@
 ###
-████████   ████████  ███████   ███████  ████████  █████████
-███   ███  ███       ███   ███  ███   ███     ███
-████████   ███████   ███████    ███████   █████████
-███   ███  ███       ███   ███  ███   ███     ███
-███   ███  ████████  ███████   ███████    █████████
+    ████████   ████████  ███   ███  ███████    ████████  ████████   
+    ███   ███  ███       ████  ███  ███   ███  ███       ███   ███  
+    ███████    ███████   ███ █ ███  ███   ███  ███████   ███████    
+    ███   ███  ███       ███  ████  ███   ███  ███       ███   ███  
+    ███   ███  ████████  ███   ███  ███████    ████████  ███   ███  
 ###
 
 #  blocks to lines, and a session row to the table line that opens it.
@@ -13,9 +13,6 @@
 #  "> agent build" marker, and a tool in between does not end the run.
 
 use ./style
-#  escape.kode has one export and it is the function, so `use ./escape`
-#  binds escape itself.
-
 use ./escape
 
 ID_WIDTH = 6
@@ -64,8 +61,6 @@ markerAgent = (sty, agent) ->
     if agent then ⮐ sty.turn.agent('> agent ') + sty.turn.mode(agent)
     sty.turn.agent '> agent'
 
-# ███████  ███████  ███████  ███████  ████   ███  ███   ███  ███   ███
-
 renderCall = (block, sty, inAgentRun) ->
 
     marker = sty.tool.call "$ #{block.name}"
@@ -108,8 +103,6 @@ renderBlock = (block, sty, inAgentRun) ->
 
     renderTurn block, sty, inAgentRun
 
-# ███████  ███████  ████████  ██████  ██   ██
-
 renderBlocks = (blocks, sty) ->
 
     s = sty ? style.createStyle false
@@ -131,8 +124,6 @@ renderBlocks = (blocks, sty) ->
     lines.join '\n'
 
 lastOf = (session) -> session.time_last ? session.time_updated
-
-# ███████   ███████  ███████ ███████  ███████  ███████   ███████
 
 renderSession = (session, width, sty, opt={}) ->
 

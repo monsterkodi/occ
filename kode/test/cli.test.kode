@@ -1,9 +1,9 @@
 ###
- ███████  ███      ███        ████████   ████████   ███████   ███████           ███████   ███████   ██     ██  ██     ██   ███████   ███   ███  ███████     ███████
-███       ███      ███        ███   ███  ███       ███   ███  ███   ███        ███       ███   ███  ███   ███  ███   ███  ███   ███  ████  ███  ███   ███  ███     
-███       ███      ███        ███████    ███████   █████████  ███   ███        ███       ███   ███  █████████  █████████  █████████  ███ █ ███  ███   ███  ███████ 
-███       ███      ███        ███   ███  ███       ███   ███  ███   ███        ███       ███   ███  ███ █ ███  ███ █ ███  ███   ███  ███  ████  ███   ███       ███
- ███████  ███████  ███        ███   ███  ████████  ███   ███  ███████           ███████   ███████   ███   ███  ███   ███  ███   ███  ███   ███  ███████    ███████ 
+     ███████  ███      ███
+    ███       ███      ███
+    ███       ███      ███
+    ███       ███      ███
+     ███████  ███████  ███
 ###
 
 import test from 'node:test'
@@ -71,7 +71,7 @@ test.describe 'cli read commands' ○->
 
     test 'every command in the help table is dispatchable' ○->
 
-        res = ○occRun(['--help'])
+        res =○ occRun(['--help'])
 
         #  The pattern is a constant: a regex written as an argument reads as
         #  the start of something else.
@@ -90,7 +90,7 @@ test.describe 'cli read commands' ○->
 
     test 'a title argument works end to end' ○->
 
-        res = ○occRun(['ls', 'ocls'])
+        res =○ occRun(['ls', 'ocls'])
 
         assert.match res.stdout, /aaaaaa/
         assert.match res.stdout, /Coco\x20-\x20ocls/
@@ -100,14 +100,6 @@ test.describe 'cli read commands' ○->
         for command in READ_COMMANDS
             res = ○occRun([command, 'ocls'])
             assert.match res.stdout, /aaaaaa/, "#{command} did not resolve a title"
-
-###
- ███████  ███      ███        ███   ███  ████████  ███      ████████ 
-███       ███      ███        ███   ███  ███       ███      ███   ███
-███       ███      ███        █████████  ███████   ███      ████████ 
-███       ███      ███        ███   ███  ███       ███      ███      
- ███████  ███████  ███        ███   ███  ████████  ███████  ███      
-###
 
 test.describe 'cli help' ○->
 
@@ -127,14 +119,6 @@ test.describe 'cli help' ○->
 
         await assert.rejects(occRun(['frobnicate']), rejectsWith(/unknown\x20command\x20\"frobnicate\"/))
 
-###
- ███████  ███      ███        ███████    ████████  ███    
-███       ███      ███        ███   ███  ███       ███    
-███       ███      ███        ███   ███  ███████   ███    
-███       ███      ███        ███   ███  ███       ███    
- ███████  ███████  ███        ███████    ████████  ███████
-###
-
 test.describe 'cli del' ○->
 
     test 'is dispatched and reaches its own guard' ○->
@@ -144,14 +128,6 @@ test.describe 'cli del' ○->
     test 'refuses without a terminal' ○->
 
         await assert.rejects(occRun(['del', 'aaaaaa']), rejectsWith(/needs\x20a\x20terminal/))
-
-###
- ███████  ███      ███        ████████   ████████   ███████  ███   ███  ██     ██  ████████
-███       ███      ███        ███   ███  ███       ███       ███   ███  ███   ███  ███     
-███       ███      ███        ███████    ███████   ███████   ███   ███  █████████  ███████ 
-███       ███      ███        ███   ███  ███            ███  ███   ███  ███ █ ███  ███     
- ███████  ███████  ███        ███   ███  ████████  ███████    ███████   ███   ███  ████████
-###
 
 test.describe 'cli resume' ○->
 

@@ -74,7 +74,7 @@ resume = (opt) ○->
     if not fs.existsSync session.directory
         throw new db.OclsError "the directory of \"#{prefix}\" is gone: #{session.directory}"
 
-    ○launch
+    ○ launch
         command: 'opencode'
         #  the full id, never the prefix: opencode creates a session for an id
         #  it does not know, and a prefix is an id it will never know

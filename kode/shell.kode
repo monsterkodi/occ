@@ -27,8 +27,6 @@ shell = (opt) ->
     width = opt.width ? 80
     sty = opt.style
 
-    #  sessions.kode exports one thing, so `use ./sessions` binds the function.
-
     sessions database, prefixes, width, sty, onlyShell
 
 export shell

@@ -53,8 +53,6 @@ TRUE_COLOR =
     foreground: [38, 39]
     background: [48, 49]
 
-### █████████  ███   ███ ███████  ███████ ██   ██ ███████  ██████
-
 #  Every call gets its own parens. Parens do not rescue juxtaposition: written
 #  the obvious way, c.bg '#111', c.fg('#ff0', c.bold text) passes the bold
 #  function itself as the text to colour.
@@ -99,8 +97,6 @@ ROLES =
         warning: delWarning
         question: delQuestion
 
-# ██████   ██████  ██    ██ ███████ ███████ ██   ██ ███████
-
 parseHex = (hex) ->
 
     if not hex is str
@@ -129,8 +125,6 @@ makeHexStyle = (enabled, layer) ->
         [r, g, b] = parseHex hex
         "\u001b[#{open};2;#{r};#{g};#{b}m#{text}\u001b[#{close}m"
 
-# ███████  █████   ██████  ██████  ██    ██ ██████   ██████   ██████
-
 #  A closure per code, made by a factory rather than written inside the loop: a
 #  variable assigned in a loop body is function-scoped in the generated
 #  javascript, so `palette[key] = (text) -> ...` with open and close read from
@@ -157,8 +151,6 @@ makePalette = (enabled) ->
         palette[key] = code(pair[0], pair[1])
 
     palette
-
-# ███████  ███████  ██████   ██████  ███████ ██████  ███    ███
 
 createStyle = (enabled) ->
 

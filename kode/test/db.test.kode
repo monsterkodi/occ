@@ -1,9 +1,9 @@
 ###
-███████    ███████
-███   ███  ███   ███
-███   ███  ███████
-███   ███  ███   ███
-███████    ███████
+    ███████    ███████
+    ███   ███  ███   ███
+    ███   ███  ███████
+    ███   ███  ███   ███
+    ███████    ███████
 ###
 
 #  where the database is, and what happens when it is not the database we asked
@@ -23,14 +23,6 @@ MISSING_COLUMN_DB_PATH = fx.MISSING_COLUMN_DB_PATH
 
 throwsOclsError = (pattern) -> (e) -> e instanceof db.OclsError and (pattern.test e.message)
 
-###
-███████    ███████          ████████    ███████   █████████  ███   ███
-███   ███  ███   ███        ███   ███  ███   ███     ███     ███   ███
-███   ███  ███████          ████████   █████████     ███     █████████
-███   ███  ███   ███        ███        ███   ███     ███     ███   ███
-███████    ███████          ███        ███   ███     ███     ███   ███
-###
-
 test.describe 'resolveDbPath' ->
 
     test 'uses XDG_DATA_HOME when set' ->
@@ -40,14 +32,6 @@ test.describe 'resolveDbPath' ->
     test 'falls back to ~/.local/share' ->
 
         assert.equal db.resolveDbPath({}), "#{process.env.HOME}/.local/share/opencode/opencode.db"
-
-###
- ███████   ████████   ████████  ███   ███        ███████    ███████  
-███   ███  ███   ███  ███       ████  ███        ███   ███  ███   ███
-███   ███  ████████   ███████   ███ █ ███        ███   ███  ███████  
-███   ███  ███        ███       ███  ████        ███   ███  ███   ███
- ███████   ███        ████████  ███   ███        ███████    ███████  
-###
 
 test.describe 'openDb' ->
 

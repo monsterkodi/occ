@@ -1,13 +1,11 @@
 ###
- ███████  ████████  ███████    ███████   ███████    ███████
-███   ███ ███       ███   ███  ███   ███ ███   ███  ███
-███████  ███████   ███████    ███████  ███████    ███████
-███   ███ ███       ███   ███  ███   ███ ███   ███  ███
-███   ███ ████████  ███████    ███████   ███████   ███████
+     ███████    ███████   ███████  
+    ███   ███  ███       ███       
+    ███   ███  ███       ███       
+    ███   ███  ███       ███       
+     ███████    ███████   ███████  
 ###
 
-#  the entry point: argv in, one command out.
-#
 #  Nothing here decides anything. The table finds the command, the module
 #  owns it, and the two things that need a process — the palette and the exit
 #  code — are decided here.
@@ -56,9 +54,6 @@ COMMANDS =
     cat: run: cat
     log: run: history
     shell: run: shell
-    #  resume.kode exports personaOf as well, so `use ./resume` binds the
-    #  module and the entry point has to name the function inside it.
-
     resume: run: resume.resume
     del:
         run: del
@@ -88,9 +83,6 @@ main = (argv) ○->
     database = if writable then db.openWritable(p) else db.openDb(p)
 
     try
-        #  `?` and not `||`: there is no ||, and ? is ?? — the same here,
-        #  since a column count is a number or nothing.
-
         width = process.stdout.columns ? 80
         sty = style.createStyle Boolean(process.stdout.isTTY) and not process.env.NO_COLOR
 
@@ -114,7 +106,7 @@ main = (argv) ○->
 run = (argv) ○->
 
     try
-        process.exitCode = ○main argv
+        process.exitCode = ○ main argv
     catch e
         if e instanceof db.OclsError
             process.stderr.write "occ: #{e.message}\n"

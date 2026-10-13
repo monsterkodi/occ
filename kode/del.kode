@@ -1,9 +1,9 @@
 ###
-███████    ████████  ███    
-███   ███  ███       ███    
-███   ███  ███████   ███    
-███   ███  ███       ███    
-███████    ████████  ███████
+    ███████    ████████  ███    
+    ███   ███  ███       ███    
+    ███   ███  ███████   ███    
+    ███   ███  ███       ███    
+    ███████    ████████  ███████
 ###
 #  `occ del sess [sess...]` — the only command that writes, so the only one
 #  that asks.
@@ -52,9 +52,6 @@ del = (opt) ->
 
     question = sty.del.question ' ARE YOU SURE? (yN) '
     terminal.write question
-
-    #  `?` is ??: the javascript reads (io.readAnswer() ?? ''). Writing it as
-    #  `answer == null` would be === null and would miss undefined.
 
     answer = terminal.readAnswer() ? ''
     answer = answer.trim().toLowerCase()

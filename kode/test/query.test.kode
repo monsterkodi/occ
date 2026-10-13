@@ -175,8 +175,6 @@ test.describe 'listSessions ordering' ->
 
         empty.close()
 
-### ████████    ███████   ███   ███        ███████     ███████   █████████   ███████
-
 test.describe 'listSessions row data' ->
 
     test 'counts turns from user messages with text only' ->
