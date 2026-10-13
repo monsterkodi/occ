@@ -1,0 +1,170 @@
+###
+████████   ████████  ███████   ███████  ████████  █████████
+███   ███  ███       ███   ███  ███   ███     ███
+████████   ███████   ███████    ███████   █████████
+███   ███  ███       ███   ███  ███   ███     ███
+███   ███  ████████  ███████   ███████    █████████
+###
+
+#  blocks to lines, and a session row to the table line that opens it.
+#
+#  The one piece of state here is whether the last thing printed was an agent
+#  still talking: a second turn from the same run is a "…" rather than another
+#  "> agent build" marker, and a tool in between does not end the run.
+
+use ./style
+#  escape.kode has one export and it is the function, so `use ./escape`
+#  binds escape itself.
+
+use ./escape
+
+ID_WIDTH = 6
+LAST_WIDTH = 11
+DURATION_WIDTH = 6
+TURNS_WIDTH = 4
+PADDING = 1
+
+COLUMN_WIDTH = ID_WIDTH + LAST_WIDTH + DURATION_WIDTH + TURNS_WIDTH
+
+FIXED_WIDTH = COLUMN_WIDTH + (2 * PADDING) * 4
+
+MINUTE = 60000
+
+durationMinutes = (ms) -> String(Math.floor(Math.max(0, ms) / MINUTE))
+
+crop = (text, width) ->
+
+    if width <= 0 then ⮐ ''
+    if text.length <= width then ⮐ text
+    if width == 1 then ⮐ '…'
+    text.slice(0, width - 1) + '…'
+
+parts = (ms) ->
+
+    d = new Date ms
+    pad = (n) -> String(n).padStart 2, '0'
+
+    date: "#{pad(d.getDate())}.#{pad(d.getMonth() + 1)}"
+    time: "#{pad(d.getHours())}:#{pad(d.getMinutes())}"
+
+dayKey = (ms) -> parts(ms).date
+
+padded = (text, width) ->
+
+    fill = Math.max 0, width - text.length
+    ' '.repeat(PADDING) + text + ' '.repeat(fill + PADDING)
+
+paddedRight = (text, width) ->
+
+    fill = Math.max 0, width - text.length
+    ' '.repeat(PADDING + fill) + text + ' '.repeat(PADDING)
+
+markerAgent = (sty, agent) ->
+
+    if agent then ⮐ sty.turn.agent('> agent ') + sty.turn.mode(agent)
+    sty.turn.agent '> agent'
+
+# ███████  ███████  ███████  ███████  ████   ███  ███   ███  ███   ███
+
+renderCall = (block, sty, inAgentRun) ->
+
+    marker = sty.tool.call "$ #{block.name}"
+
+    if inAgentRun then ⮐ [marker, escape(block.command), true]
+    ⮐ ["#{markerAgent(sty, block.agent)}\n#{marker}", escape(block.command), true]
+
+renderResult = (block, sty, inAgentRun) ->
+
+    text = escape(block.text).trimEnd()
+    if text == '' then ⮐ [null, null, inAgentRun]
+
+    #  note = … full output at <path>, then the tail is the text plus that.
+    #  Written in steps because a nested interpolation cannot hold its own
+    #  quotes.
+
+    note = sty.tool.note "… full output at #{escape(block.outputPath)}"
+    tail = if block.outputPath then "#{text}\n#{note}" else text
+
+    ⮐ [sty.tool.result("$ #{block.name} result"), tail, inAgentRun]
+
+renderTurn = (block, sty, inAgentRun) ->
+
+    text = escape(block.text ? '').trimEnd()
+    if text == '' then ⮐ [null, null, inAgentRun]
+
+    if block.role == 'user' then ⮐ [sty.turn.user('> user'), text, false]
+
+    if inAgentRun then ⮐ [sty.turn.continue('…'), text, true]
+    ⮐ [markerAgent(sty, block.agent), text, true]
+
+renderBlock = (block, sty, inAgentRun) ->
+
+    if block.kind == 'call' then ⮐ renderCall block, sty, inAgentRun
+
+    if block.kind == 'exit'
+        ⮐ [sty.tool.exit("$ #{block.name} exit #{block.code}"), '', inAgentRun]
+
+    if block.kind == 'result' then ⮐ renderResult block, sty, inAgentRun
+
+    renderTurn block, sty, inAgentRun
+
+# ███████  ███████  ████████  ██████  ██   ██
+
+renderBlocks = (blocks, sty) ->
+
+    s = sty ? style.createStyle false
+    lines = []
+    inAgentRun = false
+
+    for block in blocks
+
+        #  `next` is a keyword, so the third element gets a name of its own.
+
+        [marker, text, after] = renderBlock block, s, inAgentRun
+        inAgentRun = after
+
+        if marker == null then continue
+
+        lines.push marker
+        if text != '' then lines.push text
+
+    lines.join '\n'
+
+lastOf = (session) -> session.time_last ? session.time_updated
+
+# ███████   ███████  ███████ ███████  ███████  ███████   ███████
+
+renderSession = (session, width, sty, opt={}) ->
+
+    s = sty ? style.createStyle false
+
+    repeatDate = opt.repeatDate ? false
+
+    nameWidth = Math.max 0, (width ? 80) - FIXED_WIDTH - (2 * PADDING)
+
+    name = crop escape(session.title ? 'NULL'), nameWidth
+
+    duration = durationMinutes lastOf(session) - session.time_created
+    #  `when` is a keyword, and reads as a switch: the second time this happened.
+    stamp = parts lastOf(session)
+
+    shown = if repeatDate then "      #{stamp.time}" else "#{stamp.date} #{stamp.time}"
+
+    id = session.id.replace(/^ses_/, '').slice 0, ID_WIDTH
+
+    cells = [
+        s.row.id(padded(id, ID_WIDTH))
+        s.row.last(padded(shown, LAST_WIDTH))
+        s.row.duration(paddedRight(duration, DURATION_WIDTH))
+        s.row.turns(paddedRight(String(session.turns ? 0), TURNS_WIDTH))
+        s.row.name(padded(name, nameWidth))
+    ]
+
+    cells.join ''
+
+export
+    FIXED_WIDTH: FIXED_WIDTH
+    durationMinutes: durationMinutes
+    dayKey: dayKey
+    renderBlocks: renderBlocks
+    renderSession: renderSession

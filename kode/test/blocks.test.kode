@@ -1,0 +1,285 @@
+###
+████████  ████████  ████████  ████████  ███████████
+███       ███       ███       ███       ███
+████████  ███████   ███████   ███████   ███
+███       ███       ███       ███       ███
+███       ████████  ████████  ████████  ███████████
+###
+
+import test from 'node:test'
+import assert from 'node:assert/strict'
+
+use ../render
+use ../style
+
+plain = style.createStyle false
+colored = style.createStyle true
+
+#  A block, the way query.kode would have made it.
+
+block = (kind, extra) -> Object.assign({kind}, extra)
+
+strip = (text) -> text.replace /\x1b\[[0-9;]*m/g, ''
+
+history = [
+    block('turn', {role: 'user', agent: null, text: 'hi conny'})
+    block('turn', {role: 'agent', agent: 'build', text: 'let me look'})
+    block('call', {name: 'shell', agent: 'build', command: 'ls -la; hyprctl version'})
+    block('result', {name: 'shell', text: 'total 48', outputPath: null})
+    block('turn', {role: 'agent', agent: 'build', text: 'found it'})
+]
+
+markersOf = (blocks) ->
+
+    out = render.renderBlocks blocks, plain
+
+    out.split('\n').filter (l) -> l.startsWith('>') or l == '…' or l.startsWith '$'
+
+markerLines = ->
+
+    lines = render.renderBlocks(history, colored).split '\n'
+    find = (text) -> lines.find (l) -> strip(l) == text
+
+    user: find('> user')
+    agent: find('> agent build')
+    call: find('$ shell')
+    result: find('$ shell result')
+    continued: find('…')
+
+###
+███████    ███       ███████    ███████  ███   ███   ███████
+███   ███  ███      ███   ███  ███       ███  ███   ███     
+███████    ███      ███   ███  ███       ███████    ███████ 
+███   ███  ███      ███   ███  ███       ███  ███        ███
+███████    ███████   ███████    ███████  ███   ███  ███████ 
+###
+
+test.describe 'renderBlocks' ->
+
+    test 'a tool block does not close the agent run' ->
+
+        want = [
+            '> user'
+            'hi conny'
+            '> agent build'
+            'let me look'
+            '$ shell'
+            'ls -la; hyprctl version'
+            '$ shell result'
+            'total 48'
+            '…'
+            'found it'
+        ].join '\n'
+
+        assert.equal render.renderBlocks(history, plain), want
+
+    test 'a tool marker starts with a dollar, a turn marker with an angle bracket' ->
+
+        lines = render.renderBlocks(history, plain).split '\n'
+
+        for line in lines.filter((l) -> (/^[>$]/).test(l))
+            marker = line.split(' ')[0]
+            if marker == '$' then continue
+            assert.ok marker.startsWith('>'), "tool marker #{marker}"
+
+        assert.ok lines.includes '> user'
+        assert.ok lines.includes '> agent build'
+
+    test 'there is never an agent marker and an ellipsis on one turn' ->
+
+        assert.deepEqual markersOf(history), [
+            '> user'
+            '> agent build'
+            '$ shell'
+            '$ shell result'
+            '…'
+        ]
+
+    test 'a user turn reopens the marker for the next agent turn' ->
+
+        bs = [
+            block('turn', {role: 'agent', agent: 'plan', text: 'one'})
+            block('call', {name: 'shell', agent: 'plan', command: 'true'})
+            block('result', {name: 'shell', text: 'ok', outputPath: null})
+            block('turn', {role: 'user', agent: null, text: 'thanks'})
+            block('turn', {role: 'agent', agent: 'plan', text: 'two'})
+        ]
+
+        want = ['> agent plan', '$ shell', '$ shell result', '> user', '> agent plan']
+
+        assert.deepEqual markersOf(bs), want
+
+    test 'a second agent turn continues with an ellipsis' ->
+
+        bs = [
+            block('turn', {role: 'agent', agent: 'build', text: 'checking'})
+            block('turn', {role: 'agent', agent: 'build', text: 'found it'})
+            block('turn', {role: 'agent', agent: 'build', text: 'so that is why'})
+        ]
+
+        assert.equal render.renderBlocks(bs, plain), '> agent build\nchecking\n…\nfound it\n…\nso that is why'
+
+    test 'the continuation marker is one character, no padding' ->
+
+        bs = [
+            block('turn', {role: 'agent', agent: 'build', text: 'one'})
+            block('turn', {role: 'agent', agent: 'build', text: 'two'})
+        ]
+
+        out = render.renderBlocks bs, plain
+
+        assert.equal out.split('\n')[2], '…'
+
+    test 'an empty agent turn neither renders nor breaks the run' ->
+
+        bs = [
+            block('turn', {role: 'agent', agent: 'build', text: 'one'})
+            block('turn', {role: 'agent', agent: 'build', text: ''})
+            block('turn', {role: 'agent', agent: 'build', text: 'two'})
+        ]
+
+        out = render.renderBlocks bs, plain
+
+        assert.equal out, '> agent build\none\n…\ntwo'
+
+    test 'empty text renders nothing' ->
+
+        assert.equal render.renderBlocks([block('turn', {role: 'user', text: '   '})], plain), ''
+        assert.equal render.renderBlocks([], plain), ''
+
+    test 'an agent turn without an agent field still gets a marker' ->
+
+        assert.equal render.renderBlocks([block('turn', {role: 'agent', agent: null, text: 'hi'})], plain), '> agent\nhi'
+
+###
+████████   ████████  ███   ███  ███████    ████████  ████████   ███████    ███       ███████    ███████  ███   ███   ███████        █████████   ███████    ███████   ███       ███████
+███   ███  ███       ████  ███  ███   ███  ███       ███   ███  ███   ███  ███      ███   ███  ███       ███  ███   ███                ███     ███   ███  ███   ███  ███      ███     
+███████    ███████   ███ █ ███  ███   ███  ███████   ███████    ███████    ███      ███   ███  ███       ███████    ███████            ███     ███   ███  ███   ███  ███      ███████ 
+███   ███  ███       ███  ████  ███   ███  ███       ███   ███  ███   ███  ███      ███   ███  ███       ███  ███        ███           ███     ███   ███  ███   ███  ███           ███
+███   ███  ████████  ███   ███  ███████    ████████  ███   ███  ███████    ███████   ███████    ███████  ███   ███  ███████            ███      ███████    ███████   ███████  ███████ 
+###
+
+test.describe 'renderBlocks tools' ->
+
+    test 'a run opening with a tool call gets the agent marker first' ->
+
+        want = [
+            '> user'
+            'do the thing'
+            '> agent build'
+            '$ bash'
+            'false'
+            '$ bash result'
+            'boom'
+            '$ bash exit 42'
+            '…'
+            'it failed'
+        ].join '\n'
+
+        bs = [
+            block('turn', {role: 'user', agent: null, text: 'do the thing'})
+            block('call', {name: 'bash', agent: 'build', command: 'false'})
+            block('result', {name: 'bash', text: 'boom', outputPath: null})
+            block('exit', {name: 'bash', code: 42})
+            block('turn', {role: 'agent', agent: 'build', text: 'it failed'})
+        ]
+
+        assert.equal render.renderBlocks(bs, plain), want
+
+    test 'only one agent marker in a run that opens with tool calls' ->
+
+        bs = [
+            block('turn', {role: 'user', agent: null, text: 'go'})
+            block('call', {name: 'bash', agent: 'build', command: 'one'})
+            block('result', {name: 'bash', text: '1', outputPath: null})
+            block('call', {name: 'bash', agent: 'build', command: 'two'})
+            block('result', {name: 'bash', text: '2', outputPath: null})
+            block('turn', {role: 'agent', agent: 'build', text: 'done'})
+        ]
+
+        want = ['> user', '> agent build', '$ bash', '$ bash result', '$ bash', '$ bash result', '…']
+
+        assert.deepEqual markersOf(bs), want
+
+    test 'a run opening with a tool call and no agent field' ->
+
+        assert.equal render.renderBlocks([block('call', {name: 'grep', agent: null, command: 'x'})], plain), '> agent\n$ grep\nx'
+
+    test 'a result marker names the tool it came from' ->
+
+        bs = [
+            block('call', {name: 'edit', agent: 'build', command: 'old'})
+            block('result', {name: 'edit', text: 'written', outputPath: null})
+        ]
+
+        assert.equal render.renderBlocks(bs, plain), '> agent build\n$ edit\nold\n$ edit result\nwritten'
+
+    test 'an exit marker names the tool and the code' ->
+
+        bs = [
+            block('call', {name: 'edit', agent: 'build', command: 'old'})
+            block('exit', {name: 'edit', code: 1})
+        ]
+
+        assert.equal render.renderBlocks(bs, plain), '> agent build\n$ edit\nold\n$ edit exit 1'
+
+    test 'a zero exit gets no exit marker' ->
+
+        bs = [
+            block('call', {name: 'bash', agent: 'build', command: 'true'})
+            block('result', {name: 'bash', text: '', outputPath: null})
+        ]
+
+        assert.equal render.renderBlocks(bs, plain), '> agent build\n$ bash\ntrue'
+
+    test 'call and result text is verbatim and unindented' ->
+
+        bs = [
+            block('call', {name: 'shell', agent: 'build', command: 'line one\n  indented\n\nline four'})
+            block('result', {name: 'shell', text: '  leading space\ntrailing   ', outputPath: null})
+        ]
+
+        want = '> agent build\n$ shell\nline one\n  indented\n\nline four\n$ shell result\n  leading space\ntrailing'
+
+        assert.equal render.renderBlocks(bs, plain), want
+
+    test 'a truncated result points at the full output' ->
+
+        bs = [block('result', {name: 'read', text: 'partial', outputPath: '/tmp/tool_abc'})]
+
+        assert.equal render.renderBlocks(bs, plain), '$ read result\npartial\n… full output at /tmp/tool_abc'
+
+    test 'a call with no following result still renders the call' ->
+
+        assert.equal render.renderBlocks([block('call', {name: 'grep', agent: 'build', command: 'grep x'})], plain), '> agent build\n$ grep\ngrep x'
+
+    test 'the call marker shows the tool name' ->
+
+        out = render.renderBlocks([block('call', {name: 'webfetch', agent: 'build', command: 'GET /x'})], plain)
+        assert.ok out.includes('$ webfetch\n')
+
+###
+████████   ████████  ███   ███  ███████    ████████  ████████   ███████    ███       ███████    ███████  ███   ███   ███████         ███████   ███████   ███       ███████   ████████    ███████
+███   ███  ███       ████  ███  ███   ███  ███       ███   ███  ███   ███  ███      ███   ███  ███       ███  ███   ███             ███       ███   ███  ███      ███   ███  ███   ███  ███     
+███████    ███████   ███ █ ███  ███   ███  ███████   ███████    ███████    ███      ███   ███  ███       ███████    ███████         ███       ███   ███  ███      ███   ███  ███████    ███████ 
+███   ███  ███       ███  ████  ███   ███  ███       ███   ███  ███   ███  ███      ███   ███  ███       ███  ███        ███        ███       ███   ███  ███      ███   ███  ███   ███       ███
+███   ███  ████████  ███   ███  ███████    ████████  ███   ███  ███████    ███████   ███████    ███████  ███   ███  ███████          ███████   ███████   ███████   ███████   ███   ███  ███████ 
+###
+
+test.describe 'renderBlocks colors' ->
+
+    test 'colors leave the visible text untouched' ->
+
+        assert.equal render.renderBlocks(history, colored).replace(/\x1b\[[0-9;]*m/g, ''), render.renderBlocks(history, plain)
+
+    test 'every marker is styled when color is on' ->
+
+        markers = markerLines()
+        for [name, line] in Object.entries(markers)
+            assert.ok line != undefined, "no #{name} marker"
+            assert.ok line.includes("\u001b["), "#{name} is not styled"
+
+    test 'the markers do not all collapse into one style' ->
+
+        lines = Object.values markerLines()
+        assert.ok (new Set lines).size > 1, 'all markers render identically'
