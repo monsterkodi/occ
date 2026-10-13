@@ -1,0 +1,74 @@
+###
+███████    ████████  ███    
+███   ███  ███       ███    
+███   ███  ███████   ███    
+███   ███  ███       ███    
+███████    ████████  ███████
+###
+#  `occ del sess [sess...]` — the only command that writes, so the only one
+#  that asks.
+#
+#  Three guards before anything is printed: an argument, an argument long enough
+#  to be sure of, and a terminal to confirm in. All three, because a confirmation
+#  prompt on a pipe answers itself.
+
+use ./query
+use ./render
+use ./db
+
+WARNING = " DELETE SESSIONS "
+
+MIN_ARGUMENT = 3
+
+AFFIRMATIVE = new Set ['y', 'yes']
+
+del = (opt) ->
+
+    database = opt.db
+    prefixes = opt.prefixes ? []
+    width = opt.width ? 80
+    sty = opt.style
+    terminal = opt.io
+
+    if prefixes.length == 0
+        throw new db.OclsError 'del needs at least one session id'
+
+    tooShort = prefixes.filter (prefix) -> prefix.length < MIN_ARGUMENT
+
+    if tooShort.length > 0
+        throw new db.OclsError "del needs arguments of at least #{MIN_ARGUMENT} characters: #{tooShort.join(', ')}"
+
+    if not terminal.interactive
+        throw new db.OclsError 'del needs a terminal to confirm in'
+
+    sessions = query.listSessions database, prefixes
+
+    table = sessions.map((session) -> render.renderSession(session, width, sty)).join '\n'
+
+    terminal.write "#{sty.del.warning(WARNING)}\n\n#{table}\n\n"
+
+    #  The question is built first: written as an argument of write, the call
+    #  would pass the function rather than its text.
+
+    question = sty.del.question ' ARE YOU SURE? (yN) '
+    terminal.write question
+
+    #  `?` is ??: the javascript reads (io.readAnswer() ?? ''). Writing it as
+    #  `answer == null` would be === null and would miss undefined.
+
+    answer = terminal.readAnswer() ? ''
+    answer = answer.trim().toLowerCase()
+
+    if not AFFIRMATIVE.has answer
+        terminal.write "\nnothing deleted\n"
+        ⮐ {deleted: []}
+
+    ids = sessions.map (session) -> session.id
+
+    query.deleteSessions database, ids
+
+    terminal.write "\ndeleted #{ids.length} session(s)\n"
+
+    deleted: ids
+
+export del
