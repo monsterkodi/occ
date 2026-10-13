@@ -1,0 +1,231 @@
+###
+████████  ███  ███      █████████  ████████  ████████   ███  ███   ███   ███████
+███       ███  ███         ███     ███       ███   ███  ███  ████  ███  ███
+██████    ███  ███         ███     ███████   ███████    ███  ███ █ ███  ███  ████
+███       ███  ███         ███     ███       ███   ███  ███  ███  ████  ███   ███
+███       ███  ███████     ███     ████████  ███   ███  ███  ███   ███   ███████
+###
+
+#  which sessions, and in what order — the side of query.kode that answers
+#  "which", before any of the message parsing.
+
+import test from 'node:test'
+import assert from 'node:assert/strict'
+
+import sqlite from 'node:sqlite'
+
+use ./fixtures/build
+use ../db
+use ../query
+
+DB_PATH = build.fixtures().DB_PATH
+
+database = db.openDb DB_PATH
+
+ids = -> query.listSessions(database, []).map((s) -> s.id)
+
+A = 'ses_aaaaaaaaaaaaaaaaaaaaaaaaa1'
+C = 'ses_ccccccccccccccccccccccc3'
+
+###
+ ███████   ████████   ███████    ████████  ████████   ███  ███   ███   ███████ 
+███   ███  ███   ███  ███   ███  ███       ███   ███  ███  ████  ███  ███      
+███   ███  ███████    ███   ███  ███████   ███████    ███  ███ █ ███  ███  ████
+███   ███  ███   ███  ███   ███  ███       ███   ███  ███  ███  ████  ███   ███
+ ███████   ███   ███  ███████    ████████  ███   ███  ███  ███   ███   ███████ 
+###
+
+test.describe 'listSessions filtering' ->
+
+    test 'returns every top-level session, oldest last message first' ->
+
+        assert.deepEqual ids(), [
+            'ses_bbbbbbbbbbbbbbbbbbbbbbb2'
+            C
+            A
+        ]
+
+    test 'excludes child sessions' ->
+
+        assert.ok not ids().includes('ses_ddddddddddddddddddddddd4')
+
+    test 'carries the directory the session runs in' ->
+
+        byId = (id) -> query.listSessions(database, [id])[0]
+
+        assert.equal byId(A).directory, '/home/kodi/a/coco'
+        assert.equal byId('ses_bbbbbbbbbbbbbbbbbbbbbbb2').directory, '/home/kodi/.config'
+
+    test 'filters by a 6-character prefix' ->
+
+        found = query.listSessions database, ['cccccc']
+
+        assert.equal found.length, 1
+        assert.equal found[0].id, C
+
+    test 'accepts a prefix with the ses_ prefix included' ->
+
+        assert.equal query.listSessions(database, ["ses_aaaaaa"]).length, 1
+
+    test 'matches several prefixes at once, keeping the query order' ->
+
+        assert.deepEqual query.listSessions(database, ['ccccccc', 'aaaaaaa']).map((s) -> s.id), [C, A]
+
+    test 'matches a title substring, case insensitive' ->
+
+        assert.deepEqual query.listSessions(database, ['ocls']).map((s) -> s.id), [A]
+        assert.deepEqual query.listSessions(database, ['OCLS']).map((s) -> s.id), [A]
+        assert.deepEqual query.listSessions(database, ['Coco']).map((s) -> s.id), [A]
+
+    test 'matches anywhere in a title, not only the start' ->
+
+        assert.deepEqual query.listSessions(database, ['hyprsession']).map((s) -> s.id), [C]
+        assert.deepEqual query.listSessions(database, ['hypr']).map((s) -> s.id), [C]
+
+    test 'an id still wins over a title' ->
+
+        assert.deepEqual query.listSessions(database, ['aaaaaaa']).map((s) -> s.id), [A]
+
+    test 'ids and titles can be mixed, in the order given' ->
+
+        assert.deepEqual query.listSessions(database, ['conny', 'aaaaaaa']).map((s) -> s.id), [C, A]
+        assert.deepEqual query.listSessions(database, ['aaaaaaa', 'conny']).map((s) -> s.id), [A, C]
+
+    test 'overlapping title arguments list a session once' ->
+
+        assert.deepEqual query.listSessions(database, ['ocls', 'coco']).map((s) -> s.id), [A]
+
+    test 'title search never finds a child session' ->
+
+        assert.throws(-> query.listSessions(database, ['child']), /no\x20session/i)
+
+    test 'an ambiguous id prefix does not fall through to titles' ->
+
+        assert.throws(-> query.listSessions(database, ['ses_']), /matches\x20\d+\x20sessions/i)
+
+    test 'sql wildcards in an argument stay literal' ->
+
+        assert.throws(-> query.listSessions(database, ['%']), /no\x20session/i)
+        assert.throws(-> query.listSessions(database, ['_']), /no\x20session/i)
+
+    test 'a term matching nothing is an error' ->
+
+        assert.throws(-> query.listSessions(database, ['zzzzzz']), /no\x20session/i)
+
+    test 'unknown prefix is an error' ->
+
+        assert.throws(-> query.listSessions(database, ['zzzzzz']), (e) ->
+            e instanceof db.OclsError and (/no\x20session/i).test(e.message))
+
+    test 'ambiguous prefix is an error' ->
+
+        assert.throws(-> query.listSessions(database, ['ses_']), (e) ->
+            e instanceof db.OclsError and (/matches\x20\d+\x20sessions/i).test(e.message))
+
+###
+████████    ███████   ███   ███        ███████     ███████   █████████   ███████ 
+███   ███  ███   ███  ███ █ ███        ███   ███  ███   ███     ███     ███   ███
+███████    ███   ███  █████████        ███   ███  █████████     ███     █████████
+███   ███  ███   ███  ███   ███        ███   ███  ███   ███     ███     ███   ███
+███   ███   ███████   ██     ██        ███████    ███   ███     ███     ███   ███
+###
+
+test.describe 'listSessions ordering' ->
+
+    test 'follows the last message, not the update time' ->
+
+        rows = query.listSessions database, []
+        pairs = rows.map (s) -> [s.id, s]
+        byId = Object.fromEntries pairs
+
+        #  ses_a… has the newest message but the oldest update time, ses_c… the reverse
+
+        assert.ok byId[A].time_last > byId[C].time_last
+        assert.ok byId[A].time_updated < byId[C].time_updated
+        assert.equal rows.at(-1).id, A
+
+    test 'a session with no messages sorts on its update time' ->
+
+        empty = new sqlite.DatabaseSync ':memory:'
+
+        empty.exec """
+          CREATE TABLE session_v2 (
+            id text PRIMARY KEY, parent_id text, title text, directory text,
+            time_created integer NOT NULL, time_updated integer NOT NULL
+          );
+          CREATE TABLE session_message (
+            id text PRIMARY KEY, session_id text NOT NULL, type text NOT NULL,
+            seq integer NOT NULL, time_created integer NOT NULL, data text NOT NULL
+          );
+        """
+
+        insert = empty.prepare "INSERT INTO session_v2 (id, parent_id, title, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)"
+
+        insert.run 'ses_1111111111111111111111a', null, 'Old, touched late', '/home/kodi/a/coco', build.BASE, build.BASE + 9 * 3600000
+        insert.run 'ses_2222222222222222222222b', null, 'New, touched early', '/home/kodi/a/coco', build.BASE, build.BASE + 60000
+
+        message = empty.prepare "INSERT INTO session_message (id, session_id, type, seq, time_created, data) VALUES (?, ?, ?, ?, ?, ?)"
+
+        message.run 'm1', 'ses_2222222222222222222222b', 'user', 1, build.BASE + 5 * 3600000, '{"text":"hi"}'
+
+        assert.deepEqual query.listSessions(empty, []).map((s) -> s.id), [
+            'ses_2222222222222222222222b'
+            'ses_1111111111111111111111a'
+        ]
+
+        empty.close()
+
+### ████████    ███████   ███   ███        ███████     ███████   █████████   ███████
+
+test.describe 'listSessions row data' ->
+
+    test 'counts turns from user messages with text only' ->
+
+        pairs = query.listSessions(database, []).map (s) -> [s.id, s.turns]
+        byId = Object.fromEntries pairs
+
+        assert.equal byId[A], 2
+        assert.equal byId['ses_bbbbbbbbbbbbbbbbbbbbbbb2'], 0
+        assert.equal byId[C], 1
+
+    test 'null title comes through as null' ->
+
+        second = query.listSessions(database, ['bbbbbb'])[0]
+
+        assert.equal second.title, null
+        assert.equal second.time_created, build.BASE + 120000
+        assert.equal second.time_updated, build.BASE + 180000
+
+    test 'time_last is the time of the newest message' ->
+
+        pairs = query.listSessions(database, []).map (s) -> [s.id, s.time_last]
+        byId = Object.fromEntries pairs
+
+        assert.equal byId[A], build.BASE + 7 * 1000
+        assert.equal byId['ses_bbbbbbbbbbbbbbbbbbbbbbb2'], build.BASE + 2 * 1000
+        assert.equal byId[C], build.BASE + 4 * 1000
+
+    test 'time_last falls back to the update time of a session with no messages' ->
+
+        empty = new sqlite.DatabaseSync ':memory:'
+
+        empty.exec """
+          CREATE TABLE session_v2 (
+            id text PRIMARY KEY, parent_id text, title text, directory text,
+            time_created integer NOT NULL, time_updated integer NOT NULL
+          );
+          CREATE TABLE session_message (
+            id text PRIMARY KEY, session_id text NOT NULL, type text NOT NULL,
+            seq integer NOT NULL, time_created integer NOT NULL, data text NOT NULL
+          );
+        """
+
+        insert = empty.prepare "INSERT INTO session_v2 (id, parent_id, title, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)"
+
+        insert.run 'ses_eeeeeeeeeeeeeeeeeeeeeee5', null, 'Empty', '/home/kodi/a/coco', build.BASE, build.BASE + 42
+
+        rows = query.listSessions empty, []
+
+        assert.equal rows[0].time_last, build.BASE + 42
+
+        empty.close()

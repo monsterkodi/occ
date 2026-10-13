@@ -1,0 +1,259 @@
+###
+ ███████   ███   ███  ████████  ████████   ███   ███
+███   ███  ███   ███  ███       ███   ███   ███ ███
+███ ██ ██  ███   ███  ███████   ███████      █████
+███ ████   ███   ███  ███       ███   ███     ███
+ █████ ██   ███████   ████████  ███   ███     ███
+###
+
+#  every sql statement occ makes, and the shapes it turns rows into.
+#
+#  A session is stored as a row plus a stream of messages whose `data` column is
+#  json. listSessions answers "which sessions", getSession answers "what
+#  happened in one" and returns blocks rather than raw messages, because every
+#  command wants the same flattened view and none of them wants the json.
+
+use ./db
+
+SELECT = """
+  SELECT
+    s.id,
+    s.title,
+    s.directory,
+    s.time_created,
+    s.time_updated,
+    coalesce(
+      (
+        SELECT max(m.time_created)
+        FROM session_message m
+        WHERE m.session_id = s.id
+      ),
+      s.time_updated
+    ) AS time_last,
+    (
+      SELECT count(*)
+      FROM session_message m
+      WHERE m.session_id = s.id
+        AND m.type = 'user'
+        AND coalesce(json_extract(m.data, '$.text'), '') <> ''
+    ) AS turns
+  FROM session_v2 s
+"""
+
+CHILD_FILTER = 's.parent_id IS NULL'
+
+ORDER = 'ORDER BY time_last ASC, s.time_created ASC, s.id ASC'
+
+MESSAGE_SELECT = """
+  SELECT seq, type, data
+  FROM session_message
+  WHERE session_id = ?
+  ORDER BY seq ASC
+"""
+
+normalize = (prefix) ->
+
+    if prefix.startsWith 'ses_' then prefix.slice 4 else prefix
+
+#  Concatenated rather than interpolated: a kode string that contains a
+#  backslash escape is never interpolated, so "\\#{c}" would be five literal
+#  characters.
+
+likeEscape = (text) -> text.replace(/[\\%_]/g, (c) -> "\\" + c)
+
+ID_MATCH = "s.id LIKE 'ses_' || ? || '%' ESCAPE '\\'"
+
+TITLE_MATCH = "lower(coalesce(s.title, '')) LIKE '%' || ? || '%' ESCAPE '\\'"
+
+###
+████████   ████████   ███████   ███████   ███      ███   ███  ████████         ███████   ███   ███  ████████
+███   ███  ███       ███       ███   ███  ███      ███   ███  ███             ███   ███  ████  ███  ███     
+███████    ███████   ███████   ███   ███  ███       ███ ███   ███████         ███   ███  ███ █ ███  ███████ 
+███   ███  ███            ███  ███   ███  ███         ███     ███             ███   ███  ███  ████  ███     
+███   ███  ████████  ███████    ███████   ███████      █      ████████         ███████   ███   ███  ████████
+###
+
+resolveOne = (database, prefix) ->
+
+    needle = likeEscape normalize(prefix)
+
+    stmt = database.prepare "#{SELECT} WHERE #{ID_MATCH} AND #{CHILD_FILTER}"
+    byId = stmt.all needle
+
+    if byId.length > 1
+        throw new db.OclsError "prefix \"#{prefix}\" matches #{byId.length} sessions, use 6 or more characters"
+
+    if byId.length == 1
+        ⮐ byId
+
+    stmt = database.prepare "#{SELECT} WHERE #{TITLE_MATCH} AND #{CHILD_FILTER} #{ORDER}"
+    byTitle = stmt.all needle
+
+    if byTitle.length == 0
+        throw new db.OclsError "no session matches \"#{prefix}\""
+
+    byTitle
+
+###
+█████████   ███████    ███████   ███             ███████  █████████   ███████   █████████  ████████
+   ███     ███   ███  ███   ███  ███            ███          ███     ███   ███     ███     ███     
+   ███     ███   ███  ███   ███  ███            ███████      ███     █████████     ███     ███████ 
+   ███     ███   ███  ███   ███  ███                 ███     ███     ███   ███     ███     ███     
+   ███      ███████    ███████   ███████        ███████      ███     ███   ███     ███     ████████
+###
+
+commandOf = (input) ->
+
+    cmd = input?.command
+    if cmd is str then ⮐ cmd
+    JSON.stringify(input ? null, null, 2)
+
+resultOf = (state) ->
+
+    error = state?.error?.message
+    if error is str then ⮐ error
+
+    content = state?.content
+    if not content is arr then ⮐ ''
+
+    texts = content.filter (c) -> c and c.type == 'text' and c.text is str
+    texts.map((c) -> c.text).join '\n'
+
+###
+█████████   ███████    ███████   ███             ███████  █████████   ███████   █████████  ████████
+   ███     ███   ███  ███   ███  ███            ███          ███     ███   ███     ███     ███     
+   ███     ███   ███  ███   ███  ███            ███████      ███     █████████     ███     ███████ 
+   ███     ███   ███  ███   ███  ███                 ███     ███     ███   ███     ███     ███     
+   ███      ███████    ███████   ███████        ███████      ███     ███   ███     ███     ████████
+###
+
+#  One message into blocks: text becomes a turn, a tool becomes a call and at
+#  most a result and an exit. Text parts before a tool are flushed first, so a
+#  tool in the middle of a message does not swallow the words around it.
+
+toBlocks = (data, type, message, blocks) ->
+
+    if type == 'user'
+
+        text = if data.text is str then data.text else ''
+        if text != ''
+            blocks.push {kind: 'turn', role: 'user', agent: null, text, message}
+        ⮐
+
+    agent = data.agent ? null
+    content = if data.content is arr then data.content else []
+    text = ''
+
+    flush = ->
+        if text == '' then ⮐
+        blocks.push {kind: 'turn', role: 'agent', agent, text, message}
+        text = ''
+
+    for part in content
+
+        if not part or not (part is obj) then continue
+
+        if part.type == 'text' and part.text is str
+            text = if text == '' then part.text else "#{text}\n\n#{part.text}"
+            continue
+
+        if part.type != 'tool' then continue
+
+        flush()
+
+        name = part.name ? 'tool'
+
+        blocks.push
+            kind: 'call'
+            name: name
+            agent: agent
+            command: commandOf(part.state?.input)
+
+        result = resultOf part.state
+
+        if result != ''
+            blocks.push
+                kind: 'result'
+                name: name
+                text: result
+                outputPath: part.state?.metadata?.outputPath ? null
+
+        code = part.state?.metadata?.exit
+        if code is num and code != 0
+            blocks.push {kind: 'exit', name, code}
+
+    flush()
+
+###
+███      ███   ███████  █████████         ███████  ████████   ███████   ███████  ███   ███████   ███   ███   ███████
+███      ███  ███          ███           ███       ███       ███       ███       ███  ███   ███  ████  ███  ███     
+███      ███  ███████      ███           ███████   ███████   ███████   ███████   ███  ███   ███  ███ █ ███  ███████ 
+███      ███       ███     ███                ███  ███            ███       ███  ███  ███   ███  ███  ████       ███
+███████  ███  ███████      ███           ███████   ████████  ███████   ███████   ███   ███████   ███   ███  ███████ 
+###
+
+listSessions = (database, prefixes=[]) ->
+
+    if prefixes.length == 0
+        stmt = database.prepare "#{SELECT} WHERE #{CHILD_FILTER} #{ORDER}"
+        ⮐ stmt.all()
+
+    seen = new Set()
+    found = []
+
+    for prefix in prefixes
+
+        rows = resolveOne database, prefix
+
+        for row in rows
+            if not seen.has row.id
+                seen.add row.id
+                found.push row
+
+    found
+
+getSession = (database, id) ->
+
+    stmt = database.prepare "#{SELECT} WHERE s.id = ?"
+    rows = stmt.all id
+
+    if rows.length == 0
+        throw new db.OclsError "no session matches \"#{id}\""
+
+    row = rows[0]
+
+    blocks = []
+    messages = database.prepare(MESSAGE_SELECT).all id
+
+    for message in messages
+        toBlocks JSON.parse(message.data), message.type, message.seq, blocks
+
+    row: row
+    blocks: blocks
+
+###
+███████    ████████  ███      ████████  █████████  ████████         ███████  ████████   ███████   ███████  ███   ███████   ███   ███   ███████
+███   ███  ███       ███      ███          ███     ███             ███       ███       ███       ███       ███  ███   ███  ████  ███  ███     
+███   ███  ███████   ███      ███████      ███     ███████         ███████   ███████   ███████   ███████   ███  ███   ███  ███ █ ███  ███████ 
+███   ███  ███       ███      ███          ███     ███                  ███  ███            ███       ███  ███  ███   ███  ███  ████       ███
+███████    ████████  ███████  ████████     ███     ████████        ███████   ████████  ███████   ███████   ███   ███████   ███   ███  ███████ 
+###
+
+deleteSessions = (database, ids) ->
+
+    remove = database.prepare "DELETE FROM session_v2 WHERE id = ?"
+
+    database.exec 'BEGIN'
+
+    try
+        for id in ids
+            remove.run id
+        database.exec 'COMMIT'
+    catch e
+        database.exec 'ROLLBACK'
+        throw e
+
+export
+    listSessions: listSessions
+    getSession: getSession
+    deleteSessions: deleteSessions
