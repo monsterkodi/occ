@@ -1,0 +1,87 @@
+###
+████████   ████████   ███████  ███   ███  ██     ██  ████████
+███   ███  ███       ███       ███   ███  ███   ███  ███
+███████    ███████   ███████   ███   ███  █████████  ███████
+███   ███  ███            ███  ███   ███  ███ █ ███  ███
+███   ███  ████████  ███████    ███████   ███   ███  ████████
+###
+
+#  `occ resume sess` — hand the session back to opencode.
+#
+#  A session runs in a directory, and the directory names the persona that runs
+#  it — the same rule the persona plugin uses to title sessions. PERSONAS holds
+#  the directories whose name says nothing about who they belong to.
+
+import cp from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
+
+use ./query
+use ./db
+
+PERSONAS = '.config': 'sepp'
+
+personaOf = (directory) ->
+
+    name = path.basename directory
+    PERSONAS[name] ? name.toLowerCase()
+
+startOpencode = (opt) ->
+
+    command = opt.command
+    args = opt.args
+    cwd = opt.cwd
+    env = opt.env
+
+    #  from here on the tui owns the terminal, so occ keeps its hands off ctrl-c
+    process.on 'SIGINT', ->
+
+    new Promise (resolve, reject) ->
+
+        child = cp.spawn command, args, {cwd, env, stdio: 'inherit'}
+
+        child.on 'error', (e) ->
+            reject new db.OclsError("cannot start #{command}: #{e.message}")
+
+        child.on 'close', (code) -> resolve(code ? 0)
+
+#  ○ between the parameter list and the arrow: `○(opt) ->` would await the
+#  function rather than make it async.
+
+resume = (opt) ○->
+
+    database = opt.db
+    prefixes = opt.prefixes ? []
+    terminal = opt.io
+    launch = opt.launch ? startOpencode
+
+    if prefixes.length != 1
+        if prefixes.length == 0 then throw new db.OclsError 'resume needs exactly one session id'
+        throw new db.OclsError "resume takes one session id, got #{prefixes.length}"
+
+    if not terminal.interactive
+        throw new db.OclsError 'resume needs a terminal to hand over to'
+
+    prefix = prefixes[0]
+
+    sessions = query.listSessions database, prefixes
+
+    if sessions.length > 1
+        throw new db.OclsError "\"#{prefix}\" matches #{sessions.length} sessions, resume takes one"
+
+    session = sessions[0]
+
+    if not fs.existsSync session.directory
+        throw new db.OclsError "the directory of \"#{prefix}\" is gone: #{session.directory}"
+
+    ○launch
+        command: 'opencode'
+        #  the full id, never the prefix: opencode creates a session for an id
+        #  it does not know, and a prefix is an id it will never know
+        args: ['--session', session.id]
+        cwd: session.directory
+        env: Object.assign({}, process.env, {OPENCODE_PERSONA: personaOf(session.directory)})
+
+export
+    resume: resume
+    personaOf: personaOf
