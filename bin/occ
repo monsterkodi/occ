@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+import occ from '../js/occ.js'
+
+await occ.run(process.argv.slice(2))

@@ -1,0 +1,164 @@
+###
+ ███████  ███      ███        ████████   ████████   ███████   ███████           ███████   ███████   ██     ██  ██     ██   ███████   ███   ███  ███████     ███████
+███       ███      ███        ███   ███  ███       ███   ███  ███   ███        ███       ███   ███  ███   ███  ███   ███  ███   ███  ████  ███  ███   ███  ███     
+███       ███      ███        ███████    ███████   █████████  ███   ███        ███       ███   ███  █████████  █████████  █████████  ███ █ ███  ███   ███  ███████ 
+███       ███      ███        ███   ███  ███       ███   ███  ███   ███        ███       ███   ███  ███ █ ███  ███ █ ███  ███   ███  ███  ████  ███   ███       ███
+ ███████  ███████  ███        ███   ███  ████████  ███   ███  ███████           ███████   ███████   ███   ███  ███   ███  ███   ███  ███   ███  ███████    ███████ 
+###
+
+import test from 'node:test'
+import assert from 'node:assert/strict'
+
+import child from 'node:child_process'
+import util from 'node:util'
+import path from 'node:path'
+import url from 'node:url'
+
+use ./fixtures/build
+
+run = util.promisify child.execFile
+
+#  Two up, not one: this file is run from js/test, where the source is
+#  kode/test. The entry point is bin/occ, the file the package runs.
+
+here = url.fileURLToPath(import.meta.url)
+
+root = path.join(path.dirname(here), '..', '..')
+
+occ = path.join root, 'bin/occ'
+
+home = build.makeDataHome().home
+
+READ_COMMANDS = ['ls' 'cat' 'log' 'shell']
+
+#  the commands the help table claims are runnable
+
+LISTED = /^\x20+occ\x20(\w+)/gm
+
+occRun = (args, env={}) ->
+
+    #  concat and not +: + joins strings, so the argv list would be one
+    #  argument ending in a comma
+
+    all = [occ].concat args
+    base = {XDG_DATA_HOME: home, NO_COLOR: '1'}
+    envs = Object.assign({}, process.env, base, env)
+
+    run(process.execPath, all, {env: envs})
+
+#  the shape every refusal in the cli has: exit one, and the reason on stderr
+
+rejectsWith = (pattern) -> (e) ->
+
+    assert.equal e.code, 1
+    assert.match e.stderr, pattern
+    true
+
+
+test.describe 'cli read commands' ○->
+
+    for command in READ_COMMANDS
+
+        test "#{command} runs and prints something" ○->
+
+            res = ○occRun([command, 'aaaaaa'])
+            assert.match res.stdout, /aaaaaa/
+
+        test "#{command} with no ids runs" ○->
+
+            res = ○occRun([command])
+            assert.ok res.stdout.trim().length > 0
+
+    test 'every command in the help table is dispatchable' ○->
+
+        res = ○occRun(['--help'])
+
+        #  The pattern is a constant: a regex written as an argument reads as
+        #  the start of something else.
+
+        matches = res.stdout.matchAll LISTED
+        listed = Array.from(matches).map((m) -> m[1])
+
+        assert.ok listed.includes 'ls'
+
+        skip = ['del', 'resume']
+
+        for command in listed.filter((c) -> not skip.includes c)
+            res = ○occRun([command, 'aaaaaa'])
+            out = res.stdout
+            assert.ok out.trim().length > 0, "#{command} printed nothing"
+
+    test 'a title argument works end to end' ○->
+
+        res = ○occRun(['ls', 'ocls'])
+
+        assert.match res.stdout, /aaaaaa/
+        assert.match res.stdout, /Coco\x20-\x20ocls/
+
+    test 'every read command accepts a title argument' ○->
+
+        for command in READ_COMMANDS
+            res = ○occRun([command, 'ocls'])
+            assert.match res.stdout, /aaaaaa/, "#{command} did not resolve a title"
+
+###
+ ███████  ███      ███        ███   ███  ████████  ███      ████████ 
+███       ███      ███        ███   ███  ███       ███      ███   ███
+███       ███      ███        █████████  ███████   ███      ████████ 
+███       ███      ███        ███   ███  ███       ███      ███      
+ ███████  ███████  ███        ███   ███  ████████  ███████  ███      
+###
+
+test.describe 'cli help' ○->
+
+    test 'no arguments falls back to ls' ○->
+
+        bare = ○occRun([])
+        listed = ○occRun(['ls'])
+
+        assert.equal bare.stdout, listed.stdout
+        assert.doesNotMatch bare.stdout, /usage:/
+
+    test 'an empty argument is still a command lookup' ○->
+
+        await assert.rejects(occRun(['']), rejectsWith(/unknown\x20command/))
+
+    test 'an unknown command fails with a message' ○->
+
+        await assert.rejects(occRun(['frobnicate']), rejectsWith(/unknown\x20command\x20\"frobnicate\"/))
+
+###
+ ███████  ███      ███        ███████    ████████  ███    
+███       ███      ███        ███   ███  ███       ███    
+███       ███      ███        ███   ███  ███████   ███    
+███       ███      ███        ███   ███  ███       ███    
+ ███████  ███████  ███        ███████    ████████  ███████
+###
+
+test.describe 'cli del' ○->
+
+    test 'is dispatched and reaches its own guard' ○->
+
+        await assert.rejects(occRun(['del']), rejectsWith(/at\x20least\x20one\x20session\x20id/))
+
+    test 'refuses without a terminal' ○->
+
+        await assert.rejects(occRun(['del', 'aaaaaa']), rejectsWith(/needs\x20a\x20terminal/))
+
+###
+ ███████  ███      ███        ████████   ████████   ███████  ███   ███  ██     ██  ████████
+███       ███      ███        ███   ███  ███       ███       ███   ███  ███   ███  ███     
+███       ███      ███        ███████    ███████   ███████   ███   ███  █████████  ███████ 
+███       ███      ███        ███   ███  ███            ███  ███   ███  ███ █ ███  ███     
+ ███████  ███████  ███        ███   ███  ████████  ███████    ███████   ███   ███  ████████
+###
+
+test.describe 'cli resume' ○->
+
+    test 'is dispatched and reaches its own guard' ○->
+
+        await assert.rejects(occRun(['resume']), rejectsWith(/exactly\x20one\x20session\x20id/))
+
+    test 'refuses without a terminal' ○->
+
+        await assert.rejects(occRun(['resume', 'aaaaaa']), rejectsWith(/needs\x20a\x20terminal/))
