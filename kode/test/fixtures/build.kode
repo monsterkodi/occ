@@ -16,9 +16,6 @@ import sqlite from 'node:sqlite'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import url from 'node:url'
-
-here = path.dirname(url.fileURLToPath(import.meta.url))
 
 BASE = 1791283494422
 

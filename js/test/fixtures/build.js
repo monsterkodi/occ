@@ -1,11 +1,9 @@
-var A, BASE, build, buildBadSchemaDb, buildControlBytesDb, buildMissingColumnDb, buildTestDb, C, cached, CHILD_DDL, CHILD_TABLES, CONTROL_RESULT, CONTROL_SESSION, CONTROL_TITLE, countRows, fixtures, here, makeDataHome, msg, reasoning, run, seed, seedChildren, seedControlBytes, seedMessages, seedSessions, SESSION_DDL, text, tool
+var A, BASE, build, buildBadSchemaDb, buildControlBytesDb, buildMissingColumnDb, buildTestDb, C, cached, CHILD_DDL, CHILD_TABLES, CONTROL_RESULT, CONTROL_SESSION, CONTROL_TITLE, countRows, fixtures, makeDataHome, msg, reasoning, run, seed, seedChildren, seedControlBytes, seedMessages, seedSessions, SESSION_DDL, text, tool
 
 import sqlite from 'node:sqlite'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import url from 'node:url'
-here = path.dirname(url.fileURLToPath(import.meta.url))
 BASE = 1791283494422
 SESSION_DDL = `CREATE TABLE session_v2 (
   id text PRIMARY KEY,
@@ -112,9 +110,9 @@ reasoning = function (t)
 
 tool = function (name, input, opt = {})
 {
-    var state, _125_31_, _135_51_
+    var state, _122_31_, _132_51_
 
-    state = {status:((_125_31_=opt.status) != null ? _125_31_ : 'completed'),input:input}
+    state = {status:((_122_31_=opt.status) != null ? _122_31_ : 'completed'),input:input}
     if (opt.error !== undefined)
     {
         state.error = {type:'unknown',message:opt.error}
@@ -123,7 +121,7 @@ tool = function (name, input, opt = {})
     {
         state.content = [{type:'text',text:opt.result}]
     }
-    state.metadata = Object.assign({exit:((_135_51_=opt.exit) != null ? _135_51_ : 0)},opt.metadata)
+    state.metadata = Object.assign({exit:((_132_51_=opt.exit) != null ? _132_51_ : 0)},opt.metadata)
     return {type:'tool',id:`call_${name}`,name:name,state:state}
 }
 
