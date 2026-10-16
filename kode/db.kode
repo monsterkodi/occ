@@ -43,9 +43,6 @@ probe = (db, p) ->
 
 resolveDbPath = (env=process.env) ->
 
-    #  `if x then x else y`, not `x ? y`: this was `||` in the javascript, and an
-    #  XDG_DATA_HOME set to the empty string means unset, not "the root".
-
     base = if env.XDG_DATA_HOME then env.XDG_DATA_HOME else path.join(os.homedir(), '.local', 'share')
     path.join base, 'opencode', 'opencode.db'
 

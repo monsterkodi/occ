@@ -9,8 +9,7 @@
 #  that asks.
 #
 #  Three guards before anything is printed: an argument, an argument long enough
-#  to be sure of, and a terminal to confirm in. All three, because a confirmation
-#  prompt on a pipe answers itself.
+#  to be sure of, and a terminal to confirm in.
 
 use ./query
 use ./render
@@ -46,9 +45,6 @@ del = (opt) ->
     table = sessions.map((session) -> render.renderSession(session, width, sty)).join '\n'
 
     terminal.write "#{sty.del.warning(WARNING)}\n\n#{table}\n\n"
-
-    #  The question is built first: written as an argument of write, the call
-    #  would pass the function rather than its text.
 
     question = sty.del.question ' ARE YOU SURE? (yN) '
     terminal.write question

@@ -16,28 +16,28 @@
 use ./db
 
 SELECT = """
-  SELECT
-    s.id,
-    s.title,
-    s.directory,
-    s.time_created,
-    s.time_updated,
-    coalesce(
-      (
-        SELECT max(m.time_created)
-        FROM session_message m
-        WHERE m.session_id = s.id
-      ),
-      s.time_updated
-    ) AS time_last,
-    (
-      SELECT count(*)
-      FROM session_message m
-      WHERE m.session_id = s.id
-        AND m.type = 'user'
-        AND coalesce(json_extract(m.data, '$.text'), '') <> ''
-    ) AS turns
-  FROM session_v2 s
+    SELECT
+        s.id,
+        s.title,
+        s.directory,
+        s.time_created,
+        s.time_updated,
+        coalesce(
+            (
+              SELECT max(m.time_created)
+              FROM session_message m
+              WHERE m.session_id = s.id
+            ),
+            s.time_updated
+        ) AS time_last,
+        (
+            SELECT count(*)
+            FROM session_message m
+            WHERE m.session_id = s.id
+                AND m.type = 'user'
+                AND coalesce(json_extract(m.data, '$.text'), '') <> ''
+        ) AS turns
+    FROM session_v2 s
 """
 
 CHILD_FILTER = 's.parent_id IS NULL'
@@ -45,10 +45,10 @@ CHILD_FILTER = 's.parent_id IS NULL'
 ORDER = 'ORDER BY time_last ASC, s.time_created ASC, s.id ASC'
 
 MESSAGE_SELECT = """
-  SELECT seq, type, data
-  FROM session_message
-  WHERE session_id = ?
-  ORDER BY seq ASC
+    SELECT seq, type, data
+    FROM session_message
+    WHERE session_id = ?
+    ORDER BY seq ASC
 """
 
 normalize = (prefix) ->

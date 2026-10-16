@@ -12,11 +12,11 @@ AFFIRMATIVE = new Set(['y','yes'])
 
 del = function (opt)
 {
-    var answer, database, ids, prefixes, question, sessions, sty, table, terminal, tooShort, width, _28_28_, _29_22_, _59_35_
+    var answer, database, ids, prefixes, question, sessions, sty, table, terminal, tooShort, width, _27_28_, _28_22_, _52_35_
 
     database = opt.db
-    prefixes = ((_28_28_=opt.prefixes) != null ? _28_28_ : [])
-    width = ((_29_22_=opt.width) != null ? _29_22_ : 80)
+    prefixes = ((_27_28_=opt.prefixes) != null ? _27_28_ : [])
+    width = ((_28_22_=opt.width) != null ? _28_22_ : 80)
     sty = opt.style
     terminal = opt.io
     if (prefixes.length === 0)
@@ -43,7 +43,7 @@ del = function (opt)
     terminal.write(`${sty.del.warning(WARNING)}\n\n${table}\n\n`)
     question = sty.del.question(' ARE YOU SURE? (yN) ')
     terminal.write(question)
-    answer = ((_59_35_=terminal.readAnswer()) != null ? _59_35_ : '')
+    answer = ((_52_35_=terminal.readAnswer()) != null ? _52_35_ : '')
     answer = answer.trim().toLowerCase()
     if (!AFFIRMATIVE.has(answer))
     {
@@ -59,3 +59,6 @@ del = function (opt)
     return {deleted:ids}
 }
 export default del;
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZGVsLmpzIiwic291cmNlcyI6WyIuLi9rb2RlL2RlbC5rb2RlIl0sIm1hcHBpbmdzIjoiOzs7Ozs7OztBQWlCQSxVQUFVO0FBRVYsZUFBZTtBQUVmLGtCQUFrQixLQUFLLElBQUs7O0FBRTVCOzs7O0lBRUksV0FBVyxJQUFJO0lBQ2YscUJBQVcsSUFBSTtJQUNmLGtCQUFRLElBQUksMkJBQVE7SUFDcEIsTUFBTSxJQUFJO0lBQ1YsV0FBVyxJQUFJO1FBRVosU0FBUyxXQUFVOztRQUNsQixVQUFVLEdBQUcsVUFBVTs7SUFFM0IsV0FBVyxTQUFTOztlQUFtQixPQUFPLFNBQVM7O1FBRXBELFNBQVMsU0FBUzs7UUFDakIsVUFBVSxHQUFHLDZDQUE2Qyw0QkFBNEIsU0FBUyxLQUFLOztTQUVqRyxTQUFTOztRQUNaLFVBQVUsR0FBRyxVQUFVOztJQUUzQixXQUFXLE1BQU0sYUFBYSxTQUFVO0lBRXhDLFFBQVEsU0FBUzs7ZUFBaUIsT0FBTyxjQUFjLFFBQVMsTUFBTztPQUFNLEtBQUs7SUFFbEYsU0FBUyxTQUFTLElBQUksSUFBSSxRQUFRLGVBQWU7SUFFakQsV0FBVyxJQUFJLElBQUksU0FBUztJQUM1QixTQUFTLE1BQU07SUFFZixtQkFBUyxTQUFTLGtDQUFlO0lBQ2pDLFNBQVMsT0FBTyxPQUFPO1NBRWhCLFlBQVksSUFBSTs7UUFDbkIsU0FBUyxNQUFNO2dCQUNaOztJQUVQLE1BQU0sU0FBUzs7ZUFBaUIsUUFBUTs7SUFFeEMsTUFBTSxlQUFlLFNBQVU7SUFFL0IsU0FBUyxtQkFBbUIsSUFBSTtZQUVoQyxRQUFTOztlQUVOIn0=
+//# sourceURL=file://kode/del.kode

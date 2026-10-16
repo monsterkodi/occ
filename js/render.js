@@ -107,9 +107,9 @@ renderResult = function (block, sty, inAgentRun)
 
 renderTurn = function (block, sty, inAgentRun)
 {
-    var text, _92_29_
+    var text, _87_29_
 
-    text = escape(((_92_29_=block.text) != null ? _92_29_ : '')).trimEnd()
+    text = escape(((_87_29_=block.text) != null ? _87_29_ : '')).trimEnd()
     if (text === '')
     {
         return [null,null,inAgentRun]
@@ -171,24 +171,24 @@ renderBlocks = function (blocks, sty)
 
 lastOf = function (session)
 {
-    var _133_40_
+    var _126_40_
 
-    return ((_133_40_=session.time_last) != null ? _133_40_ : session.time_updated)
+    return ((_126_40_=session.time_last) != null ? _126_40_ : session.time_updated)
 }
 
 renderSession = function (session, width, sty, opt = {})
 {
-    var cells, duration, id, name, nameWidth, repeatDate, s, shown, stamp, _141_32_, _145_37_, _159_53_
+    var cells, duration, id, name, nameWidth, repeatDate, s, shown, stamp, _132_32_, _136_37_, _150_53_
 
     s = (sty != null ? sty : style.createStyle(false))
-    repeatDate = ((_141_32_=opt.repeatDate) != null ? _141_32_ : false)
+    repeatDate = ((_132_32_=opt.repeatDate) != null ? _132_32_ : false)
     nameWidth = Math.max(0,((width != null ? width : 80)) - FIXED_WIDTH - (2 * PADDING))
-    name = crop(escape(((_145_37_=session.title) != null ? _145_37_ : 'NULL')),nameWidth)
+    name = crop(escape(((_136_37_=session.title) != null ? _136_37_ : 'NULL')),nameWidth)
     duration = durationMinutes(lastOf(session) - session.time_created)
     stamp = parts(lastOf(session))
     shown = repeatDate ? `      ${stamp.time}` : `${stamp.date} ${stamp.time}`
     id = session.id.replace(/^ses_/,'').slice(0,ID_WIDTH)
-    cells = [s.row.id(padded(id,ID_WIDTH)),s.row.last(padded(shown,LAST_WIDTH)),s.row.duration(paddedRight(duration,DURATION_WIDTH)),s.row.turns(paddedRight(String(((_159_53_=session.turns) != null ? _159_53_ : 0)),TURNS_WIDTH)),s.row.name(padded(name,nameWidth))]
+    cells = [s.row.id(padded(id,ID_WIDTH)),s.row.last(padded(shown,LAST_WIDTH)),s.row.duration(paddedRight(duration,DURATION_WIDTH)),s.row.turns(paddedRight(String(((_150_53_=session.turns) != null ? _150_53_ : 0)),TURNS_WIDTH)),s.row.name(padded(name,nameWidth))]
     return cells.join('')
 }
 export default {
@@ -198,3 +198,6 @@ export default {
     renderBlocks:renderBlocks,
     renderSession:renderSession
 }
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVuZGVyLmpzIiwic291cmNlcyI6WyIuLi9rb2RlL3JlbmRlci5rb2RlIl0sIm1hcHBpbmdzIjoiOzs7Ozs7OztBQWlCQSxXQUFXO0FBQ1gsYUFBYTtBQUNiLGlCQUFpQjtBQUNqQixjQUFjO0FBQ2QsVUFBVTtBQUVWLGVBQWUsV0FBVyxhQUFhLGlCQUFpQjtBQUV4RCxjQUFjLGdCQUFnQixJQUFJLFdBQVc7QUFFN0MsU0FBUzs7QUFFVDs7V0FBMEIsT0FBTyxLQUFLLE1BQU0sS0FBSyxJQUFJLEVBQUcsTUFBTTs7O0FBRTlEOztRQUVPLFNBQVM7O2VBQVM7O1FBQ2xCLEtBQUssVUFBVTs7ZUFBYTs7UUFDNUIsVUFBUzs7ZUFBUzs7V0FDckIsS0FBSyxNQUFNLEVBQUcsUUFBUSxLQUFLOzs7QUFFL0I7Ozs7SUFFSSxRQUFRLEtBQUs7SUFDYjs7ZUFBYSxPQUFPLEdBQUcsU0FBUyxFQUFHOztZQUVuQyxRQUFTLElBQUksRUFBRSxjQUFjLElBQUksRUFBRSxhQUFhLEtBQ2hELFFBQVMsSUFBSSxFQUFFLGVBQWUsSUFBSSxFQUFFOzs7QUFFeEM7O1dBQWlCLE1BQU0sSUFBSTs7O0FBRTNCOzs7O0lBRUksT0FBTyxLQUFLLElBQUksRUFBRyxRQUFRLEtBQUs7V0FDaEMsSUFBSSxPQUFPLFdBQVcsT0FBTyxJQUFJLE9BQU8sT0FBTzs7O0FBRW5EOzs7O0lBRUksT0FBTyxLQUFLLElBQUksRUFBRyxRQUFRLEtBQUs7V0FDaEMsSUFBSSxPQUFPLFVBQVUsUUFBUSxPQUFPLElBQUksT0FBTzs7O0FBRW5EOztRQUVPOztlQUFhLElBQUksS0FBSyxNQUFNLGNBQWMsSUFBSSxLQUFLLEtBQUs7O1dBQzNELElBQUksS0FBSyxNQUFNOzs7QUFFbkI7Ozs7SUFFSSxTQUFTLElBQUksS0FBSyxVQUFVLE1BQU07UUFFL0I7O2dCQUFtQixPQUFRLE9BQU8sTUFBTSxTQUFVOztlQUMvQyxZQUFZLElBQUssTUFBTSxXQUFXLFNBQVUsT0FBTyxNQUFNLFNBQVU7OztBQUU3RTs7OztJQUVJLE9BQU8sT0FBTyxNQUFNLE1BQU07UUFDdkIsU0FBUTs7Z0JBQVcsS0FBTSxLQUFNOztJQU1sQyxPQUFPLElBQUksS0FBSyx5QkFBeUIsT0FBTyxNQUFNO0lBQ3RELE9BQVUsTUFBTSxnQkFBbUIsU0FBUyxTQUFZO1lBRXJELElBQUksS0FBSyxZQUFZLE1BQU0sZUFBZ0IsS0FBTTs7O0FBRXhEOzs7O0lBRUksT0FBTyxpQkFBTyxNQUFNLDBCQUFPLEtBQUk7UUFDNUIsU0FBUTs7Z0JBQVcsS0FBTSxLQUFNOztRQUUvQixNQUFNLFNBQVE7O2dCQUFlLElBQUksS0FBSyxLQUFLLFVBQVcsS0FBTTs7UUFFNUQ7O2dCQUFtQixJQUFJLEtBQUssU0FBUyxLQUFNLEtBQU07O1lBQ2pELFlBQVksSUFBSyxNQUFNLE9BQVEsS0FBTTs7O0FBRTVDOztRQUVPLE1BQU0sU0FBUTs7ZUFBYyxXQUFXLE1BQU8sSUFBSzs7UUFFbkQsTUFBTSxTQUFROztnQkFDVixJQUFJLEtBQUssVUFBVSxNQUFNLGFBQWEsTUFBTSxRQUFTLEdBQUk7O1FBRTdELE1BQU0sU0FBUTs7ZUFBZ0IsYUFBYSxNQUFPLElBQUs7O1dBRTFELFdBQVcsTUFBTyxJQUFLOzs7QUFFM0I7Ozs7SUFFSSxLQUFJLGNBQUEsTUFBTSxNQUFNLFlBQVk7SUFDNUI7SUFDQSxhQUFhO3dCQUVBOzs7O2tCQUllLFlBQVksTUFBTyxFQUFHOztRQUM5QyxhQUFhO1lBRVYsV0FBVTs7WUFBVTs7UUFFdkIsTUFBTSxLQUFLO1lBQ1IsU0FBUTs7WUFBUSxNQUFNLEtBQUs7OztXQUVsQyxNQUFNLEtBQUs7OztBQUVmOzs7O3NCQUFzQixRQUFRLGdDQUFZLFFBQVE7OztBQUVsRDs7OztJQUVJLEtBQUksY0FBQSxNQUFNLE1BQU0sWUFBWTtJQUU1Qix3QkFBYSxJQUFJLGlDQUFhO0lBRTlCLFlBQVksS0FBSyxJQUFJLElBQUksZ0JBQUEsUUFBUSxPQUFNLGVBQWUsSUFBSTtJQUUxRCxPQUFPLEtBQUssa0JBQU8sUUFBUSw0QkFBUSxTQUFTO0lBRTVDLFdBQVcsZ0JBQWdCLE9BQU8sV0FBVyxRQUFRO0lBRXJELFFBQVEsTUFBTSxPQUFPO0lBRXJCLFFBQVcsc0JBQXlCLE1BQU0sWUFBZSxNQUFNLFFBQVEsTUFBTTtJQUU3RSxLQUFLLFFBQVEsR0FBRyxRQUFRLFFBQVMsSUFBSSxNQUFNLEVBQUc7SUFFOUMsU0FDSSxFQUFFLElBQUksR0FBRyxPQUFPLEdBQUksV0FDcEIsRUFBRSxJQUFJLEtBQUssT0FBTyxNQUFPLGFBQ3pCLEVBQUUsSUFBSSxTQUFTLFlBQVksU0FBVSxpQkFDckMsRUFBRSxJQUFJLE1BQU0sWUFBWSxrQkFBTyxRQUFRLDRCQUFRLElBQUksY0FDbkQsRUFBRSxJQUFJLEtBQUssT0FBTyxLQUFNO1dBRzVCLE1BQU0sS0FBSzs7O0lBR1gsWUFBYTtJQUNiLGdCQUFpQjtJQUNqQixPQUFRO0lBQ1IsYUFBYztJQUNkLGNBQWUifQ==
+//# sourceURL=file://kode/render.kode

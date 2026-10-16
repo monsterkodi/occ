@@ -23,3 +23,6 @@ shell = function (opt)
     return sessions(database,prefixes,width,sty,onlyShell)
 }
 export default shell;
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic2hlbGwuanMiLCJzb3VyY2VzIjpbIi4uL2tvZGUvc2hlbGwua29kZSJdLCJtYXBwaW5ncyI6Ijs7OztBQWVBLFFBQVE7O0FBRVI7O1dBRUksT0FBTzs7Z0JBQ0YsRUFBRSxTQUFRLFVBQVUsRUFBRSxTQUFRLFlBQVksRUFBRSxTQUFRLFdBQVksRUFBRSxTQUFROzs7O0FBRW5GOzs7O0lBRUksV0FBVyxJQUFJO0lBQ2YscUJBQVcsSUFBSTtJQUNmLGtCQUFRLElBQUksMkJBQVE7SUFDcEIsTUFBTSxJQUFJO1dBRVYsU0FBUyxTQUFVLFNBQVUsTUFBTyxJQUFLOztlQUV0QyJ9
+//# sourceURL=file://kode/shell.kode

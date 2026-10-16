@@ -6,10 +6,6 @@
      ███████    ███████   ███████  
 ###
 
-#  Nothing here decides anything. The table finds the command, the module
-#  owns it, and the two things that need a process — the palette and the exit
-#  code — are decided here.
-
 use ./db
 use ./style
 use ./terminal
@@ -24,30 +20,24 @@ use ./resume
 
 history = log
 
-#  An array and a join, not a triple-quoted string: a triple-quoted string has
-#  its common indentation stripped from every line, and this text is printed
-#  indented by four.
+HELP = """
 
-USAGE = [
-    ''
-    '    occ - list, dump and delete opencode v2 sessions'
-    ''
-    '    usage:'
-    ''
-    '      occ ls [sess...]        show session table'
-    '      occ cat [sess...]       show session conversation'
-    '      occ log [sess...]       show session history including tool calls'
-    '      occ shell [sess...]     show shell commands with their output'
-    '      occ resume sess         resume a session in opencode'
-    '      occ del sess [sess...]  delete sessions, asks for confirmation'
-    ''
-    '    sess: a fragment of a session id or session title'
-    ''
-    '    table: id datetime minutes turns title'
-    '    '
-    ]
+    occ - list, dump and delete opencode v2 sessions
+    
+    usage:
 
-HELP = USAGE.join '\n'
+      occ ls [sess...]        show session table
+      occ cat [sess...]       show session conversation
+      occ log [sess...]       show session history including tool calls
+      occ shell [sess...]     show shell commands with their output
+      occ resume sess         resume a session in opencode
+      occ del sess [sess...]  delete sessions, asks for confirmation
+
+    sess: a fragment of a session id or session title
+    
+    table: id datetime minutes turns title
+
+"""
 
 COMMANDS =
     ls: run: ls
@@ -98,10 +88,6 @@ main = (argv) ○->
 
     database.close()
     0
-
-#  What bin/occ calls. The try belongs to the program and not to a command:
-#  a command that refuses has already said why, and saying it twice would put
-#  the message on stderr where the refusal did not belong.
 
 run = (argv) ○->
 

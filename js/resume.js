@@ -45,12 +45,12 @@ startOpencode = function (opt)
 
 resume = async function (opt)
 {
-    var database, launch, prefix, prefixes, session, sessions, terminal, _54_28_, _56_24_
+    var database, launch, prefix, prefixes, session, sessions, terminal, _51_28_, _53_24_
 
     database = opt.db
-    prefixes = ((_54_28_=opt.prefixes) != null ? _54_28_ : [])
+    prefixes = ((_51_28_=opt.prefixes) != null ? _51_28_ : [])
     terminal = opt.io
-    launch = ((_56_24_=opt.launch) != null ? _56_24_ : startOpencode)
+    launch = ((_53_24_=opt.launch) != null ? _53_24_ : startOpencode)
     if (prefixes.length !== 1)
     {
         if (prefixes.length === 0)
@@ -80,3 +80,6 @@ export default {
     resume:resume,
     personaOf:personaOf
 }
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzdW1lLmpzIiwic291cmNlcyI6WyIuLi9rb2RlL3Jlc3VtZS5rb2RlIl0sIm1hcHBpbmdzIjoiOztPQWNPLEdBQUcsS0FBSztPQUNSLEdBQUcsS0FBSztPQUNSLEtBQUssS0FBSzs7Ozs7QUFLakIsWUFBVyxVQUFXOztBQUV0Qjs7OztJQUVJLE9BQU8sS0FBSyxTQUFTO3FCQUNyQixTQUFTLDJCQUFRLEtBQUs7OztBQUUxQjs7OztJQUVJLFVBQVUsSUFBSTtJQUNkLE9BQU8sSUFBSTtJQUNYLE1BQU0sSUFBSTtJQUNWLE1BQU0sSUFBSTtJQUdWLFFBQVEsR0FBRzs7ZUFFUDs7OztRQUVBLFFBQVEsR0FBRyxNQUFNLFFBQVMsTUFBTyxJQUFBLElBQUssSUFBQSxJQUFLLE1BQU87UUFFbEQsTUFBTSxHQUFHOzttQkFDTCxXQUFXLEdBQUcsMEJBQTBCLFlBQVksRUFBRTs7ZUFFMUQsTUFBTSxHQUFHOzttQkFBbUIsU0FBUSxlQUFBLE9BQU87Ozs7O0FBRW5EOzs7O0lBRUksV0FBVyxJQUFJO0lBQ2YscUJBQVcsSUFBSTtJQUNmLFdBQVcsSUFBSTtJQUNmLG1CQUFTLElBQUksNEJBQVM7UUFFbkIsU0FBUyxXQUFVOztZQUNmLFNBQVMsV0FBVTs7WUFBTyxVQUFVLEdBQUcsVUFBVTs7UUFDcEQsVUFBVSxHQUFHLDhDQUE4QyxTQUFTOztTQUVqRSxTQUFTOztRQUNaLFVBQVUsR0FBRyxVQUFVOztJQUUzQixTQUFTLFNBQVM7SUFFbEIsV0FBVyxNQUFNLGFBQWEsU0FBVTtRQUVyQyxTQUFTLFNBQVM7O1FBQ2pCLFVBQVUsR0FBRyxlQUFlLG9CQUFvQixTQUFTOztJQUU3RCxVQUFVLFNBQVM7U0FFWixHQUFHLFdBQVcsUUFBUTs7UUFDekIsVUFBVSxHQUFHLGdDQUFnQyxxQkFBcUIsUUFBUTs7aUJBRTVFLFFBQ0UsUUFBUyxXQUNULE1BQU8sWUFBYSxRQUFRLElBQzVCLElBQUssUUFBUSxVQUNiLElBQUssT0FBTyxVQUFXLFFBQVEsS0FBTSxpQkFBa0IsVUFBVSxRQUFROzs7SUFHN0UsT0FBUTtJQUNSLFVBQVcifQ==
+//# sourceURL=file://kode/resume.kode

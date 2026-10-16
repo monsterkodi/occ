@@ -7,14 +7,6 @@
 ###
 
 #  colours: a palette, and the roles a renderer picks from it.
-#
-#  Two layers. The palette is the named codes plus fg/bg for arbitrary hex; a
-#  role is a named place in the output that says what a thing is — a hash, a
-#  tool call, a warning — rather than what colour it is. Roles are built from the
-#  palette, so turning colour off turns off both and nothing else changes.
-#
-#  The role table is written as named functions and then referenced by the
-#  object, because a function literal inside an object literal does not lex.
 
 class StyleError extends Error
 
@@ -52,10 +44,6 @@ PLAIN = (text) -> String(text)
 TRUE_COLOR =
     foreground: [38, 39]
     background: [48, 49]
-
-#  Every call gets its own parens. Parens do not rescue juxtaposition: written
-#  the obvious way, c.bg '#111', c.fg('#ff0', c.bold text) passes the bold
-#  function itself as the text to colour.
 
 rowId       = (c) -> (text) -> c.bg('#111', c.fg('#ff0', text))
 rowLast     = (c) -> (text) -> c.bg('#111', c.fg('#55a', text))
@@ -124,12 +112,6 @@ makeHexStyle = (enabled, layer) ->
     (hex, text) ->
         [r, g, b] = parseHex hex
         "\u001b[#{open};2;#{r};#{g};#{b}m#{text}\u001b[#{close}m"
-
-#  A closure per code, made by a factory rather than written inside the loop: a
-#  variable assigned in a loop body is function-scoped in the generated
-#  javascript, so `palette[key] = (text) -> ...` with open and close read from
-#  the iteration would hand every code the numbers of the last one — every
-#  colour in the palette coming out bgGray.
 
 code = (open, close) -> (text) -> "\u001b[#{open}m#{text}\u001b[#{close}m"
 

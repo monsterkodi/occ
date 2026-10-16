@@ -45,9 +45,6 @@ startOpencode = (opt) ->
 
         child.on 'close', (code) -> resolve(code ? 0)
 
-#  ○ between the parameter list and the arrow: `○(opt) ->` would await the
-#  function rather than make it async.
-
 resume = (opt) ○->
 
     database = opt.db
@@ -76,8 +73,6 @@ resume = (opt) ○->
 
     ○ launch
         command: 'opencode'
-        #  the full id, never the prefix: opencode creates a session for an id
-        #  it does not know, and a prefix is an id it will never know
         args: ['--session', session.id]
         cwd: session.directory
         env: Object.assign({}, process.env, {OPENCODE_PERSONA: personaOf(session.directory)})
