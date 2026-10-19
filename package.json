@@ -6,7 +6,7 @@
   "license": "Unlicense",
   "bin": {
     "occ": "./bin/occ"
-  },  ~
+  },
   "engines": {
     "node": ">=24"
   }
