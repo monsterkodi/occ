@@ -194,19 +194,8 @@ toBlocks = (data, type, message, blocks) ->
 
 listSessions = (database, prefixes=[]) ->
 
-    # Delete sessions with NULL titles (top-level only)
-    nullStmt = database.prepare "SELECT id FROM session_v2 WHERE title IS NULL AND parent_id IS NULL"
-    nullRows = nullStmt.all()
-    if nullRows.length > 0
-        ids = []
-        for row in nullRows
-            ids.push row.id
-        if valid ids
-            try
-                deleteSessions database, ids
-            catch err
-                true # ignore failures (readonly db?)
-
+    cleanSessions()
+        
     if prefixes.length == 0
         stmt = database.prepare "#{SELECT} WHERE #{CHILD_FILTER} #{ORDER}"
         ⮐ stmt.all()
@@ -224,6 +213,21 @@ listSessions = (database, prefixes=[]) ->
                 found.push row
 
     found
+    
+cleanSessions = ->
+
+    writableDb = db.openWritable(db.resolveDbPath())
+    try
+        nullStmt = writableDb.prepare "SELECT id FROM session_v2 WHERE title IS NULL AND parent_id IS NULL"
+        nullRows = nullStmt.all()
+        if nullRows.length > 0
+            ids = []
+            for row in nullRows
+                ids.push row.id
+            if valid ids
+                deleteSessions writableDb, ids
+    finally
+        writableDb.close()
 
 getSession = (database, id) ->
 
