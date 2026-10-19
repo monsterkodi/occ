@@ -1,16 +1,12 @@
 {
   "name": "occ",
-  "version": "1.0.0",
-  "description": "opencode companion. lists, dumps and deletes opencode v2 sessions",
+  "version": "1.1",
+  "description": "opencode companion ─ lists, dumps and deletes opencode v2 sessions",
   "type": "module",
   "license": "Unlicense",
   "bin": {
     "occ": "./bin/occ"
-  },
-  "scripts": {
-    "build": "node ${KODE:-../ked/js/kode/kode.js} -o js kode/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test kode/test/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test/fixtures kode/test/fixtures/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test_old kode/test_old/*.kode",
-    "test": "node --test 'js/test_old/*.test.js'"
-  },
+  },  ~
   "engines": {
     "node": ">=24"
   }
