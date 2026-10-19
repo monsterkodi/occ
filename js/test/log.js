@@ -29,25 +29,25 @@ markers = function (out)
         return l.startsWith('>') || l.startsWith('$')
     })
 }
-toExport["log blocks"] = function ()
+toExport["log blocks"] = async function ()
 {
-    section("starts with the session row, then the blocks", function ()
+    await section("starts with the session row, then the blocks", async function ()
     {
         lines = run(['aaaaaa']).split('\n')
         compare(lines[0].trimStart().startsWith('aaaaaa '),true)
         compare(lines[1],'> user')
         compare(lines[2],'hello')
     })
-    section("shows tool calls and results inline, in order", function ()
+    await section("shows tool calls and results inline, in order", async function ()
     {
         compare(markers(run(['aaaaaa'])),['> user','> agent plan','$ shell','$ shell result','> user','> agent build','$ shell','$ webfetch','$ webfetch result','$ grep','$ read','$ read result'])
     })
-    section("an assistant message with no agent field continues the run", function ()
+    await section("an assistant message with no agent field continues the run", async function ()
     {
         lines = run(['aaaaaa']).split('\n')
         compare(lines[lines.indexOf('no agent field') - 1],'…')
     })
-    section("agent text after a tool call continues with an ellipsis", function ()
+    await section("agent text after a tool call continues with an ellipsis", async function ()
     {
         lines = run(['aaaaaa']).split('\n')
         cont = lines.indexOf('…',lines.indexOf,'$ shell result')
@@ -56,24 +56,24 @@ toExport["log blocks"] = function ()
     })
 }
 toExport["log blocks"]._section_ = true
-toExport["log selection"] = function ()
+toExport["log selection"] = async function ()
 {
-    section("shows every session when no ids are given", function ()
+    await section("shows every session when no ids are given", async function ()
     {
         every = run([])
         compare(every.includes('$ webfetch'),true)
         compare(every.includes('$ shell'),true)
     })
-    section("ids filter which sessions are shown", function ()
+    await section("ids filter which sessions are shown", async function ()
     {
         compare(!run(['cccccc']).includes('$ webfetch'),true)
     })
-    section("ids keep the order they were given in", function ()
+    await section("ids keep the order they were given in", async function ()
     {
         out = run(['bbbbbb','aaaaaa'])
         compare(out.indexOf('bbbbbb') < out.indexOf('aaaaaa'),true)
     })
-    section("sessions are separated by a blank line", function ()
+    await section("sessions are separated by a blank line", async function ()
     {
         lines = run(['aaaaaa','cccccc']).split('\n')
         secondRow = lines.findIndex(function (l)
@@ -82,15 +82,15 @@ toExport["log selection"] = function ()
         })
         compare(lines[secondRow - 1],'')
     })
-    section("a session with no renderable blocks prints only its row", function ()
+    await section("a session with no renderable blocks prints only its row", async function ()
     {
         compare(run(['bbbbbb']),run(['bbbbbb']).split('\n')[0])
     })
 }
 toExport["log selection"]._section_ = true
-toExport["log errors"] = function ()
+toExport["log errors"] = async function ()
 {
-    section("unknown id surfaces the error", function ()
+    await section("unknown id surfaces the error", async function ()
     {
         throws(function ()
         {
@@ -98,7 +98,7 @@ toExport["log errors"] = function ()
             return /no\x20session/i
         })
     })
-    section("output ends without a trailing blank line", function ()
+    await section("output ends without a trailing blank line", async function ()
     {
         out = run(['aaaaaa'])
         compare(!out.endsWith('\n'),true)

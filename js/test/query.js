@@ -34,17 +34,17 @@ throwsOcls = function (pattern)
     check.prototype = null
     return check
 }
-toExport["listSessions filtering"] = function ()
+toExport["listSessions filtering"] = async function ()
 {
-    section("returns every top-level session, oldest last message first", function ()
+    await section("returns every top-level session, oldest last message first", async function ()
     {
         compare((ids()),['ses_bbbbbbbbbbbbbbbbbbbbbbb2',C,A])
     })
-    section("excludes child sessions", function ()
+    await section("excludes child sessions", async function ()
     {
         compare(!ids().includes('ses_ddddddddddddddddddddddd4'),true)
     })
-    section("carries the directory the session runs in", function ()
+    await section("carries the directory the session runs in", async function ()
     {
         byId = function (id)
         {
@@ -53,24 +53,24 @@ toExport["listSessions filtering"] = function ()
         compare(byId(A).directory,'/home/kodi/a/coco')
         compare(byId('ses_bbbbbbbbbbbbbbbbbbbbbbb2').directory,'/home/kodi/.config')
     })
-    section("filters by a 6-character prefix", function ()
+    await section("filters by a 6-character prefix", async function ()
     {
         found = query.listSessions(database,['cccccc'])
         compare(found.length,1)
         compare(found[0].id,C)
     })
-    section("accepts a prefix with the ses_ prefix included", function ()
+    await section("accepts a prefix with the ses_ prefix included", async function ()
     {
         compare(query.listSessions(database,["ses_aaaaaa"]).length,1)
     })
-    section("matches several prefixes at once, keeping the query order", function ()
+    await section("matches several prefixes at once, keeping the query order", async function ()
     {
         compare((query.listSessions(database,['ccccccc','aaaaaaa']).map(function (s)
         {
             return s.id
         })),[C,A])
     })
-    section("matches a title substring, case insensitive", function ()
+    await section("matches a title substring, case insensitive", async function ()
     {
         compare((query.listSessions(database,['ocls']).map(function (s)
         {
@@ -85,7 +85,7 @@ toExport["listSessions filtering"] = function ()
             return s.id
         })),[A])
     })
-    section("matches anywhere in a title, not only the start", function ()
+    await section("matches anywhere in a title, not only the start", async function ()
     {
         compare((query.listSessions(database,['hyprsession']).map(function (s)
         {
@@ -96,14 +96,14 @@ toExport["listSessions filtering"] = function ()
             return s.id
         })),[C])
     })
-    section("an id still wins over a title", function ()
+    await section("an id still wins over a title", async function ()
     {
         compare((query.listSessions(database,['aaaaaaa']).map(function (s)
         {
             return s.id
         })),[A])
     })
-    section("ids and titles can be mixed, in the order given", function ()
+    await section("ids and titles can be mixed, in the order given", async function ()
     {
         compare((query.listSessions(database,['conny','aaaaaaa']).map(function (s)
         {
@@ -114,28 +114,28 @@ toExport["listSessions filtering"] = function ()
             return s.id
         })),[A,C])
     })
-    section("overlapping title arguments list a session once", function ()
+    await section("overlapping title arguments list a session once", async function ()
     {
         compare((query.listSessions(database,['ocls','coco']).map(function (s)
         {
             return s.id
         })),[A])
     })
-    section("title search never finds a child session", function ()
+    await section("title search never finds a child session", async function ()
     {
         throws((function ()
         {
             return query.listSessions(database,['child'])
         }),/no\x20session/i)
     })
-    section("an ambiguous id prefix does not fall through to titles", function ()
+    await section("an ambiguous id prefix does not fall through to titles", async function ()
     {
         throws((function ()
         {
             return query.listSessions(database,['ses_'])
         }),/matches\x20\d+\x20sessions/i)
     })
-    section("sql wildcards in an argument stay literal", function ()
+    await section("sql wildcards in an argument stay literal", async function ()
     {
         throws((function ()
         {
@@ -146,21 +146,21 @@ toExport["listSessions filtering"] = function ()
             return query.listSessions(database,['_'])
         }),/no\x20session/i)
     })
-    section("a term matching nothing is an error", function ()
+    await section("a term matching nothing is an error", async function ()
     {
         throws((function ()
         {
             return query.listSessions(database,['zzzzzz'])
         }),/no\x20session/i)
     })
-    section("unknown prefix is an error", function ()
+    await section("unknown prefix is an error", async function ()
     {
         throws((function ()
         {
             return query.listSessions(database,['zzzzzz'])
         }),throwsOcls(/no\x20session/i))
     })
-    section("ambiguous prefix is an error", function ()
+    await section("ambiguous prefix is an error", async function ()
     {
         throws((function ()
         {
@@ -169,9 +169,9 @@ toExport["listSessions filtering"] = function ()
     })
 }
 toExport["listSessions filtering"]._section_ = true
-toExport["listSessions ordering"] = function ()
+toExport["listSessions ordering"] = async function ()
 {
-    section("follows the last message, not the update time", function ()
+    await section("follows the last message, not the update time", async function ()
     {
         rows = query.listSessions(database,[])
         pairs = rows.map(function (s)
@@ -183,7 +183,7 @@ toExport["listSessions ordering"] = function ()
         compare(byId[A].time_updated < byId[C].time_updated,true)
         compare(rows.at(-1).id,A)
     })
-    section("a session with no messages sorts on its update time", function ()
+    await section("a session with no messages sorts on its update time", async function ()
     {
         empty = new sqlite.DatabaseSync(':memory:')
         empty.exec(`CREATE TABLE session_v2 (
@@ -207,9 +207,9 @@ CREATE TABLE session_message (
     })
 }
 toExport["listSessions ordering"]._section_ = true
-toExport["listSessions row data"] = function ()
+toExport["listSessions row data"] = async function ()
 {
-    section("counts turns from user messages with text only", function ()
+    await section("counts turns from user messages with text only", async function ()
     {
         pairs = query.listSessions(database,[]).map(function (s)
         {
@@ -220,14 +220,14 @@ toExport["listSessions row data"] = function ()
         compare(byId['ses_bbbbbbbbbbbbbbbbbbbbbbb2'],0)
         compare(byId[C],1)
     })
-    section("null title comes through as null", function ()
+    await section("null title comes through as null", async function ()
     {
         second = query.listSessions(database,['bbbbbb'])[0]
         compare(second.title,null)
         compare(second.time_created,build.BASE + 120000)
         compare(second.time_updated,build.BASE + 180000)
     })
-    section("time_last is the time of the newest message", function ()
+    await section("time_last is the time of the newest message", async function ()
     {
         pairs = query.listSessions(database,[]).map(function (s)
         {
@@ -238,7 +238,7 @@ toExport["listSessions row data"] = function ()
         compare(byId['ses_bbbbbbbbbbbbbbbbbbbbbbb2'],build.BASE + 2 * 1000)
         compare(byId[C],build.BASE + 4 * 1000)
     })
-    section("time_last falls back to the update time of a session with no messages", function ()
+    await section("time_last falls back to the update time of a session with no messages", async function ()
     {
         empty = new sqlite.DatabaseSync(':memory:')
         empty.exec(`CREATE TABLE session_v2 (

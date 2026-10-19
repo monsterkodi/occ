@@ -20,21 +20,21 @@ throwsOclsError = function (pattern)
         return e instanceof db.OclsError && (pattern.test,e.message)
     }
 }
-toExport["resolveDbPath"] = function ()
+toExport["resolveDbPath"] = async function ()
 {
-    section("uses XDG_DATA_HOME when set", function ()
+    await section("uses XDG_DATA_HOME when set", async function ()
     {
         compare(db.resolveDbPath({XDG_DATA_HOME:'/xdg'}),'/xdg/opencode/opencode.db')
     })
-    section("falls back to ~/.local/share", function ()
+    await section("falls back to ~/.local/share", async function ()
     {
         compare(db.resolveDbPath({}),`${process.env.HOME}/.local/share/opencode/opencode.db`)
     })
 }
 toExport["resolveDbPath"]._section_ = true
-toExport["openDb"] = function ()
+toExport["openDb"] = async function ()
 {
-    section("opens the fixture read-only", function ()
+    await section("opens the fixture read-only", async function ()
     {
         d = db.openDb(DB_PATH)
         compare((d.prepare('SELECT count(*) c FROM session_v2').get()).c,4)
@@ -45,7 +45,7 @@ toExport["openDb"] = function ()
         })
         d.close()
     })
-    section("missing file gives a clear error", function ()
+    await section("missing file gives a clear error", async function ()
     {
         throws(function ()
         {
@@ -53,7 +53,7 @@ toExport["openDb"] = function ()
             return throwsOclsError(/no\x20database/i)
         })
     })
-    section("unrecognized schema gives a clear error", function ()
+    await section("unrecognized schema gives a clear error", async function ()
     {
         throws(function ()
         {
@@ -61,7 +61,7 @@ toExport["openDb"] = function ()
             return throwsOclsError(/schema/i)
         })
     })
-    section("missing required column gives a clear error", function ()
+    await section("missing required column gives a clear error", async function ()
     {
         throws(function ()
         {

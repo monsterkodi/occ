@@ -46,14 +46,14 @@ markerLines = function ()
     }
     return {user:find('> user'),agent:find('> agent build'),call:find('$ shell'),result:find('$ shell result'),continued:find('…')}
 }
-toExport["renderBlocks"] = function ()
+toExport["renderBlocks"] = async function ()
 {
-    section("a tool block does not close the agent run", function ()
+    await section("a tool block does not close the agent run", async function ()
     {
         want = ['> user','hi conny','> agent build','let me look','$ shell','ls -la; hyprctl version','$ shell result','total 48','…','found it'].join('\n')
         compare((render.renderBlocks(history,plain)),want)
     })
-    section("a tool marker starts with a dollar, a turn marker with an angle bracket", function ()
+    await section("a tool marker starts with a dollar, a turn marker with an angle bracket", async function ()
     {
         lines = render.renderBlocks(history,plain).split('\n')
         var list = _k_.list(lines.filter(function (l)
@@ -73,106 +73,106 @@ toExport["renderBlocks"] = function ()
         compare((lines.includes('> user')),true)
         compare((lines.includes('> agent build')),true)
     })
-    section("there is never an agent marker and an ellipsis on one turn", function ()
+    await section("there is never an agent marker and an ellipsis on one turn", async function ()
     {
         compare((markersOf(history)),['> user','> agent build','$ shell','$ shell result','…'])
     })
-    section("a user turn reopens the marker for the next agent turn", function ()
+    await section("a user turn reopens the marker for the next agent turn", async function ()
     {
         bs = [block('turn',{role:'agent',agent:'plan',text:'one'}),block('call',{name:'shell',agent:'plan',command:'true'}),block('result',{name:'shell',text:'ok',outputPath:null}),block('turn',{role:'user',agent:null,text:'thanks'}),block('turn',{role:'agent',agent:'plan',text:'two'})]
         want = ['> agent plan','$ shell','$ shell result','> user','> agent plan']
         compare((markersOf(bs)),want)
     })
-    section("a second agent turn continues with an ellipsis", function ()
+    await section("a second agent turn continues with an ellipsis", async function ()
     {
         bs = [block('turn',{role:'agent',agent:'build',text:'checking'}),block('turn',{role:'agent',agent:'build',text:'found it'}),block('turn',{role:'agent',agent:'build',text:'so that is why'})]
         compare((render.renderBlocks(bs,plain)),'> agent build\nchecking\n…\nfound it\n…\nso that is why')
     })
-    section("the continuation marker is one character, no padding", function ()
+    await section("the continuation marker is one character, no padding", async function ()
     {
         bs = [block('turn',{role:'agent',agent:'build',text:'one'}),block('turn',{role:'agent',agent:'build',text:'two'})]
         out = render.renderBlocks(bs,plain)
         compare((out.split('\n')[2]),'…')
     })
-    section("an empty agent turn neither renders nor breaks the run", function ()
+    await section("an empty agent turn neither renders nor breaks the run", async function ()
     {
         bs = [block('turn',{role:'agent',agent:'build',text:'one'}),block('turn',{role:'agent',agent:'build',text:''}),block('turn',{role:'agent',agent:'build',text:'two'})]
         out = render.renderBlocks(bs,plain)
         compare(out,'> agent build\none\n…\ntwo')
     })
-    section("empty text renders nothing", function ()
+    await section("empty text renders nothing", async function ()
     {
         compare((render.renderBlocks([block('turn',{role:'user',text:'   '})],plain)),'')
         compare((render.renderBlocks([],plain)),'')
     })
-    section("an agent turn without an agent field still gets a marker", function ()
+    await section("an agent turn without an agent field still gets a marker", async function ()
     {
         compare((render.renderBlocks([block('turn',{role:'agent',agent:null,text:'hi'})],plain)),'> agent\nhi')
     })
 }
 toExport["renderBlocks"]._section_ = true
-toExport["renderBlocks tools"] = function ()
+toExport["renderBlocks tools"] = async function ()
 {
-    section("a run opening with a tool call gets the agent marker first", function ()
+    await section("a run opening with a tool call gets the agent marker first", async function ()
     {
         want = ['> user','do the thing','> agent build','$ bash','false','$ bash result','boom','$ bash exit 42','…','it failed'].join('\n')
         bs = [block('turn',{role:'user',agent:null,text:'do the thing'}),block('call',{name:'bash',agent:'build',command:'false'}),block('result',{name:'bash',text:'boom',outputPath:null}),block('exit',{name:'bash',code:42}),block('turn',{role:'agent',agent:'build',text:'it failed'})]
         compare((render.renderBlocks(bs,plain)),want)
     })
-    section("only one agent marker in a run that opens with tool calls", function ()
+    await section("only one agent marker in a run that opens with tool calls", async function ()
     {
         bs = [block('turn',{role:'user',agent:null,text:'go'}),block('call',{name:'bash',agent:'build',command:'one'}),block('result',{name:'bash',text:'1',outputPath:null}),block('call',{name:'bash',agent:'build',command:'two'}),block('result',{name:'bash',text:'2',outputPath:null}),block('turn',{role:'agent',agent:'build',text:'done'})]
         want = ['> user','> agent build','$ bash','$ bash result','$ bash','$ bash result','…']
         compare((markersOf(bs)),want)
     })
-    section("a run opening with a tool call and no agent field", function ()
+    await section("a run opening with a tool call and no agent field", async function ()
     {
         compare((render.renderBlocks([block('call',{name:'grep',agent:null,command:'x'})],plain)),'> agent\n$ grep\nx')
     })
-    section("a result marker names the tool it came from", function ()
+    await section("a result marker names the tool it came from", async function ()
     {
         bs = [block('call',{name:'edit',agent:'build',command:'old'}),block('result',{name:'edit',text:'written',outputPath:null})]
         compare((render.renderBlocks(bs,plain)),'> agent build\n$ edit\nold\n$ edit result\nwritten')
     })
-    section("an exit marker names the tool and the code", function ()
+    await section("an exit marker names the tool and the code", async function ()
     {
         bs = [block('call',{name:'edit',agent:'build',command:'old'}),block('exit',{name:'edit',code:1})]
         compare((render.renderBlocks(bs,plain)),'> agent build\n$ edit\nold\n$ edit exit 1')
     })
-    section("a zero exit gets no exit marker", function ()
+    await section("a zero exit gets no exit marker", async function ()
     {
         bs = [block('call',{name:'bash',agent:'build',command:'true'}),block('result',{name:'bash',text:'',outputPath:null})]
         compare((render.renderBlocks(bs,plain)),'> agent build\n$ bash\ntrue')
     })
-    section("call and result text is verbatim and unindented", function ()
+    await section("call and result text is verbatim and unindented", async function ()
     {
         bs = [block('call',{name:'shell',agent:'build',command:'line one\n  indented\n\nline four'}),block('result',{name:'shell',text:'  leading space\ntrailing   ',outputPath:null})]
         want = '> agent build\n$ shell\nline one\n  indented\n\nline four\n$ shell result\n  leading space\ntrailing'
         compare((render.renderBlocks(bs,plain)),want)
     })
-    section("a truncated result points at the full output", function ()
+    await section("a truncated result points at the full output", async function ()
     {
         bs = [block('result',{name:'read',text:'partial',outputPath:'/tmp/tool_abc'})]
         compare((render.renderBlocks(bs,plain)),'$ read result\npartial\n… full output at /tmp/tool_abc')
     })
-    section("a call with no following result still renders the call", function ()
+    await section("a call with no following result still renders the call", async function ()
     {
         compare((render.renderBlocks([block('call',{name:'grep',agent:'build',command:'grep x'})],plain)),'> agent build\n$ grep\ngrep x')
     })
-    section("the call marker shows the tool name", function ()
+    await section("the call marker shows the tool name", async function ()
     {
         out = render.renderBlocks([block('call',{name:'webfetch',agent:'build',command:'GET /x'})],plain)
         compare((out.includes('$ webfetch\n')),true)
     })
 }
 toExport["renderBlocks tools"]._section_ = true
-toExport["renderBlocks colors"] = function ()
+toExport["renderBlocks colors"] = async function ()
 {
-    section("colors leave the visible text untouched", function ()
+    await section("colors leave the visible text untouched", async function ()
     {
         compare((render.renderBlocks(history,colored).replace(/\x1b\[[0-9;]*m/g,'')),(render.renderBlocks(history,plain)))
     })
-    section("every marker is styled when color is on", function ()
+    await section("every marker is styled when color is on", async function ()
     {
         markers = markerLines()
         var list1 = _k_.list(Object.entries(markers))
@@ -184,7 +184,7 @@ toExport["renderBlocks colors"] = function ()
             compare((line.includes("\u001b[")),true)
         }
     })
-    section("the markers do not all collapse into one style", function ()
+    await section("the markers do not all collapse into one style", async function ()
     {
         lines = Object.values(markerLines())
         compare((new Set(lines)).size > 1,true)

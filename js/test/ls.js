@@ -102,9 +102,9 @@ stamp = function (ms)
     }
     return `${pad(d.getDate())}.${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
-toExport["ls date grouping"] = function ()
+toExport["ls date grouping"] = async function ()
 {
-    section("a session repeating the previous row's date shows spaces instead", function ()
+    await section("a session repeating the previous row's date shows spaces instead", async function ()
     {
         lines = runOn(daysDb()).split('\n')
         compare((dateOf(lines[0])),'07.10')
@@ -113,12 +113,12 @@ toExport["ls date grouping"] = function ()
         compare((dateOf(lines[3])),undefined)
         compare((dateOf(lines[4])),'13.10')
     })
-    section("the time is still printed on a blanked row", function ()
+    await section("the time is still printed on a blanked row", async function ()
     {
         lines = runOn(daysDb()).split('\n')
         compare((lines.map(timeOf)),['11:00','12:00','08:00','14:00','01:00'])
     })
-    section("every row keeps its full width when the date is blanked", function ()
+    await section("every row keeps its full width when the date is blanked", async function ()
     {
         var list = _k_.list(runOn(daysDb()).split('\n'))
         for (var _b_ = 0; _b_ < list.length; _b_++)
@@ -127,28 +127,28 @@ toExport["ls date grouping"] = function ()
             compare(line.length,80)
         }
     })
-    section("the hour is in the same column on blanked and dated rows", function ()
+    await section("the hour is in the same column on blanked and dated rows", async function ()
     {
         lines = runOn(daysDb()).split('\n')
         compare((at_(lines[1],'12:00')),(at_(lines[0],'11:00')))
         compare((at_(lines[3],'14:00')),(at_(lines[2],'08:00')))
     })
-    section("ids are listed with every date shown", function ()
+    await section("ids are listed with every date shown", async function ()
     {
         lines = runOn(daysDb(),['2222','4444']).split('\n')
         compare((lines.map(dateOf)),['07.10','11.10'])
     })
-    section("a title argument lists with every date shown", function ()
+    await section("a title argument lists with every date shown", async function ()
     {
         lines = runOn(daysDb(),['same day']).split('\n')
         compare((lines.map(dateOf)),['07.10','07.10'])
     })
-    section("one row only shows its date", function ()
+    await section("one row only shows its date", async function ()
     {
         rows = runOn(daysDb(),['1111']).split('\n')
         compare((dateOf(rows[0])),'07.10')
     })
-    section("a session with no messages groups on its update time", function ()
+    await section("a session with no messages groups on its update time", async function ()
     {
         database = daysDb()
         stmt = database.prepare("INSERT INTO session_v2 (id, parent_id, title, time_created, time_updated) VALUES (?, ?, ?, ?, ?)")
@@ -160,7 +160,7 @@ toExport["ls date grouping"] = function ()
         compare((lines.map(dateOf)),['07.10',undefined,undefined,'11.10',undefined,'13.10'])
         database.close()
     })
-    section("the shared fixture groups too", function ()
+    await section("the shared fixture groups too", async function ()
     {
         lines = run([]).split('\n')
         dates = lines.map(dateOf)
@@ -169,48 +169,48 @@ toExport["ls date grouping"] = function ()
     })
 }
 toExport["ls date grouping"]._section_ = true
-toExport["ls"] = function ()
+toExport["ls"] = async function ()
 {
-    section("no ids lists every session, one row each", function ()
+    await section("no ids lists every session, one row each", async function ()
     {
         compare((run([]).split('\n').length),3)
     })
-    section("ids filter the rows", function ()
+    await section("ids filter the rows", async function ()
     {
         lines = run(['bbbbbb']).split('\n')
         compare(lines.length,1)
         compare((lines[0].trimStart().startsWith('bbbbbb')),true)
     })
-    section("a title argument selects rows too", function ()
+    await section("a title argument selects rows too", async function ()
     {
         lines = run(['ocls']).split('\n')
         compare(lines.length,1)
         compare((lines[0].includes('Coco - ocls')),true)
     })
-    section("ids and titles can be mixed", function ()
+    await section("ids and titles can be mixed", async function ()
     {
         compare((run(['ocls','bbbbbb']).split('\n').length),2)
     })
-    section("unknown id surfaces the error", function ()
+    await section("unknown id surfaces the error", async function ()
     {
         throws((function ()
         {
             return run(['zzzzzz'])
         }),/no\x20session/i)
     })
-    section("output ends without a trailing blank line", function ()
+    await section("output ends without a trailing blank line", async function ()
     {
         every = run([])
         compare(!(every.endsWith('\n')),true)
     })
-    section("the date column shows the last turn, not the session start", function ()
+    await section("the date column shows the last turn, not the session start", async function ()
     {
         sessions = query.listSessions(db.openDb(DB_PATH),['aaaaaa'])
         rows = run(['aaaaaa']).split('\n')
         compare((rows[0].includes(stamp(sessions[0].time_last))),true)
         compare(!(rows[0].includes(stamp(sessions[0].time_created))),true)
     })
-    section("each row adds up: last turn minus duration is the session start", function ()
+    await section("each row adds up: last turn minus duration is the session start", async function ()
     {
         sessions = query.listSessions(db.openDb(DB_PATH),[])
         rows = run([]).split('\n')

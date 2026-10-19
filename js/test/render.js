@@ -48,9 +48,9 @@ background = function (text)
 {
     return `\u001b[44m${text}\u001b[49m`
 }
-toExport["durationMinutes"] = function ()
+toExport["durationMinutes"] = async function ()
 {
-    section("is whole minutes, with no unit", function ()
+    await section("is whole minutes, with no unit", async function ()
     {
         cases = [[0,'0'],[999,'0'],[59999,'0'],[60000,'1'],[60000 + 59999,'1'],[90000,'1'],[18 * 60000,'18'],[59 * 60000,'59'],[3600000,'60'],[24 * 3600000,'1440'],[365 * 86400000,'525600']]
         var list = _k_.list(cases)
@@ -63,11 +63,11 @@ toExport["durationMinutes"] = function ()
             matches(out,/^\d+$/)
         }
     })
-    section("a negative span reads as zero", function ()
+    await section("a negative span reads as zero", async function ()
     {
         compare((render.durationMinutes(-5000)),'0')
     })
-    section("six digits covers just under two years", function ()
+    await section("six digits covers just under two years", async function ()
     {
         just = render.durationMinutes(999999 * MINUTE)
         over = render.durationMinutes(1000000 * MINUTE)
@@ -76,39 +76,39 @@ toExport["durationMinutes"] = function ()
     })
 }
 toExport["durationMinutes"]._section_ = true
-toExport["renderSession"] = function ()
+toExport["renderSession"] = async function ()
 {
-    section("id has the ses_ prefix stripped and is cropped to 6", function ()
+    await section("id has the ses_ prefix stripped and is cropped to 6", async function ()
     {
         matches(strip(row()),/^\x20aaaaaa\x20/)
     })
-    section("last is day.month hour:minute, 11 chars", function ()
+    await section("last is day.month hour:minute, 11 chars", async function ()
     {
         matches(strip(row()),/^\x20aaaaaa\x20+\d\d\.\d\d\x20\d\d:\d\d\x20/)
     })
-    section("last reads the time of the last turn, not the start", function ()
+    await section("last reads the time of the last turn, not the start", async function ()
     {
         out = strip(row({time_last:1791283494422 + 24 * 3600000}))
         compare((out.startsWith(" aaaaaa  07.10 12:44 ")),true)
     })
-    section("a session without a last turn falls back to its update time", function ()
+    await section("a session without a last turn falls back to its update time", async function ()
     {
         out = strip(row({time_last:undefined}))
         compare((out.startsWith(" aaaaaa  06.10 12:45 ")),true)
     })
-    section("null title prints NULL", function ()
+    await section("null title prints NULL", async function ()
     {
         out = strip(row({title:null}))
         matches(out,/\x20NULL/)
     })
-    section("every cell is inset by one space on each side", function ()
+    await section("every cell is inset by one space on each side", async function ()
     {
         out = strip(row({title:'zz'}))
         compare((out.startsWith(" aaaaaa  06.10 12:45 ")),true)
         compare((out.includes("zz  ")),true)
         compare(out.length,80)
     })
-    section("the fixed columns are 34 wide and do not move with the terminal", function ()
+    await section("the fixed columns are 34 wide and do not move with the terminal", async function ()
     {
         fixed = function (text)
         {
@@ -120,35 +120,35 @@ toExport["renderSession"] = function ()
         compare((fixed(40)),(fixed(120)))
         compare(fixed(80).length,35)
     })
-    section("the duration column holds six digits of minutes", function ()
+    await section("the duration column holds six digits of minutes", async function ()
     {
         out = strip(row({time_last:1791283494422 + 999999 * MINUTE}))
         matches(out,/\s999999\s/)
     })
-    section("duration measures to the last message, not the update time", function ()
+    await section("duration measures to the last message, not the update time", async function ()
     {
         out = strip(row({time_last:1791283494422 + 5 * MINUTE}))
         matches(out,/\s5\s/)
     })
-    section("a session without a last turn measures to its update time", function ()
+    await section("a session without a last turn measures to its update time", async function ()
     {
         out = strip(row({time_last:undefined}))
         matches(out,/\s1\s/)
     })
-    section("the name column fills to the terminal edge", function ()
+    await section("the name column fills to the terminal edge", async function ()
     {
         at80 = strip(row({title:'zz'},80))
         at60 = strip(row({title:'zz'},60))
         compare(at80.length,80)
         compare(at60.length,60)
     })
-    section("a long name is cropped inside the name column", function ()
+    await section("a long name is cropped inside the name column", async function ()
     {
         out = strip(row({title:('x').repeat,200:200},50))
         compare((out.includes('…')),true)
         compare(out.length,50)
     })
-    section("the row fills the terminal, or falls back to its minimum width", function ()
+    await section("the row fills the terminal, or falls back to its minimum width", async function ()
     {
         var list1 = [38,40,60,120]
         for (var _b_ = 0; _b_ < list1.length; _b_++)
@@ -164,25 +164,25 @@ toExport["renderSession"] = function ()
     })
 }
 toExport["renderSession"]._section_ = true
-toExport["renderSession repeatDate"] = function ()
+toExport["renderSession repeatDate"] = async function ()
 {
-    section("a repeated date renders as spaces, the time stays in its column", function ()
+    await section("a repeated date renders as spaces, the time stays in its column", async function ()
     {
         out = row({time_last:day(10,7,11,0)},80,plain,{repeatDate:true})
         matches(strip(out),/^\x20aaaaaa\x20+\x20{6}\d\d:\d\d\x20/)
     })
-    section("the hour sits in the same column with and without a date", function ()
+    await section("the hour sits in the same column with and without a date", async function ()
     {
         blanked = strip(row({time_last:day(10,7,11,0)},80,plain,{repeatDate:true}))
         shown = strip(row({time_last:day(10,7,11,0)},80,plain,{repeatDate:false}))
         compare((blanked.indexOf('11:00')),(shown.indexOf('11:00')))
     })
-    section("the date is printed when repeatDate is not set", function ()
+    await section("the date is printed when repeatDate is not set", async function ()
     {
         out = row({time_last:day(10,7,11,0)},80,plain,{repeatDate:false})
         compare((dateOf(out)),'07.10')
     })
-    section("the row keeps its width and its cell positions with a repeated date", function ()
+    await section("the row keeps its width and its cell positions with a repeated date", async function ()
     {
         blanked = row({time_last:day(10,7,11,0)},80,plain,{repeatDate:true})
         shown = row({time_last:day(10,7,11,0)},80,plain,{repeatDate:false})
@@ -191,7 +191,7 @@ toExport["renderSession repeatDate"] = function ()
         compare((strip(blanked).slice(21)),(strip(shown).slice(21)))
         compare((strip(blanked)),(strip(shown).replace('07.10','     ')))
     })
-    section("colors wrap the blanked date like any other cell", function ()
+    await section("colors wrap the blanked date like any other cell", async function ()
     {
         custom = style.createStyle(true)
         background = function (text)
@@ -205,9 +205,9 @@ toExport["renderSession repeatDate"] = function ()
     })
 }
 toExport["renderSession repeatDate"]._section_ = true
-toExport["renderSession padding"] = function ()
+toExport["renderSession padding"] = async function ()
 {
-    section("cell padding sits inside the role, so a background reaches the gap", function ()
+    await section("cell padding sits inside the role, so a background reaches the gap", async function ()
     {
         custom = style.createStyle(true)
         custom.row.id = background
@@ -215,7 +215,7 @@ toExport["renderSession padding"] = function ()
         out = row({},80,custom)
         compare((out.startsWith("\u001b[44m aaaaaa ")),true)
     })
-    section("no space between two cells is left unstyled", function ()
+    await section("no space between two cells is left unstyled", async function ()
     {
         custom = style.createStyle(true)
         var list2 = ['id','last','duration','turns','name']
@@ -237,7 +237,7 @@ toExport["renderSession padding"] = function ()
             i += 1
         }
     })
-    section("a fully backgrounded row has the same visible text as a plain one", function ()
+    await section("a fully backgrounded row has the same visible text as a plain one", async function ()
     {
         custom = style.createStyle(true)
         var list3 = ['id','last','duration','turns','name']
@@ -250,9 +250,9 @@ toExport["renderSession padding"] = function ()
     })
 }
 toExport["renderSession padding"]._section_ = true
-toExport["renderSession colors"] = function ()
+toExport["renderSession colors"] = async function ()
 {
-    section("colors do not shift or truncate the visible text", function ()
+    await section("colors do not shift or truncate the visible text", async function ()
     {
         compare((strip(row({},80,colored))),(strip(row())))
         var list4 = [40,80,120]
@@ -264,7 +264,7 @@ toExport["renderSession colors"] = function ()
             compare(strip(withColor).length <= width,true)
         }
     })
-    section("a colored long name still ends at the terminal edge", function ()
+    await section("a colored long name still ends at the terminal edge", async function ()
     {
         out = strip(row({title:('q').repeat,200:200},50,colored))
         compare(out.length,50)

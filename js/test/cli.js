@@ -44,9 +44,9 @@ refuses = function (res, pattern)
     }
     return matches(res.stderr,pattern)
 }
-toExport["cli read commands"] = function ()
+toExport["cli read commands"] = async function ()
 {
-    section("every read command runs and prints something", function ()
+    await section("every read command runs and prints something", async function ()
     {
         var list = _k_.list(READ_COMMANDS)
         for (var _a_ = 0; _a_ < list.length; _a_++)
@@ -56,7 +56,7 @@ toExport["cli read commands"] = function ()
             matches(out,/aaaaaa/)
         }
     })
-    section("every read command with no ids runs", function ()
+    await section("every read command with no ids runs", async function ()
     {
         var list1 = _k_.list(READ_COMMANDS)
         for (var _b_ = 0; _b_ < list1.length; _b_++)
@@ -66,7 +66,7 @@ toExport["cli read commands"] = function ()
             compare(out.trim().length > 0,true)
         }
     })
-    section("every command in the help table is dispatchable", function ()
+    await section("every command in the help table is dispatchable", async function ()
     {
         res = occRun(['--help'])
         found = res.stdout.matchAll(LISTED)
@@ -87,13 +87,13 @@ toExport["cli read commands"] = function ()
             compare(out.trim().length > 0,true)
         }
     })
-    section("a title argument works end to end", function ()
+    await section("a title argument works end to end", async function ()
     {
         out = stdoutOf(occRun(['ls','ocls']))
         matches(out,/aaaaaa/)
         matches(out,/Coco\x20-\x20ocls/)
     })
-    section("every read command accepts a title argument", function ()
+    await section("every read command accepts a title argument", async function ()
     {
         var list3 = _k_.list(READ_COMMANDS)
         for (var _d_ = 0; _d_ < list3.length; _d_++)
@@ -105,44 +105,44 @@ toExport["cli read commands"] = function ()
     })
 }
 toExport["cli read commands"]._section_ = true
-toExport["cli help"] = function ()
+toExport["cli help"] = async function ()
 {
-    section("no arguments falls back to ls", function ()
+    await section("no arguments falls back to ls", async function ()
     {
         bare = stdoutOf(occRun([]))
         listed = stdoutOf(occRun(['ls']))
         compare(bare,listed)
         notMatches(bare,/usage:/)
     })
-    section("an empty argument is still a command lookup", function ()
+    await section("an empty argument is still a command lookup", async function ()
     {
         refuses(occRun(['']),/unknown\x20command/)
     })
-    section("an unknown command fails with a message", function ()
+    await section("an unknown command fails with a message", async function ()
     {
         refuses(occRun(['frobnicate']),/unknown\x20command\x20\"frobnicate\"/)
     })
 }
 toExport["cli help"]._section_ = true
-toExport["cli del"] = function ()
+toExport["cli del"] = async function ()
 {
-    section("is dispatched and reaches its own guard", function ()
+    await section("is dispatched and reaches its own guard", async function ()
     {
         refuses(occRun(['del']),/at\x20least\x20one\x20session\x20id/)
     })
-    section("refuses without a terminal", function ()
+    await section("refuses without a terminal", async function ()
     {
         refuses(occRun(['del','aaaaaa']),/needs\x20a\x20terminal/)
     })
 }
 toExport["cli del"]._section_ = true
-toExport["cli resume"] = function ()
+toExport["cli resume"] = async function ()
 {
-    section("is dispatched and reaches its own guard", function ()
+    await section("is dispatched and reaches its own guard", async function ()
     {
         refuses(occRun(['resume']),/exactly\x20one\x20session\x20id/)
     })
-    section("refuses without a terminal", function ()
+    await section("refuses without a terminal", async function ()
     {
         refuses(occRun(['resume','aaaaaa']),/needs\x20a\x20terminal/)
     })

@@ -15,15 +15,15 @@ sink = function ()
     }
     return {chunks:chunks,write:write}
 }
-toExport["createTerminal"] = function ()
+toExport["createTerminal"] = async function ()
 {
-    section("writes through to the writer it was given", function ()
+    await section("writes through to the writer it was given", async function ()
     {
         out = sink()
         terminal(out,false).write('hello')
         compare(out.chunks,['hello'])
     })
-    section("reports interactivity as given", function ()
+    await section("reports interactivity as given", async function ()
     {
         compare(terminal(sink(),true).interactive,true)
         compare(terminal(sink(),false).interactive,false)

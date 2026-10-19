@@ -41,13 +41,13 @@ ofKind = function (id, kind)
         return b.kind === kind
     })
 }
-toExport["getSession order"] = function ()
+toExport["getSession order"] = async function ()
 {
-    section("walks messages and parts in order", function ()
+    await section("walks messages and parts in order", async function ()
     {
         compare((brief(blocks(A))),[['turn','hello'],['turn','hi there'],['call','shell'],['result','total 48\n---\nHyprland 0.56.2'],['turn','done listing'],['turn','again'],['turn','first bit\n\nsecond bit'],['turn','no agent field'],['call','shell'],['call','webfetch'],['result','StatusCode: non 2xx status code (404)'],['call','grep'],['call','read'],['result','name: occ\n']])
     })
-    section("consecutive text parts in one message join with a blank line", function ()
+    await section("consecutive text parts in one message join with a blank line", async function ()
     {
         turn = blocks(A).find(function (b)
         {
@@ -57,9 +57,9 @@ toExport["getSession order"] = function ()
     })
 }
 toExport["getSession order"]._section_ = true
-toExport["getSession message types"] = function ()
+toExport["getSession message types"] = async function ()
 {
-    section("reasoning, synthetic and idle never produce blocks", function ()
+    await section("reasoning, synthetic and idle never produce blocks", async function ()
     {
         texts = blocks(A).map(function (b)
         {
@@ -71,7 +71,7 @@ toExport["getSession message types"] = function ()
         compare(!texts.includes('only thinking'),true)
         compare(!texts.includes('system note'),true)
     })
-    section("turn blocks carry the role and agent field", function ()
+    await section("turn blocks carry the role and agent field", async function ()
     {
         turns = ofKind(A,'turn')
         compare(turns[0].role,'user')
@@ -81,18 +81,18 @@ toExport["getSession message types"] = function ()
         compare(turns[4].agent,'build')
         compare(turns[5].agent,null)
     })
-    section("call blocks carry the agent of the message they came from", function ()
+    await section("call blocks carry the agent of the message they came from", async function ()
     {
         compare(ofKind(C,'call')[0].agent,'build')
     })
-    section("unknown session id is an error", function ()
+    await section("unknown session id is an error", async function ()
     {
         throws((function ()
         {
             return query.getSession(database,'nope')
         }),/no\x20session/i)
     })
-    section("the row is the same one listSessions returns", function ()
+    await section("the row is the same one listSessions returns", async function ()
     {
         fromList = query.listSessions(database,['aaaaaa'])[0]
         row = query.getSession(database,A).row
@@ -103,20 +103,20 @@ toExport["getSession message types"] = function ()
     })
 }
 toExport["getSession message types"]._section_ = true
-toExport["getSession tool blocks"] = function ()
+toExport["getSession tool blocks"] = async function ()
 {
-    section("a call block carries the tool name and its input command", function ()
+    await section("a call block carries the tool name and its input command", async function ()
     {
         call = ofKind(A,'call')[0]
         compare(call.name,'shell')
         compare(call.command,'ls -la; echo ---; hyprctl version')
     })
-    section("a tool with empty output produces no result block", function ()
+    await section("a tool with empty output produces no result block", async function ()
     {
         compare(ofKind(A,'call').length,5)
         compare(ofKind(A,'result').length,3)
     })
-    section("an errored tool puts the error message where the result would be", function ()
+    await section("an errored tool puts the error message where the result would be", async function ()
     {
         texts = ofKind(A,'result').map(function (b)
         {
@@ -124,7 +124,7 @@ toExport["getSession tool blocks"] = function ()
         })
         compare(texts.includes('StatusCode: non 2xx status code (404)'),true)
     })
-    section("a running tool produces no result block", function ()
+    await section("a running tool produces no result block", async function ()
     {
         names = ofKind(A,'call').map(function (b)
         {
@@ -133,22 +133,22 @@ toExport["getSession tool blocks"] = function ()
         compare(names.includes('grep'),true)
         compare(ofKind(A,'result').length,3)
     })
-    section("every call block carries its tool name", function ()
+    await section("every call block carries its tool name", async function ()
     {
         compare((ofKind(C,'call').map(function (b)
         {
             return b.name
         })),['shell','shell','shell'])
     })
-    section("a nonzero exit produces an exit block naming the tool", function ()
+    await section("a nonzero exit produces an exit block naming the tool", async function ()
     {
         compare((ofKind(C,'exit')),[{kind:'exit',name:'shell',code:42}])
     })
-    section("a zero exit produces no exit block", function ()
+    await section("a zero exit produces no exit block", async function ()
     {
         compare(ofKind(A,'exit').length,0)
     })
-    section("a truncated result carries its full output path", function ()
+    await section("a truncated result carries its full output path", async function ()
     {
         truncated = ofKind(A,'result').find(function (b)
         {
@@ -156,7 +156,7 @@ toExport["getSession tool blocks"] = function ()
         })
         compare(truncated.outputPath,'/home/kodi/.local/share/opencode/tool-output/tool_abc')
     })
-    section("a non-truncated result has no output path", function ()
+    await section("a non-truncated result has no output path", async function ()
     {
         full = ofKind(A,'result').find(function (b)
         {

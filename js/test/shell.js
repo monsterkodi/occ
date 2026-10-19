@@ -20,44 +20,44 @@ run = function (ids, width = 80)
     database = db.openDb(DB_PATH)
     return shell({db:database,prefixes:ids,width:width,style:plain})
 }
-toExport["shell blocks"] = function ()
+toExport["shell blocks"] = async function ()
 {
-    section("starts with the session row, then the commands", function ()
+    await section("starts with the session row, then the commands", async function ()
     {
         lines = run(['cccccc']).split('\n')
         compare(lines[0].trimStart().startsWith('cccccc '),true)
         compare(lines.includes('$ shell'),true)
     })
-    section("shows the result of every command, successful or not", function ()
+    await section("shows the result of every command, successful or not", async function ()
     {
         out = run(['cccccc'])
         compare(out.includes("$ shell result\nhi"),true)
         compare(out.includes("$ shell result\nboom"),true)
     })
-    section("shows an exit marker for a nonzero exit", function ()
+    await section("shows an exit marker for a nonzero exit", async function ()
     {
         compare(run(['cccccc']).includes('$ shell exit 42'),true)
     })
-    section("a successful command gets no exit marker", function ()
+    await section("a successful command gets no exit marker", async function ()
     {
         compare(!run(['cccccc']).includes('$ shell exit 0'),true)
     })
-    section("shows the agent marker, since it labels whose commands these are", function ()
+    await section("shows the agent marker, since it labels whose commands these are", async function ()
     {
         compare(run(['cccccc']).includes('> agent build'),true)
     })
 }
 toExport["shell blocks"]._section_ = true
-toExport["shell filtering"] = function ()
+toExport["shell filtering"] = async function ()
 {
-    section("shows no user turns and no continuation ellipses", function ()
+    await section("shows no user turns and no continuation ellipses", async function ()
     {
         out = run(['cccccc'])
         compare(!out.includes('> user'),true)
         compare(!out.includes("\n…"),true)
         compare(!out.includes('one'),true)
     })
-    section("only shell tools are shown", function ()
+    await section("only shell tools are shown", async function ()
     {
         out = run(['aaaaaa'])
         compare(out.includes('$ shell'),true)
@@ -65,29 +65,29 @@ toExport["shell filtering"] = function ()
         compare(!out.includes('$ webfetch'),true)
         compare(!out.includes('$ grep'),true)
     })
-    section("a non-shell tool is never shown even when its name is close", function ()
+    await section("a non-shell tool is never shown even when its name is close", async function ()
     {
         compare(!run(['cccccc']).includes('$ bash'),true)
     })
-    section("no ellipsis markers anywhere, since there are no runs to continue", function ()
+    await section("no ellipsis markers anywhere, since there are no runs to continue", async function ()
     {
         every = run([])
         compare(!every.includes("\n…"),true)
     })
 }
 toExport["shell filtering"]._section_ = true
-toExport["shell selection"] = function ()
+toExport["shell selection"] = async function ()
 {
-    section("shows every session when no ids are given", function ()
+    await section("shows every session when no ids are given", async function ()
     {
         compare(run([]).includes('$ shell'),true)
     })
-    section("ids filter which sessions are shown", function ()
+    await section("ids filter which sessions are shown", async function ()
     {
         compare(!run(['cccccc']).includes('hyprctl'),true)
         compare(run(['aaaaaa']).includes('hyprctl'),true)
     })
-    section("sessions are separated by a blank line", function ()
+    await section("sessions are separated by a blank line", async function ()
     {
         lines = run(['aaaaaa','cccccc']).split('\n')
         secondRow = lines.findIndex(function (l)
@@ -96,15 +96,15 @@ toExport["shell selection"] = function ()
         })
         compare(lines[secondRow - 1],'')
     })
-    section("a session with no shell commands prints only its row", function ()
+    await section("a session with no shell commands prints only its row", async function ()
     {
         compare(run(['bbbbbb']),run(['bbbbbb']).split('\n')[0])
     })
 }
 toExport["shell selection"]._section_ = true
-toExport["shell errors"] = function ()
+toExport["shell errors"] = async function ()
 {
-    section("unknown id surfaces the error", function ()
+    await section("unknown id surfaces the error", async function ()
     {
         throws(function ()
         {
@@ -112,7 +112,7 @@ toExport["shell errors"] = function ()
             return /no\x20session/i
         })
     })
-    section("output ends without a trailing blank line", function ()
+    await section("output ends without a trailing blank line", async function ()
     {
         out = run(['cccccc'])
         compare(!out.endsWith('\n'),true)

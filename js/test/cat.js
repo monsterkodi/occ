@@ -22,36 +22,36 @@ run = function (ids, width = 80)
     database = db.openDb(DB_PATH)
     return cat({db:database,prefixes:ids,width:width,style:plain})
 }
-toExport["cat"] = function ()
+toExport["cat"] = async function ()
 {
-    section("starts with the session row, then the turns", function ()
+    await section("starts with the session row, then the turns", async function ()
     {
         lines = run(['aaaaaa']).split('\n')
         compare(lines[0].trimStart().startsWith('aaaaaa '),true)
         compare(lines[1],'> user')
         compare(lines[2],'hello')
     })
-    section("shows no tool calls or results at all", function ()
+    await section("shows no tool calls or results at all", async function ()
     {
         out = run(['aaaaaa'])
         compare(!out.includes('$ '),true)
         compare(!out.includes('hyprctl'),true)
     })
-    section("text on both sides of a tool call joins into one turn", function ()
+    await section("text on both sides of a tool call joins into one turn", async function ()
     {
         out = run(['aaaaaa'])
         compare(out.includes("hi there\n\ndone listing"),true)
         compare(!out.includes('total 48'),true)
     })
-    section("consecutive text parts in one message still join with a blank line", function ()
+    await section("consecutive text parts in one message still join with a blank line", async function ()
     {
         compare(run(['aaaaaa']).includes("first bit\n\nsecond bit"),true)
     })
 }
 toExport["cat"]._section_ = true
-toExport["cat selection"] = function ()
+toExport["cat selection"] = async function ()
 {
-    section("shows every session when no ids are given", function ()
+    await section("shows every session when no ids are given", async function ()
     {
         out = run([])
         compare(out.includes('> user'),true)
@@ -60,18 +60,18 @@ toExport["cat selection"] = function ()
             return l === '> user'
         }).length,3)
     })
-    section("ids filter which sessions are shown", function ()
+    await section("ids filter which sessions are shown", async function ()
     {
         out = run(['cccccc'])
         compare(!out.includes('hello'),true)
         compare(out.includes('> user'),true)
     })
-    section("ids keep the order they were given in", function ()
+    await section("ids keep the order they were given in", async function ()
     {
         out = run(['bbbbbb','aaaaaa'])
         compare(out.indexOf('bbbbbb') < out.indexOf('aaaaaa'),true)
     })
-    section("sessions are separated by a blank line, not a rule", function ()
+    await section("sessions are separated by a blank line, not a rule", async function ()
     {
         lines = run(['aaaaaa','cccccc']).split('\n')
         secondRow = lines.findIndex(function (l)
@@ -80,15 +80,15 @@ toExport["cat selection"] = function ()
         })
         compare(lines[secondRow - 1],'')
     })
-    section("a session with no renderable turns prints only its row", function ()
+    await section("a session with no renderable turns prints only its row", async function ()
     {
         compare(run(['bbbbbb']),run(['bbbbbb']).split('\n')[0])
     })
 }
 toExport["cat selection"]._section_ = true
-toExport["cat errors"] = function ()
+toExport["cat errors"] = async function ()
 {
-    section("unknown id surfaces the error", function ()
+    await section("unknown id surfaces the error", async function ()
     {
         throws(function ()
         {
@@ -96,7 +96,7 @@ toExport["cat errors"] = function ()
             return /no\x20session/i
         })
     })
-    section("output ends without a trailing blank line", function ()
+    await section("output ends without a trailing blank line", async function ()
     {
         out = run(['aaaaaa'])
         compare(!out.endsWith('\n'),true)

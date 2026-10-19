@@ -6,15 +6,7 @@
      ███████    ███████   ███████  
 ###
 
-use ./db
-use ./style
-use ./terminal
-use ./ls
-use ./cat
-use ./log
-use ./shell
-use ./del
-use ./resume
+use ◆ db style terminal ls cat log shell del resume
 
 #  log is the console builtin, so the module answers to a second name
 
@@ -103,3 +95,4 @@ run = (argv) ○->
 export
     main: main
     run: run
+    

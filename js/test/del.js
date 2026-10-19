@@ -105,9 +105,9 @@ isOcls = function (e)
 {
     return e instanceof db.OclsError
 }
-toExport["openWritable"] = function ()
+toExport["openWritable"] = async function ()
 {
-    section("can actually write", function ()
+    await section("can actually write", async function ()
     {
         withDb(function (database)
         {
@@ -115,7 +115,7 @@ toExport["openWritable"] = function ()
             return compare(rowCount(database,A),0)
         })
     })
-    section("has foreign keys enforced", function ()
+    await section("has foreign keys enforced", async function ()
     {
         withDb(function (database)
         {
@@ -125,7 +125,7 @@ toExport["openWritable"] = function ()
             return compare(pragma.foreign_keys,1)
         })
     })
-    section("rejects a bad schema the same way openDb does", function ()
+    await section("rejects a bad schema the same way openDb does", async function ()
     {
         throws((function ()
         {
@@ -134,16 +134,16 @@ toExport["openWritable"] = function ()
     })
 }
 toExport["openWritable"]._section_ = true
-toExport["del guards"] = function ()
+toExport["del guards"] = async function ()
 {
-    section("no ids is an error, and nothing is printed first", function ()
+    await section("no ids is an error, and nothing is printed first", async function ()
     {
         throws((function ()
         {
             return run([])
         }),throwsOcls(/id/i))
     })
-    section("an argument shorter than three characters is refused", function ()
+    await section("an argument shorter than three characters is refused", async function ()
     {
         var list = ['a','ab']
         for (var _a_ = 0; _a_ < list.length; _a_++)
@@ -156,7 +156,7 @@ toExport["del guards"] = function ()
             }),refused)
         }
     })
-    section("the refusal names the arguments it rejected", function ()
+    await section("the refusal names the arguments it rejected", async function ()
     {
         tooShort = ['ab','ocls','cd']
         names = function (e)
@@ -170,7 +170,7 @@ toExport["del guards"] = function ()
             return run(tooShort)
         }),names)
     })
-    section("nothing is deleted when an argument is too short", function ()
+    await section("nothing is deleted when an argument is too short", async function ()
     {
         withDb(function (database)
         {
@@ -182,19 +182,19 @@ toExport["del guards"] = function ()
             return compare(rowCount(database,A),1)
         })
     })
-    section("a three character title argument is accepted", function ()
+    await section("a three character title argument is accepted", async function ()
     {
         got = run(['oco'],'y').deleted
         compare(got,[A])
     })
-    section("an unknown id errors before the warning", function ()
+    await section("an unknown id errors before the warning", async function ()
     {
         throws((function ()
         {
             return run(['zzzzzz'])
         }),/no\x20session/i)
     })
-    section("a non-interactive terminal refuses without deleting", function ()
+    await section("a non-interactive terminal refuses without deleting", async function ()
     {
         withDb(function (database)
         {
@@ -209,9 +209,9 @@ toExport["del guards"] = function ()
     })
 }
 toExport["del guards"]._section_ = true
-toExport["del confirmation"] = function ()
+toExport["del confirmation"] = async function ()
 {
-    section("shows a warning, the sessions, and the question", function ()
+    await section("shows a warning, the sessions, and the question", async function ()
     {
         res = run(['aaaaaa'])
         text = res.text
@@ -219,39 +219,39 @@ toExport["del confirmation"] = function ()
         matches(text,/aaaaaa.*Coco\x20-\x20ocls/s)
         matches(text,/ARE\x20YOU\x20SURE\?\x20\(yN\)/)
     })
-    section("the warning comes before the session list", function ()
+    await section("the warning comes before the session list", async function ()
     {
         res = run(['aaaaaa'])
         text = res.text
         compare(text.indexOf('DELETE SESSIONS') < text.indexOf('aaaaaa'),true)
         compare(text.indexOf('aaaaaa') < text.indexOf('ARE YOU SURE'),true)
     })
-    section("n aborts without deleting", function ()
+    await section("n aborts without deleting", async function ()
     {
         res = run(['aaaaaa'],'n')
         compare(res.deleted,[])
         matches(res.text,/nothing\x20deleted/i)
     })
-    section("empty input aborts", function ()
+    await section("empty input aborts", async function ()
     {
         empty = run(['aaaaaa'],'').deleted
         compare(empty,[])
     })
-    section("anything other than y aborts", function ()
+    await section("anything other than y aborts", async function ()
     {
         maybe = run(['aaaaaa'],'maybe').deleted
         compare(maybe,[])
     })
-    section("yes is accepted too", function ()
+    await section("yes is accepted too", async function ()
     {
         agreed = run(['aaaaaa'],'yes').deleted
         compare(agreed.length,1)
     })
 }
 toExport["del confirmation"]._section_ = true
-toExport["del deletion"] = function ()
+toExport["del deletion"] = async function ()
 {
-    section("accepts a title argument and deletes what it matched", function ()
+    await section("accepts a title argument and deletes what it matched", async function ()
     {
         withDb(function (database)
         {
@@ -260,7 +260,7 @@ toExport["del deletion"] = function ()
             return compare(rowCount(database,C),1)
         })
     })
-    section("accepts a mix of ids and titles", function ()
+    await section("accepts a mix of ids and titles", async function ()
     {
         withDb(function (database)
         {
@@ -271,7 +271,7 @@ toExport["del deletion"] = function ()
             return compare(rowCount(database,A),0)
         })
     })
-    section("removes the session row", function ()
+    await section("removes the session row", async function ()
     {
         withDb(function (database)
         {
@@ -279,7 +279,7 @@ toExport["del deletion"] = function ()
             return compare(rowCount(database,A),0)
         })
     })
-    section("cascades to all five child tables", function ()
+    await section("cascades to all five child tables", async function ()
     {
         withDb(function (database)
         {
@@ -300,7 +300,7 @@ toExport["del deletion"] = function ()
             }
         })
     })
-    section("leaves other sessions and their children alone", function ()
+    await section("leaves other sessions and their children alone", async function ()
     {
         withDb(function (database)
         {
@@ -315,12 +315,12 @@ toExport["del deletion"] = function ()
             }),true)
         })
     })
-    section("reports what it deleted, in the ids given", function ()
+    await section("reports what it deleted, in the ids given", async function ()
     {
         both = run(['aaaaaa','cccccc']).deleted
         compare(both,[A,C])
     })
-    section("an aborted delete leaves the rows untouched", function ()
+    await section("an aborted delete leaves the rows untouched", async function ()
     {
         withDb(function (database)
         {

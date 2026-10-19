@@ -34,21 +34,21 @@ bytesOf = function (text)
 {
     return Array.from(Buffer.from(text,'utf8'))
 }
-toExport["escapeControl"] = function ()
+toExport["escapeControl"] = async function ()
 {
-    section("leaves printable text alone", function ()
+    await section("leaves printable text alone", async function ()
     {
         compare((escape('plain text 123 !?')),'plain text 123 !?')
     })
-    section("keeps tab and newline, since they are layout, not noise", function ()
+    await section("keeps tab and newline, since they are layout, not noise", async function ()
     {
         compare((escape("a\tb\nc")),"a\tb\nc")
     })
-    section("escapes nul as a hex byte", function ()
+    await section("escapes nul as a hex byte", async function ()
     {
         compare((escape("a\0b")),'a\\x00b')
     })
-    section("escapes every other c0 control as hex", function ()
+    await section("escapes every other c0 control as hex", async function ()
     {
         all = Array.from({length:0x20},function (_, i)
         {
@@ -66,24 +66,24 @@ toExport["escapeControl"] = function ()
             compare((escape(`a${c}b`)),`a\\x${hex}b`)
         }
     })
-    section("escapes delete", function ()
+    await section("escapes delete", async function ()
     {
         compare((escape("a\u007fb")),'a\\x7fb')
     })
-    section("keeps the ansi escape byte, since colors are output to keep", function ()
+    await section("keeps the ansi escape byte, since colors are output to keep", async function ()
     {
         compare((escape("\u001b[31mred\u001b[39m")),"\u001b[31mred\u001b[39m")
     })
-    section("leaves multibyte text untouched", function ()
+    await section("leaves multibyte text untouched", async function ()
     {
         compare((escape('héllo → 🎉')),'héllo → 🎉')
     })
-    section("coerces a non-string", function ()
+    await section("coerces a non-string", async function ()
     {
         compare((escape(42)),'42')
         compare((escape(null)),'null')
     })
-    section("output never carries a control byte other than tab and newline", function ()
+    await section("output never carries a control byte other than tab and newline", async function ()
     {
         var list1 = _k_.list(Array.from({length:0x80},function (_, i)
         {
@@ -109,14 +109,14 @@ toExport["escapeControl"] = function ()
     })
 }
 toExport["escapeControl"]._section_ = true
-toExport["control bytes in a session"] = function ()
+toExport["control bytes in a session"] = async function ()
 {
-    section("the raw fixture result really does contain the offending bytes", function ()
+    await section("the raw fixture result really does contain the offending bytes", async function ()
     {
         compare((bytesOf(build.CONTROL_RESULT).includes(0x00)),true)
         compare((bytesOf(build.CONTROL_TITLE).includes(0x00)),true)
     })
-    section("shell and log output holds no control byte and shows the nul bytes", function ()
+    await section("shell and log output holds no control byte and shows the nul bytes", async function ()
     {
         var list2 = [['shell',shell],['log',history]]
         for (var _c_ = 0; _c_ < list2.length; _c_++)
@@ -130,42 +130,42 @@ toExport["control bytes in a session"] = function ()
             compare((out.includes('\\x00')),true)
         }
     })
-    section("the escaped result keeps its tabs, newlines and colors", function ()
+    await section("the escaped result keeps its tabs, newlines and colors", async function ()
     {
         out = run(shell)
         compare((out.includes("tab\there")),true)
         compare((out.includes("<anonymous_script>:1\n")),true)
         compare((out.includes("\u001b[31mred\u001b[39m")),true)
     })
-    section("a session title with control bytes is escaped in the table", function ()
+    await section("a session title with control bytes is escaped in the table", async function ()
     {
         database = db.openDb(CONTROL_DB_PATH)
         out = ls({db:database,prefixes:[],width:80,style:plain})
         compare(!(CONTROL_BYTES.test(out)),true)
         compare((out.includes(build.CONTROL_TITLE.replace("\0",'\\x00'))),true)
     })
-    section("a command carrying control bytes is escaped too", function ()
+    await section("a command carrying control bytes is escaped too", async function ()
     {
         blocks = [{kind:'call',name:'shell',agent:null,command:"printf '\0'"},{kind:'result',name:'shell',text:'ok',outputPath:null}]
         out = render.renderBlocks(blocks,plain)
         compare(!(CONTROL_BYTES.test(out)),true)
         compare((out.includes("printf '\\x00'")),true)
     })
-    section("a truncated result's output path is escaped as well", function ()
+    await section("a truncated result's output path is escaped as well", async function ()
     {
         blocks = [{kind:'call',name:'read',agent:null,command:'cat f'},{kind:'result',name:'read',text:'head',outputPath:"/tmp/out\0put"}]
         out = render.renderBlocks(blocks,plain)
         compare(!(CONTROL_BYTES.test(out)),true)
         compare((out.includes('/tmp/out\\x00put')),true)
     })
-    section("the row renderer escapes a title before it is cropped", function ()
+    await section("the row renderer escapes a title before it is cropped", async function ()
     {
         session = {id:build.CONTROL_SESSION,title:("x").repeat(79) + "\0",time_created:1791283494422,time_updated:1791283494422 + 60000,time_last:1791283494422 + 60000,turns:1}
         out = render.renderSession(session,80,plain)
         compare(!(CONTROL_BYTES.test(out)),true)
         compare(out.length,80)
     })
-    section("escaping survives the round trip through the database", function ()
+    await section("escaping survives the round trip through the database", async function ()
     {
         out = run(shell)
         compare((out.includes('\\x00\\x00\\x00 \\x08\\x10\\x00\\x040\\x00\\x00')),true)

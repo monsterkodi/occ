@@ -20,46 +20,46 @@ isStyleError = function (e)
 {
     return e instanceof style.StyleError
 }
-toExport["fg and bg with hex"] = function ()
+toExport["fg and bg with hex"] = async function ()
 {
-    section("fg emits a 24-bit foreground sequence", function ()
+    await section("fg emits a 24-bit foreground sequence", async function ()
     {
         compare((lit.fg('#0000ff','x')),"\u001b[38;2;0;0;255mx\u001b[39m")
     })
-    section("bg emits a 24-bit background sequence", function ()
+    await section("bg emits a 24-bit background sequence", async function ()
     {
         compare((lit.bg('#ff0000','x')),"\u001b[48;2;255;0;0mx\u001b[49m")
     })
-    section("three digit shorthand expands to pairs", function ()
+    await section("three digit shorthand expands to pairs", async function ()
     {
         compare((lit.fg('#00f','x')),(lit.fg('#0000ff','x')))
         compare((lit.bg('#f00','x')),(lit.bg('#ff0000','x')))
     })
-    section("uppercase and a missing hash are accepted", function ()
+    await section("uppercase and a missing hash are accepted", async function ()
     {
         compare((lit.fg('#0000FF','x')),(lit.fg('#0000ff','x')))
         compare((lit.fg('00ff00','x')),(lit.fg('#00ff00','x')))
     })
-    section("four digits are rejected as neither rgb nor rrggbb", function ()
+    await section("four digits are rejected as neither rgb nor rrggbb", async function ()
     {
         throws((function ()
         {
             return lit.fg('#00FF','x')
         }),isStyleError)
     })
-    section("nesting preserves the visible text", function ()
+    await section("nesting preserves the visible text", async function ()
     {
         out = lit.bg('#ff0000',lit.fg('#ffff00','hi'))
         compare((strip(out)),'hi')
     })
-    section("fg nests inside another role", function ()
+    await section("fg nests inside another role", async function ()
     {
         out = lit.fg('#0000ff',lit.turn.user('> user'))
         compare((strip(out)),'> user')
         compare((out.includes('38;2;0;0;255')),true)
         compare(out !== lit.turn.user('> user'),true)
     })
-    section("a role can be built from hex, foreground inside background", function ()
+    await section("a role can be built from hex, foreground inside background", async function ()
     {
         c = function (text)
         {
@@ -70,22 +70,22 @@ toExport["fg and bg with hex"] = function ()
     })
 }
 toExport["fg and bg with hex"]._section_ = true
-toExport["fg and bg when color is off"] = function ()
+toExport["fg and bg when color is off"] = async function ()
 {
-    section("fg returns the text, not the hex", function ()
+    await section("fg returns the text, not the hex", async function ()
     {
         compare((plain.fg('#0000ff','hello')),'hello')
     })
-    section("bg returns the text, not the hex", function ()
+    await section("bg returns the text, not the hex", async function ()
     {
         compare((plain.bg('#ff0000','hello')),'hello')
     })
-    section("no escape codes are emitted", function ()
+    await section("no escape codes are emitted", async function ()
     {
         compare((strip(plain.fg('#0000ff','x'))),'x')
         compare((strip(plain.bg('#ff0000','x'))),'x')
     })
-    section("a role using fg does not leak the hex when color is off", function ()
+    await section("a role using fg does not leak the hex when color is off", async function ()
     {
         name = function (text)
         {
@@ -95,40 +95,40 @@ toExport["fg and bg when color is off"] = function ()
     })
 }
 toExport["fg and bg when color is off"]._section_ = true
-toExport["palette"] = function ()
+toExport["palette"] = async function ()
 {
-    section("exposes the named codes alongside fg and bg", function ()
+    await section("exposes the named codes alongside fg and bg", async function ()
     {
         compare(typeof(lit.palette.bold),'function')
         compare(typeof(lit.palette.gray),'function')
         compare(typeof(lit.palette.fg),'function')
         compare(typeof(lit.palette.bg),'function')
     })
-    section("fg composes with a named code the way a role author writes it", function ()
+    await section("fg composes with a named code the way a role author writes it", async function ()
     {
         out = lit.fg('#0000ff',lit.palette.bold('hi'))
         compare((strip(out)),'hi')
         compare((out.includes('38;2;0;0;255')),true)
         compare((out.includes("\u001b[1m")),true)
     })
-    section("bg composes with fg for a foreground on a background", function ()
+    await section("bg composes with fg for a foreground on a background", async function ()
     {
         out = lit.bg('#ff0000',lit.fg('#ffff00','hi'))
         compare((strip(out)),'hi')
         compare((out.includes('48;2;255;0;0')),true)
         compare((out.includes('38;2;255;255;0')),true)
     })
-    section("the palette follows the color setting too", function ()
+    await section("the palette follows the color setting too", async function ()
     {
         compare((plain.palette.bold('hi')),'hi')
         compare(lit.palette.bold('hi') !== 'hi',true)
     })
 }
 toExport["palette"]._section_ = true
-toExport["hex validation"] = function ()
+toExport["hex validation"] = async function ()
 {
     bad = ['#12345','#1234567','#gggggg','blue','','#']
-    section("rejects each malformed hex value", function ()
+    await section("rejects each malformed hex value", async function ()
     {
         var list = _k_.list(bad)
         for (var _a_ = 0; _a_ < list.length; _a_++)
@@ -140,7 +140,7 @@ toExport["hex validation"] = function ()
             }),isStyleError)
         }
     })
-    section("rejects a non-string", function ()
+    await section("rejects a non-string", async function ()
     {
         throws((function ()
         {
@@ -151,21 +151,21 @@ toExport["hex validation"] = function ()
             return lit.bg(null,'x')
         }),isStyleError)
     })
-    section("rejects eight digit hex with a message mentioning alpha", function ()
+    await section("rejects eight digit hex with a message mentioning alpha", async function ()
     {
         throws((function ()
         {
             return lit.fg('#0000ffff','x')
         }),/hex|rgb/i)
     })
-    section("the error names the offending value", function ()
+    await section("the error names the offending value", async function ()
     {
         throws((function ()
         {
             return lit.fg('#zzzzzz','x')
         }),/#zzzzzz/)
     })
-    section("nothing is validated while color is off, since nothing is applied", function ()
+    await section("nothing is validated while color is off, since nothing is applied", async function ()
     {
         compare((plain.fg('nope','x')),'x')
     })

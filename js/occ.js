@@ -3,21 +3,13 @@ var _k_ = {in: function (a,l) {return (typeof l === 'string' && typeof a === 'st
 var COMMANDS, HELP, history, main, run
 
 import db from "./db.js"
-
 import style from "./style.js"
-
 import terminal from "./terminal.js"
-
 import ls from "./ls.js"
-
 import cat from "./cat.js"
-
 import log from "./log.js"
-
 import shell from "./shell.js"
-
 import del from "./del.js"
-
 import resume from "./resume.js"
 
 history = log
@@ -41,7 +33,7 @@ COMMANDS = {ls:{run:ls},cat:{run:cat},log:{run:history},shell:{run:shell},resume
 
 main = async function (argv)
 {
-    var command, database, entry, given, handler, ids, out, p, sty, width, writable, _70_30_, _76_39_
+    var command, database, entry, given, handler, ids, out, p, sty, width, writable, _62_30_, _68_39_
 
     given = argv[0]
     ids = argv.slice(1)
@@ -58,12 +50,12 @@ main = async function (argv)
         return 1
     }
     handler = entry.run
-    writable = ((_70_30_=entry.writable) != null ? _70_30_ : false)
+    writable = ((_62_30_=entry.writable) != null ? _62_30_ : false)
     p = db.resolveDbPath()
     database = writable ? db.openWritable(p) : db.openDb(p)
     try
     {
-        width = ((_76_39_=process.stdout.columns) != null ? _76_39_ : 80)
+        width = ((_68_39_=process.stdout.columns) != null ? _68_39_ : 80)
         sty = style.createStyle(Boolean(process.stdout.isTTY) && !process.env.NO_COLOR)
         out = await handler({db:database,prefixes:ids,width:width,style:sty,io:terminal()})
         if (_k_.isStr(out) && !_k_.empty(out))
@@ -109,5 +101,5 @@ export default {
     run:run
 }
 
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib2NjLmpzIiwic291cmNlcyI6WyIuLi9rb2RlL29jYy5rb2RlIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBb0JBLFVBQVU7QUFFVixPQUFPOzs7Ozs7Ozs7Ozs7Ozs7O0FBbUJQLFlBQ0ksSUFBSSxJQUFLLElBQ1QsS0FBSyxJQUFLLEtBQ1YsS0FBSyxJQUFLLFNBQ1YsT0FBTyxJQUFLLE9BQ1osUUFBUSxJQUFLLE9BQU8sUUFDcEIsS0FDSSxJQUFLLElBQ0wsU0FBVTs7QUFFbEI7Ozs7SUFFSSxRQUFRLEtBQUs7SUFDYixNQUFNLEtBQUssTUFBTTtlQUVkLE9BQVUsS0FBSyxTQUFTOztRQUN2QixRQUFRLE9BQU8sU0FBUztlQUN0Qjs7SUFFTixVQUFhLEtBQUssV0FBVSxJQUFPLE9BQVU7SUFFN0MsUUFBUSxTQUFTO2tCQUVSOztRQUNMLFFBQVEsT0FBTywyQkFBMkIsZ0JBQWdCO2VBQ3hEOztJQUVOLFVBQVUsTUFBTTtJQUNoQixxQkFBVyxNQUFNLDhCQUFXO0lBRTVCLElBQUksR0FBRztJQUNQLFdBQWMsV0FBYyxHQUFHLGFBQWEsS0FBUSxHQUFHLE9BQU87OztRQUcxRCxrQkFBUSxRQUFRLE9BQU8sNkJBQVU7UUFDakMsTUFBTSxNQUFNLFlBQVksUUFBUSxRQUFRLE9BQU8sV0FBZSxRQUFRLElBQUk7UUFFMUUsWUFBTyxTQUFTLEdBQUksU0FBVSxTQUFVLElBQUssTUFBQSxNQUFPLE1BQU8sSUFBSyxHQUFJO3NCQUVqRSxtQkFBeUI7O1lBQVMsUUFBUSxPQUFPLFNBQVM7O3NCQUUxRDs7bUJBQWtCOztlQUNuQjs7V0FDQTs7UUFDRixTQUFTO1FBQ1QsTUFBTTs7SUFFVixTQUFTO1dBQ1Q7OztBQUVKOzs7O2VBR1EsUUFBUSxpQkFBYSxLQUFLOztXQUN4Qjs7WUFDQyxhQUFhLEdBQUc7O1lBQ2YsUUFBUSxPQUFPLGNBQWMsRUFBRTttQkFDL0IsUUFBUSxXQUFXOzs7O1lBRW5CLE1BQU07Ozs7O0lBR2QsS0FBTTtJQUNOLElBQUsifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib2NjLmpzIiwic291cmNlcyI6WyIuLi9rb2RlL29jYy5rb2RlIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQVlBLFVBQVU7QUFFVixPQUFPOzs7Ozs7Ozs7Ozs7Ozs7O0FBbUJQLFlBQ0ksSUFBSSxJQUFLLElBQ1QsS0FBSyxJQUFLLEtBQ1YsS0FBSyxJQUFLLFNBQ1YsT0FBTyxJQUFLLE9BQ1osUUFBUSxJQUFLLE9BQU8sUUFDcEIsS0FDSSxJQUFLLElBQ0wsU0FBVTs7QUFFbEI7Ozs7SUFFSSxRQUFRLEtBQUs7SUFDYixNQUFNLEtBQUssTUFBTTtlQUVkLE9BQVUsS0FBSyxTQUFTOztRQUN2QixRQUFRLE9BQU8sU0FBUztlQUN0Qjs7SUFFTixVQUFhLEtBQUssV0FBVSxJQUFPLE9BQVU7SUFFN0MsUUFBUSxTQUFTO2tCQUVSOztRQUNMLFFBQVEsT0FBTywyQkFBMkIsZ0JBQWdCO2VBQ3hEOztJQUVOLFVBQVUsTUFBTTtJQUNoQixxQkFBVyxNQUFNLDhCQUFXO0lBRTVCLElBQUksR0FBRztJQUNQLFdBQWMsV0FBYyxHQUFHLGFBQWEsS0FBUSxHQUFHLE9BQU87OztRQUcxRCxrQkFBUSxRQUFRLE9BQU8sNkJBQVU7UUFDakMsTUFBTSxNQUFNLFlBQVksUUFBUSxRQUFRLE9BQU8sV0FBZSxRQUFRLElBQUk7UUFFMUUsWUFBTyxTQUFTLEdBQUksU0FBVSxTQUFVLElBQUssTUFBQSxNQUFPLE1BQU8sSUFBSyxHQUFJO3NCQUVqRSxtQkFBeUI7O1lBQVMsUUFBUSxPQUFPLFNBQVM7O3NCQUUxRDs7bUJBQWtCOztlQUNuQjs7V0FDQTs7UUFDRixTQUFTO1FBQ1QsTUFBTTs7SUFFVixTQUFTO1dBQ1Q7OztBQUVKOzs7O2VBR1EsUUFBUSxpQkFBYSxLQUFLOztXQUN4Qjs7WUFDQyxhQUFhLEdBQUc7O1lBQ2YsUUFBUSxPQUFPLGNBQWMsRUFBRTttQkFDL0IsUUFBUSxXQUFXOzs7O1lBRW5CLE1BQU07Ozs7O0lBR2QsS0FBTTtJQUNOLElBQUsifQ==
 //# sourceURL=file://kode/occ.kode

@@ -108,72 +108,72 @@ title = await attempted(['ocls'])
 dotConfig = await attempted(['bbbbbbb'])
 inherited = await attempted(['aaaaaa'])
 exitCode = await attempted(['aaaaaa'],{code:42})
-toExport["personaOf"] = function ()
+toExport["personaOf"] = async function ()
 {
-    section("the directory basename is the persona", function ()
+    await section("the directory basename is the persona", async function ()
     {
         compare(resume.personaOf('/home/kodi/a/coco'),'coco')
         compare(resume.personaOf('/home/kodi/a/bert'),'bert')
     })
-    section("a dot directory can name a persona of its own", function ()
+    await section("a dot directory can name a persona of its own", async function ()
     {
         compare(resume.personaOf('/home/kodi/.config'),'sepp')
     })
-    section("the persona is lowercased", function ()
+    await section("the persona is lowercased", async function ()
     {
         compare(resume.personaOf('/home/kodi/A/Coco'),'coco')
     })
-    section("a trailing slash does not matter", function ()
+    await section("a trailing slash does not matter", async function ()
     {
         compare(resume.personaOf('/home/kodi/a/coco/'),'coco')
     })
 }
 toExport["personaOf"]._section_ = true
-toExport["resume guards"] = function ()
+toExport["resume guards"] = async function ()
 {
-    section("no session at all is refused", function ()
+    await section("no session at all is refused", async function ()
     {
         compare(noId.res.error,function (e)
         {
             return e instanceof db.OclsError && (/exactly\x20one\x20session\x20id/i).test(e.message)
         })
     })
-    section("two sessions are refused", function ()
+    await section("two sessions are refused", async function ()
     {
         compare(twoIds.res.error,function (e)
         {
             return e instanceof db.OclsError && (/got\x202/).test(e.message)
         })
     })
-    section("a fragment matching several sessions is refused", function ()
+    await section("a fragment matching several sessions is refused", async function ()
     {
         compare(fragment.res.error,function (e)
         {
             return e instanceof db.OclsError && (/matches\x202\x20sessions/).test(e.message)
         })
     })
-    section("the refusal names the fragment and the count", function ()
+    await section("the refusal names the fragment and the count", async function ()
     {
         compare(named.res.error,function (e)
         {
             return (/"o".*2/).test(e.message)
         })
     })
-    section("an unknown session is refused", function ()
+    await section("an unknown session is refused", async function ()
     {
         compare(unknown.res.error,function (e)
         {
             return (/no\x20session\x20matches/).test(e.message)
         })
     })
-    section("a non-interactive terminal is refused", function ()
+    await section("a non-interactive terminal is refused", async function ()
     {
         compare(noTerminal.res.error,function (e)
         {
             return e instanceof db.OclsError && (/terminal/i).test(e.message)
         })
     })
-    section("a session whose directory is gone is refused", function ()
+    await section("a session whose directory is gone is refused", async function ()
     {
         compare(goneRes.error,function (e)
         {
@@ -181,7 +181,7 @@ toExport["resume guards"] = function ()
         })
         compare(gonePlans,[])
     })
-    section("nothing is launched when a guard fires", function ()
+    await section("nothing is launched when a guard fires", async function ()
     {
         var list1 = _k_.list(guardRuns)
         for (var _b_ = 0; _b_ < list1.length; _b_++)
@@ -193,49 +193,49 @@ toExport["resume guards"] = function ()
     })
 }
 toExport["resume guards"]._section_ = true
-toExport["resume plan"] = function ()
+toExport["resume plan"] = async function ()
 {
-    section("runs opencode on the session", function ()
+    await section("runs opencode on the session", async function ()
     {
         compare(onSession.res.error,null)
         compare(onSession.res.value,0)
         compare(onSession.plans.length,1)
         compare(onSession.plans[0].command,'opencode')
     })
-    section("passes the full session id, never the prefix", function ()
+    await section("passes the full session id, never the prefix", async function ()
     {
         compare(fullId.res.error,null)
         compare(fullId.plans[0].args,['--session',A])
     })
-    section("runs in the directory the session belongs to", function ()
+    await section("runs in the directory the session belongs to", async function ()
     {
         compare(directory.res.error,null)
         compare(directory.plans[0].cwd,'/home/kodi/a/coco')
     })
-    section("sets the persona the session runs as", function ()
+    await section("sets the persona the session runs as", async function ()
     {
         compare(persona.res.error,null)
         compare(persona.plans[0].env.OPENCODE_PERSONA,'coco')
     })
-    section("a title fragment resolves the same way", function ()
+    await section("a title fragment resolves the same way", async function ()
     {
         compare(title.res.error,null)
         compare(title.plans[0].args,['--session',A])
         compare(title.plans[0].cwd,'/home/kodi/a/coco')
     })
-    section("a session in .config resumes as sepp", function ()
+    await section("a session in .config resumes as sepp", async function ()
     {
         compare(dotConfig.res.error,null)
         compare(dotConfig.plans[0].args,['--session',B])
         compare(dotConfig.plans[0].cwd,'/home/kodi/.config')
         compare(dotConfig.plans[0].env.OPENCODE_PERSONA,'sepp')
     })
-    section("the rest of the environment is inherited", function ()
+    await section("the rest of the environment is inherited", async function ()
     {
         compare(inherited.res.error,null)
         compare(inherited.plans[0].env.PATH,process.env.PATH)
     })
-    section("returns the exit code opencode exited with", function ()
+    await section("returns the exit code opencode exited with", async function ()
     {
         compare(exitCode.res.error,null)
         compare(exitCode.res.value,42)

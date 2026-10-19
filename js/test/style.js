@@ -56,13 +56,13 @@ roleOf = function (style, path)
     }
     return fn
 }
-toExport["createStyle"] = function ()
+toExport["createStyle"] = async function ()
 {
-    section("exposes the same roles whether or not color is on", function ()
+    await section("exposes the same roles whether or not color is on", async function ()
     {
         compare(walk(style.createStyle(true)),walk(style.createStyle(false)))
     })
-    section("every role is a function of text", function ()
+    await section("every role is a function of text", async function ()
     {
         var list = _k_.list(walk(style.createStyle(true)))
         for (var _c_ = 0; _c_ < list.length; _c_++)
@@ -73,12 +73,12 @@ toExport["createStyle"] = function ()
             compare(typeof(fn('x')),'string')
         }
     })
-    section("reports whether color is enabled", function ()
+    await section("reports whether color is enabled", async function ()
     {
         compare(style.createStyle(true).enabled,true)
         compare(style.createStyle(false).enabled,false)
     })
-    section("each expected role exists", function ()
+    await section("each expected role exists", async function ()
     {
         s = style.createStyle(true)
         var list1 = _k_.list(groups)
@@ -92,7 +92,7 @@ toExport["createStyle"] = function ()
         compare(Object.keys(s.tool),['call','result','exit','note'])
         compare(Object.keys(s.del),['warning','question'])
     })
-    section("disabled style returns the text unchanged", function ()
+    await section("disabled style returns the text unchanged", async function ()
     {
         s = style.createStyle(false)
         var list2 = _k_.list(walk(s))
@@ -102,7 +102,7 @@ toExport["createStyle"] = function ()
             compare(roleOf(s,role)('plain text'),'plain text')
         }
     })
-    section("enabled style returns the same visible text", function ()
+    await section("enabled style returns the same visible text", async function ()
     {
         s = style.createStyle(true)
         var list3 = _k_.list(walk(s))
@@ -112,13 +112,13 @@ toExport["createStyle"] = function ()
             compare(strip(roleOf(s,role)('plain text')),'plain text')
         }
     })
-    section("a dim role wraps text without changing it", function ()
+    await section("a dim role wraps text without changing it", async function ()
     {
         out = style.createStyle(true).turn.continue('…')
         compare(out !== '…',true)
         compare(strip(out),'…')
     })
-    section("nested styles compose rather than replace", function ()
+    await section("nested styles compose rather than replace", async function ()
     {
         s = style.createStyle(true)
         inner = s.turn.mode('build')
@@ -126,7 +126,7 @@ toExport["createStyle"] = function ()
         compare(inner !== outer,true)
         compare(strip(outer).includes('build'),true)
     })
-    section("styling is applied consistently across runs", function ()
+    await section("styling is applied consistently across runs", async function ()
     {
         a = style.createStyle(true)
         b = style.createStyle(true)
