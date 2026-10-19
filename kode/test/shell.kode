@@ -1,0 +1,136 @@
+###
+ ███████  ███   ███  ████████  ███      ███
+███       ███   ███  ███       ███      ███
+ ███████  █████████  ███████   ███      ███
+      ███  ███   ███  ███       ███      ███
+ ███████  ███   ███  ████████  ███████  ███████
+###
+
+use ../test/fixtures/build
+use ../db
+use ../shell
+use ../style
+use ./helpers ▪ throws
+
+DB_PATH = build.fixtures().DB_PATH
+
+plain = style.createStyle false
+
+run = (ids, width=80) ->
+
+    database = db.openDb DB_PATH
+    shell {db: database, prefixes: ids, width, style: plain}
+
+# ███████    ███       ███████    ███████  ███   ███   ███████
+# ███   ███  ███      ███   ███  ███       ███  ███   ███
+# ███████    ███      ███   ███  ███       ███████    ███████
+# ███   ███  ███      ███   ███  ███       ███  ███        ███
+# ███████    ███████   ███████    ███████  ███   ███  ███████
+
+
+▸ shell blocks
+
+    ▸ starts with the session row, then the commands
+
+        lines = run(['cccccc']).split('\n')
+
+        lines[0].trimStart().startsWith('cccccc ') ▸ yes
+        lines.includes('$ shell') ▸ yes
+
+    ▸ shows the result of every command, successful or not
+
+        out = run ['cccccc']
+
+        out.includes("$ shell result\nhi") ▸ yes
+        out.includes("$ shell result\nboom") ▸ yes
+
+    ▸ shows an exit marker for a nonzero exit
+
+        run(['cccccc']).includes('$ shell exit 42') ▸ yes
+
+    ▸ a successful command gets no exit marker
+
+        not run(['cccccc']).includes('$ shell exit 0') ▸ yes
+
+    ▸ shows the agent marker, since it labels whose commands these are
+
+        run(['cccccc']).includes('> agent build') ▸ yes
+
+# ████████  ███  ███      █████████  ████████  ████████   ███  ███   ███   ███████
+# ███       ███  ███         ███     ███       ███   ███  ███  ████  ███  ███
+# ██████    ███  ███         ███     ███████   ███████    ███  ███ █ ███  ███  ████
+# ███       ███  ███         ███     ███       ███   ███  ███  ███  ████  ███   ███
+# ███       ███  ███████     ███     ████████  ███   ███  ███  ███   ███   ███████
+
+▸ shell filtering
+
+    ▸ shows no user turns and no continuation ellipses
+
+        out = run ['cccccc']
+
+        not out.includes('> user') ▸ yes
+        not out.includes("\n…") ▸ yes
+        not out.includes('one') ▸ yes
+
+    ▸ only shell tools are shown
+
+        out = run ['aaaaaa']
+
+        out.includes('$ shell') ▸ yes
+        not out.includes('$ read') ▸ yes
+        not out.includes('$ webfetch') ▸ yes
+        not out.includes('$ grep') ▸ yes
+
+    ▸ a non-shell tool is never shown even when its name is close
+
+        not run(['cccccc']).includes('$ bash') ▸ yes
+
+    ▸ no ellipsis markers anywhere, since there are no runs to continue
+
+        every = run []
+        not every.includes("\n…") ▸ yes
+
+#  ███████  ████████  ███      ████████   ███████  █████████  ███   ███████   ███   ███
+# ███       ███       ███      ███       ███          ███     ███  ███   ███  ████  ███
+# ███████   ███████   ███      ███████   ███          ███     ███  ███   ███  ███ █ ███
+#      ███  ███       ███      ███       ███          ███     ███  ███   ███  ███  ████
+# ███████   ████████  ███████  ████████   ███████     ███     ███   ███████   ███   ███
+
+▸ shell selection
+
+    ▸ shows every session when no ids are given
+
+        run([]).includes('$ shell') ▸ yes
+
+    ▸ ids filter which sessions are shown
+
+        not run(['cccccc']).includes('hyprctl') ▸ yes
+        run(['aaaaaa']).includes('hyprctl') ▸ yes
+
+    ▸ sessions are separated by a blank line
+
+        lines = run(['aaaaaa', 'cccccc']).split('\n')
+        secondRow = lines.findIndex (l) -> l.trimStart().startsWith 'cccccc '
+
+        lines[secondRow - 1] ▸ ''
+
+    ▸ a session with no shell commands prints only its row
+
+        run(['bbbbbb']) ▸ run(['bbbbbb']).split('\n')[0]
+
+# ████████  ████████   ████████    ███████   ████████    ███████
+# ███       ███   ███  ███   ███  ███   ███  ███   ███  ███
+# ███████   ███████    ███████    ███   ███  ███████    ███████
+# ███       ███   ███  ███   ███  ███   ███  ███   ███       ███
+# ████████  ███   ███  ███   ███   ███████   ███   ███  ███████
+
+▸ shell errors
+
+    ▸ unknown id surfaces the error
+
+        throws(-> run(['zzzzzz']), /no\x20session/i)
+
+    ▸ output ends without a trailing blank line
+
+        out = run ['cccccc']
+        not out.endsWith('\n') ▸ yes

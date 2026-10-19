@@ -1,0 +1,129 @@
+var toExport = {}
+var DB_PATH, every, lines, out, plain, run, secondRow
+
+import build from "../test/fixtures/build.js"
+
+import db from "../db.js"
+
+import shell from "../shell.js"
+
+import style from "../style.js"
+
+import helpers from "./helpers.js"
+let throws = helpers.throws
+
+DB_PATH = build.fixtures().DB_PATH
+plain = style.createStyle(false)
+
+run = function (ids, width = 80)
+{
+    var database
+
+    database = db.openDb(DB_PATH)
+    return shell({db:database,prefixes:ids,width:width,style:plain})
+}
+toExport["shell blocks"] = function ()
+{
+    section("starts with the session row, then the commands", function ()
+    {
+        lines = run(['cccccc']).split('\n')
+        compare(lines[0].trimStart().startsWith('cccccc '),true)
+        compare(lines.includes('$ shell'),true)
+    })
+    section("shows the result of every command, successful or not", function ()
+    {
+        out = run(['cccccc'])
+        compare(out.includes("$ shell result\nhi"),true)
+        compare(out.includes("$ shell result\nboom"),true)
+    })
+    section("shows an exit marker for a nonzero exit", function ()
+    {
+        compare(run(['cccccc']).includes('$ shell exit 42'),true)
+    })
+    section("a successful command gets no exit marker", function ()
+    {
+        compare(!run(['cccccc']).includes('$ shell exit 0'),true)
+    })
+    section("shows the agent marker, since it labels whose commands these are", function ()
+    {
+        compare(run(['cccccc']).includes('> agent build'),true)
+    })
+}
+toExport["shell blocks"]._section_ = true
+toExport["shell filtering"] = function ()
+{
+    section("shows no user turns and no continuation ellipses", function ()
+    {
+        out = run(['cccccc'])
+        compare(!out.includes('> user'),true)
+        compare(!out.includes("\n…"),true)
+        compare(!out.includes('one'),true)
+    })
+    section("only shell tools are shown", function ()
+    {
+        out = run(['aaaaaa'])
+        compare(out.includes('$ shell'),true)
+        compare(!out.includes('$ read'),true)
+        compare(!out.includes('$ webfetch'),true)
+        compare(!out.includes('$ grep'),true)
+    })
+    section("a non-shell tool is never shown even when its name is close", function ()
+    {
+        compare(!run(['cccccc']).includes('$ bash'),true)
+    })
+    section("no ellipsis markers anywhere, since there are no runs to continue", function ()
+    {
+        every = run([])
+        compare(!every.includes("\n…"),true)
+    })
+}
+toExport["shell filtering"]._section_ = true
+toExport["shell selection"] = function ()
+{
+    section("shows every session when no ids are given", function ()
+    {
+        compare(run([]).includes('$ shell'),true)
+    })
+    section("ids filter which sessions are shown", function ()
+    {
+        compare(!run(['cccccc']).includes('hyprctl'),true)
+        compare(run(['aaaaaa']).includes('hyprctl'),true)
+    })
+    section("sessions are separated by a blank line", function ()
+    {
+        lines = run(['aaaaaa','cccccc']).split('\n')
+        secondRow = lines.findIndex(function (l)
+        {
+            return l.trimStart().startsWith('cccccc ')
+        })
+        compare(lines[secondRow - 1],'')
+    })
+    section("a session with no shell commands prints only its row", function ()
+    {
+        compare(run(['bbbbbb']),run(['bbbbbb']).split('\n')[0])
+    })
+}
+toExport["shell selection"]._section_ = true
+toExport["shell errors"] = function ()
+{
+    section("unknown id surfaces the error", function ()
+    {
+        throws(function ()
+        {
+            run(['zzzzzz'])
+            return /no\x20session/i
+        })
+    })
+    section("output ends without a trailing blank line", function ()
+    {
+        out = run(['cccccc'])
+        compare(!out.endsWith('\n'),true)
+    })
+}
+toExport["shell errors"]._section_ = true
+toExport._test_ = true
+export default toExport
+
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic2hlbGwuanMiLCJzb3VyY2VzIjpbIi4uLy4uL2tvZGUvdGVzdC9zaGVsbC5rb2RlIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQWNBLFVBQVUsTUFBTSxXQUFXO0FBRTNCLFFBQVEsTUFBTSxZQUFZOztBQUUxQjs7OztJQUVJLFdBQVcsR0FBRyxPQUFPO1dBQ3JCLE9BQU8sR0FBSSxTQUFVLFNBQVUsSUFBSyxNQUFBLE1BQU8sTUFBTzs7Ozs7O1FBYTlDLFFBQVEsS0FBSyxXQUFXLE1BQU07Z0JBRTlCLE1BQU0sR0FBRyxZQUFZLFdBQVcsV0FBYTtnQkFDN0MsTUFBTSxTQUFTLFdBQWE7Ozs7UUFJNUIsTUFBTSxLQUFLO2dCQUVYLElBQUksU0FBUyxzQkFBd0I7Z0JBQ3JDLElBQUksU0FBUyx3QkFBMEI7Ozs7Z0JBSXZDLEtBQUssV0FBVyxTQUFTLG1CQUFxQjs7OztpQkFJMUMsS0FBSyxXQUFXLFNBQVMsa0JBQW9COzs7O2dCQUlqRCxLQUFLLFdBQVcsU0FBUyxpQkFBbUI7Ozs7Ozs7O1FBWTVDLE1BQU0sS0FBSztpQkFFUCxJQUFJLFNBQVMsVUFBWTtpQkFDekIsSUFBSSxTQUFTLE9BQVM7aUJBQ3RCLElBQUksU0FBUyxPQUFTOzs7O1FBSTFCLE1BQU0sS0FBSztnQkFFWCxJQUFJLFNBQVMsV0FBYTtpQkFDdEIsSUFBSSxTQUFTLFVBQVk7aUJBQ3pCLElBQUksU0FBUyxjQUFnQjtpQkFDN0IsSUFBSSxTQUFTLFVBQVk7Ozs7aUJBSXpCLEtBQUssV0FBVyxTQUFTLFVBQVk7Ozs7UUFJekMsUUFBUTtpQkFDSixNQUFNLFNBQVMsT0FBUzs7Ozs7Ozs7Z0JBWTVCLFFBQVEsU0FBUyxXQUFhOzs7O2lCQUkxQixLQUFLLFdBQVcsU0FBUyxXQUFhO2dCQUMxQyxLQUFLLFdBQVcsU0FBUyxXQUFhOzs7O1FBSXRDLFFBQVEsS0FBSyxTQUFVLFdBQVcsTUFBTTtRQUN4QyxZQUFZLE1BQU07O21CQUFpQixFQUFFLFlBQVksV0FBVzs7Z0JBRTVELE1BQU0sWUFBWSxHQUFLOzs7O2dCQUl2QixLQUFLLFdBQWEsS0FBSyxXQUFXLE1BQU0sTUFBTTs7Ozs7Ozs7UUFZOUM7O1lBQVUsS0FBSzttQkFBWTs7Ozs7UUFJM0IsTUFBTSxLQUFLO2lCQUNQLElBQUksU0FBUyxNQUFRIn0=
+//# sourceURL=file://kode/test/shell.kode

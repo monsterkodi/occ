@@ -8,8 +8,8 @@
     "occ": "./bin/occ"
   },
   "scripts": {
-    "build": "node ${KODE:-../ked/js/kode/kode.js} -o js kode/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test kode/test/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test/fixtures kode/test/fixtures/*.kode",
-    "test": "node --test 'js/test/*.test.js'"
+    "build": "node ${KODE:-../ked/js/kode/kode.js} -o js kode/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test kode/test/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test/fixtures kode/test/fixtures/*.kode && node ${KODE:-../ked/js/kode/kode.js} -o js/test_old kode/test_old/*.kode",
+    "test": "node --test 'js/test_old/*.test.js'"
   },
   "engines": {
     "node": ">=24"

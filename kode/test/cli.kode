@@ -1,0 +1,152 @@
+###
+     ███████  ███      ███
+    ███       ███      ███
+    ███       ███      ███
+    ███       ███      ███
+     ███████  ███████  ███
+###
+
+import child from 'node:child_process'
+import path from 'node:path'
+import url from 'node:url'
+
+use ./fixtures/build
+use ./helpers ▪ matches notMatches
+
+#  Two up, not one: this file is run from js/test, where the source is
+#  kode/test. The entry point is bin/occ, the file the package runs.
+
+here = url.fileURLToPath(import.meta.url)
+
+root = path.join(path.dirname(here), '..', '..')
+
+occ = path.join root, 'bin/occ'
+
+home = build.makeDataHome().home
+
+READ_COMMANDS = ['ls' 'cat' 'log' 'shell']
+
+#  the commands the help table claims are runnable
+
+#  The pattern is a constant: a regex written as an argument reads as
+#  the start of something else.
+
+LISTED = /^\x20+occ\x20(\w+)/gm
+
+#  spawnSync rather than the promisified execFile the old suite awaited: the
+#  tester runs a section in one synchronous go, so the answer has to be here
+#  before the section ends.
+
+occRun = (args, env={}) ->
+
+    #  concat and not +: + joins strings, so the argv list would be one
+    #  argument ending in a comma
+
+    all = [occ].concat args
+    base = {XDG_DATA_HOME: home, NO_COLOR: '1'}
+    envs = Object.assign({}, process.env, base, env)
+
+    res = child.spawnSync process.execPath, all, {env: envs, encoding: 'utf8'}
+
+    stdout: res.stdout
+    stderr: res.stderr
+    status: res.status
+
+#  The stdout of a run that had to succeed. A rejected promise used to fail
+#  the test before anyone looked at the output; the status check is that, now
+#  that there is no promise.
+
+stdoutOf = (res) ->
+
+    res.status ▸ 0
+    res.stdout
+
+#  The shape every refusal in the cli has: exit one, and the reason on stderr.
+#  It was a predicate handed to assert.rejects, and checks the same two things
+#  on the result.
+
+refuses = (res, pattern) ->
+
+    if res.status != 1
+        ⮐ res.status ▸ 1
+    matches res.stderr, pattern
+
+▸ cli read commands
+
+    ▸ every read command runs and prints something
+
+        for command in READ_COMMANDS
+            out = stdoutOf occRun([command, 'aaaaaa'])
+            matches out, /aaaaaa/
+
+    ▸ every read command with no ids runs
+
+        for command in READ_COMMANDS
+            out = stdoutOf occRun([command])
+            out.trim().length > 0 ▸ yes
+
+    ▸ every command in the help table is dispatchable
+
+        res = occRun(['--help'])
+
+        found = res.stdout.matchAll LISTED
+        listed = Array.from(found).map((m) -> m[1])
+
+        listed.includes 'ls' ▸ yes
+
+        skip = ['del' 'resume']
+
+        for command in listed.filter((c) -> not skip.includes c)
+            out = stdoutOf occRun([command, 'aaaaaa'])
+            out.trim().length > 0 ▸ yes
+
+    ▸ a title argument works end to end
+
+        out = stdoutOf occRun(['ls', 'ocls'])
+
+        matches out, /aaaaaa/
+        matches out, /Coco\x20-\x20ocls/
+
+    ▸ every read command accepts a title argument
+
+        for command in READ_COMMANDS
+            out = stdoutOf occRun([command, 'ocls'])
+            matches out, /aaaaaa/
+
+▸ cli help
+
+    ▸ no arguments falls back to ls
+
+        bare = stdoutOf occRun([])
+        listed = stdoutOf occRun(['ls'])
+
+        bare ▸ listed
+        notMatches bare, /usage:/
+
+    ▸ an empty argument is still a command lookup
+
+        refuses occRun(['']), /unknown\x20command/
+
+    ▸ an unknown command fails with a message
+
+        refuses occRun(['frobnicate']), /unknown\x20command\x20\"frobnicate\"/
+
+▸ cli del
+
+    ▸ is dispatched and reaches its own guard
+
+        refuses occRun(['del']), /at\x20least\x20one\x20session\x20id/
+
+    ▸ refuses without a terminal
+
+        refuses occRun(['del', 'aaaaaa']), /needs\x20a\x20terminal/
+
+▸ cli resume
+
+    ▸ is dispatched and reaches its own guard
+
+        refuses occRun(['resume']), /exactly\x20one\x20session\x20id/
+
+    ▸ refuses without a terminal
+
+        refuses occRun(['resume', 'aaaaaa']), /needs\x20a\x20terminal/

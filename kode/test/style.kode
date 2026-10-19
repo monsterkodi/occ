@@ -1,0 +1,102 @@
+###
+ ███████  █████████  ███   ███  ███      ████████
+███          ███      ███ ███   ███      ███
+ ███████      ███       █████    ███      ███████
+      ███     ███        ███     ███      ███
+ ███████      ███        ███     ███████  ████████
+###
+
+#  the same roles whether or not color is on, every role a function of text, and
+#  a style that composes rather than replaces.
+
+use ../style
+
+strip = (text) -> text.replace /\x1b\[[0-9;]*m/g, ''
+
+groups = ['row' 'turn' 'tool' 'del']
+
+HEX = new Set ['fg', 'bg']
+
+#  Every leaf of the style tree, as a dotted path. A role that is a function is
+#  a leaf; a group is walked into.
+
+walk = (style, prefix='', found=[]) ->
+
+    for [key, value] in Object.entries style
+        if key in ['enabled' 'palette'] then continue
+        if HEX.has key then continue
+        path = if prefix then "#{prefix}.#{key}" else key
+        if value is func then found.push path
+        else walk(value, path, found)
+
+    found
+
+roleOf = (style, path) ->
+
+    fn = style
+    for key in path.split '.'
+        fn = fn[key]
+
+    fn
+
+▸ createStyle
+
+    ▸ exposes the same roles whether or not color is on
+
+        walk(style.createStyle(true)) ▸ walk(style.createStyle(false))
+
+    ▸ every role is a function of text
+
+        for role in walk style.createStyle(true)
+            fn = roleOf style.createStyle(true), role
+            typeof(fn) ▸ 'function'
+            typeof(fn('x')) ▸ 'string'
+
+    ▸ reports whether color is enabled
+
+        style.createStyle(true).enabled ▸ true
+        style.createStyle(false).enabled ▸ false
+
+    ▸ each expected role exists
+
+        s = style.createStyle true
+        for group in groups
+            Boolean(s[group]) ▸ yes
+        Object.keys(s.row) ▸ ['id' 'last' 'duration' 'turns' 'name']
+        Object.keys(s.turn) ▸ ['user' 'agent' 'mode' 'continue']
+        Object.keys(s.tool) ▸ ['call' 'result' 'exit' 'note']
+        Object.keys(s.del) ▸ ['warning' 'question']
+
+    ▸ disabled style returns the text unchanged
+
+        s = style.createStyle false
+        for role in walk s
+            roleOf(s, role)('plain text') ▸ 'plain text'
+
+    ▸ enabled style returns the same visible text
+
+        s = style.createStyle true
+        for role in walk s
+            strip(roleOf(s, role)('plain text')) ▸ 'plain text'
+
+    ▸ a dim role wraps text without changing it
+
+        out = style.createStyle(true).turn.continue '…'
+        out != '…' ▸ yes
+        strip(out) ▸ '…'
+
+    ▸ nested styles compose rather than replace
+
+        s = style.createStyle true
+        inner = s.turn.mode 'build'
+        outer = s.tool.result inner
+
+        inner != outer ▸ yes
+        strip(outer).includes('build') ▸ yes
+
+    ▸ styling is applied consistently across runs
+
+        a = style.createStyle true
+        b = style.createStyle true
+
+        a.turn.user('> user') ▸ b.turn.user('> user')

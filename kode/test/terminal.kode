@@ -1,0 +1,34 @@
+###
+    █████████  ████████  ████████   ██     ██  ███  ███   ███   ███████   ███
+       ███     ███       ███   ███  ███   ███  ███  ████  ███  ███   ███  ███
+       ███     ███████   ███████    █████████  ███  ███ █ ███  █████████  ███
+       ███     ███       ███   ███  ███ █ ███  ███  ███  ████  ███   ███  ███
+       ███     ████████  ████████   ███   ███  ███  ███   ███  ███   ███  ███████
+###
+
+#  terminal.kode has one export and it is the module, so `use ../terminal`
+#  binds the function itself rather than an object to reach through.
+
+use ../terminal
+
+sink = ->
+
+    chunks = []
+    write = (text) -> chunks.push text
+
+    chunks: chunks
+    write: write
+
+▸ createTerminal
+
+    ▸ writes through to the writer it was given
+
+        out = sink()
+        terminal(out, false).write 'hello'
+
+        out.chunks ▸ ['hello']
+
+    ▸ reports interactivity as given
+
+        terminal(sink(), true).interactive  ▸ true
+        terminal(sink(), false).interactive ▸ false

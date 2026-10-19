@@ -1,0 +1,235 @@
+###
+    ████████   ████████   ███████  ███   ███  ██     ██  ████████
+    ███   ███  ███       ███       ███   ███  ███   ███  ███
+    ███████    ███████   ███████   ███   ███  █████████  ███████
+    ███   ███  ███            ███  ███   ███  ███  ███ █ ███  ███
+    ███   ███  ████████  ███████    ███████   ███   ███  ████████
+###
+
+#  `occ resume sess` — hand the session back to opencode.
+#
+#  A session runs in a directory, and the directory names the persona that runs
+#  it — the same rule the persona plugin uses to title sessions. PERSONAS holds
+#  the directories whose name says nothing about who they belong to.
+
+#  resume answers with a promise, and the tester runs a section in one
+#  synchronous go — so every run happens here, while the module is imported
+#  with await, and the sections below only look at what came back. ked's
+#  konrad/knrd test is built the same way.
+
+use ./fixtures/build
+use ../db
+use ../resume
+use ./helpers ▪ catching
+
+A = 'ses_aaaaaaaaaaaaaaaaaaaaaaaaa1'
+B = 'ses_bbbbbbbbbbbbbbbbbbbbbbb2'
+
+GONE = 'ses_9999999999999999999999g'
+
+withDb = (fn) ->
+
+    database = db.openDb build.buildTestDb()
+
+    try
+        out = fn database
+    catch err
+        database.close()
+        throw err
+
+    database.close()
+    out
+
+addSession = (database, id, directory, title) ->
+
+    stmt = database.prepare "INSERT INTO session_v2 (id, project_id, parent_id, title, slug, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    stmt.run id, 'proj1', null, title, 'quiet-fox', directory, 1, 2
+
+#  A run that records the plans it was handed, so a test can look at both what
+#  was launched and what was refused before launching.
+#
+#  Destructuring is not written as `{plans, code} = attempt ['aaaaaa']`: the
+#  call is a sequence, and the destructuring would repeat it once per name.
+
+attempt = (prefixes, opt={}) ->
+
+    plans = []
+    launch = (plan) ->
+        plans.push plan
+        opt.code ? 0
+
+    code = ○-> withDb (database) ->
+        resume.resume
+            db: database
+            prefixes: prefixes
+            io: interactive: opt.interactive ? true
+            launch: launch
+
+    plans: plans
+    code: code
+
+#  one attempt, run to the end: what it launched, and what came back instead
+#  of a value
+
+attempted = (prefixes, opt={}) ○->
+
+    run = attempt prefixes, opt
+    res = ○ catching(run.code)
+
+    plans: run.plans
+    res: res
+
+noId        = ○ attempted([])
+twoIds      = ○ attempted(['aaaaaa', 'cccccc'])
+fragment    = ○ attempted(['o'])
+named       = ○ attempted(['o'])
+unknown     = ○ attempted(['zzzzzz'])
+noTerminal  = ○ attempted(['aaaaaa'], {interactive: false})
+
+#  the guards, one per prefix shape, each with what it launched before firing
+
+guardRuns = []
+
+for prefixes in [[] ['aaaaaa' 'cccccc'] ['o'] ['zzzzzz']]
+    one = ○ attempted(prefixes)
+    guardRuns.push one
+
+#  a directory that is gone: refused, and nothing handed to the launch
+
+gonePlans = []
+goneDatabase = db.openWritable build.buildTestDb()
+
+addSession goneDatabase, GONE, '/nonexistent/persona', 'Gone - nothing'
+
+refused = -> resume.resume
+    db: goneDatabase
+    prefixes: [GONE]
+    io: {interactive: true}
+    launch: (plan) -> gonePlans.push plan
+
+goneRes = ○ catching(refused)
+goneDatabase.close()
+
+onSession = ○ attempted(['aaaaaa'])
+fullId    = ○ attempted(['aaaaaa'])
+directory = ○ attempted(['aaaaaa'])
+persona   = ○ attempted(['aaaaaa'])
+title     = ○ attempted(['ocls'])
+dotConfig = ○ attempted(['bbbbbbb'])
+inherited = ○ attempted(['aaaaaa'])
+exitCode  = ○ attempted(['aaaaaa'], {code: 42})
+
+▸ personaOf
+
+    ▸ the directory basename is the persona
+
+        resume.personaOf('/home/kodi/a/coco') ▸ 'coco'
+        resume.personaOf('/home/kodi/a/bert')  ▸ 'bert'
+
+    ▸ a dot directory can name a persona of its own
+
+        resume.personaOf('/home/kodi/.config') ▸ 'sepp'
+
+    ▸ the persona is lowercased
+
+        resume.personaOf('/home/kodi/A/Coco') ▸ 'coco'
+
+    ▸ a trailing slash does not matter
+
+        resume.personaOf('/home/kodi/a/coco/') ▸ 'coco'
+
+#  ███████   ███   ███   ███████   ████████   ███████     ███████
+# ███        ███   ███  ███   ███  ███   ███  ███   ███  ███
+# ███  ████  ███   ███  █████████  ███████    ███   ███  ███████
+# ███   ███  ███   ███  ███   ███  ███        ███   ███       ███
+#  ███████    ███   ███  ███   ███  ███        ███████   ███████
+
+▸ resume guards
+
+    ▸ no session at all is refused
+
+        noId.res.error ▸ (e) -> e instanceof db.OclsError and (/exactly\x20one\x20session\x20id/i).test e.message
+
+    ▸ two sessions are refused
+
+        twoIds.res.error ▸ (e) -> e instanceof db.OclsError and (/got\x202/).test e.message
+
+    ▸ a fragment matching several sessions is refused
+
+        fragment.res.error ▸ (e) -> e instanceof db.OclsError and (/matches\x202\x20sessions/).test e.message
+
+    ▸ the refusal names the fragment and the count
+
+        named.res.error ▸ (e) -> (/"o".*2/).test e.message
+
+    ▸ an unknown session is refused
+
+        unknown.res.error ▸ (e) -> (/no\x20session\x20matches/).test e.message
+
+    ▸ a non-interactive terminal is refused
+
+        noTerminal.res.error ▸ (e) -> e instanceof db.OclsError and (/terminal/i).test e.message
+
+    ▸ a session whose directory is gone is refused
+
+        goneRes.error ▸ (e) -> e instanceof db.OclsError and e.message.includes '/nonexistent/persona'
+        gonePlans ▸ []
+
+    ▸ nothing is launched when a guard fires
+
+        for guard in guardRuns
+            (guard.res.error != null) ▸ yes
+            guard.plans ▸ []
+
+# ████████   ███       ███████   ███   ███
+# ███   ███  ███      ███   ███  ████  ███
+# ████████   ███      █████████  ███ █ ███
+# ███        ███      ███   ███  ███  ████
+# ███        ███████  ███   ███  ███   ███
+
+▸ resume plan
+
+    ▸ runs opencode on the session
+
+        onSession.res.error ▸ null
+        onSession.res.value ▸ 0
+        onSession.plans.length ▸ 1
+        onSession.plans[0].command ▸ 'opencode'
+
+    ▸ passes the full session id, never the prefix
+
+        fullId.res.error ▸ null
+        fullId.plans[0].args ▸ ['--session', A]
+
+    ▸ runs in the directory the session belongs to
+
+        directory.res.error ▸ null
+        directory.plans[0].cwd ▸ '/home/kodi/a/coco'
+
+    ▸ sets the persona the session runs as
+
+        persona.res.error ▸ null
+        persona.plans[0].env.OPENCODE_PERSONA ▸ 'coco'
+
+    ▸ a title fragment resolves the same way
+
+        title.res.error ▸ null
+        title.plans[0].args ▸ ['--session', A]
+        title.plans[0].cwd ▸ '/home/kodi/a/coco'
+
+    ▸ a session in .config resumes as sepp
+
+        dotConfig.res.error ▸ null
+        dotConfig.plans[0].args ▸ ['--session', B]
+        dotConfig.plans[0].cwd ▸ '/home/kodi/.config'
+        dotConfig.plans[0].env.OPENCODE_PERSONA ▸ 'sepp'
+
+    ▸ the rest of the environment is inherited
+
+        inherited.res.error ▸ null
+        inherited.plans[0].env.PATH ▸ process.env.PATH
+
+    ▸ returns the exit code opencode exited with
+
+        exitCode.res.error ▸ null
+        exitCode.res.value ▸ 42

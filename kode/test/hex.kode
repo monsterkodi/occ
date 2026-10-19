@@ -1,0 +1,162 @@
+###
+    ███   ███  ████████  ███   ███  
+    ███   ███  ███        ███ ███   
+    █████████  ███████     █████    
+    ███   ███  ███        ███ ███   
+    ███   ███  ████████  ███   ███  
+###
+
+#  fg and bg take a hex colour, #rgb or #rrggbb, and are the only thing here
+#  that validates: with colour off nothing is applied, so nothing is checked.
+
+use ../style
+use ./helpers ▪ throws
+
+strip = (text) -> text.replace /\x1b\[[0-9;]*m/g, ''
+
+lit = style.createStyle true
+plain = style.createStyle false
+
+#  Named, because the tester would call a class matcher with its own failure
+#  as the argument, and an es6 class cannot be called at all - an instanceof
+#  predicate stands in for style.StyleError.
+
+isStyleError = (e) -> e instanceof style.StyleError
+
+▸ fg and bg with hex
+
+    ▸ fg emits a 24-bit foreground sequence
+
+        (lit.fg('#0000ff', 'x')) ▸ "\u001b[38;2;0;0;255mx\u001b[39m"
+
+    ▸ bg emits a 24-bit background sequence
+
+        (lit.bg('#ff0000', 'x')) ▸ "\u001b[48;2;255;0;0mx\u001b[49m"
+
+    ▸ three digit shorthand expands to pairs
+
+        (lit.fg('#00f', 'x')) ▸ (lit.fg('#0000ff', 'x'))
+        (lit.bg('#f00', 'x')) ▸ (lit.bg('#ff0000', 'x'))
+
+    ▸ uppercase and a missing hash are accepted
+
+        (lit.fg('#0000FF', 'x')) ▸ (lit.fg('#0000ff', 'x'))
+        (lit.fg('00ff00', 'x')) ▸ (lit.fg('#00ff00', 'x'))
+
+    ▸ four digits are rejected as neither rgb nor rrggbb
+
+        throws (-> lit.fg('#00FF', 'x')), isStyleError
+
+    ▸ nesting preserves the visible text
+
+        out = lit.bg '#ff0000', lit.fg('#ffff00', 'hi')
+        (strip(out)) ▸ 'hi'
+
+    ▸ fg nests inside another role
+
+        out = lit.fg '#0000ff', lit.turn.user('> user')
+
+        (strip(out)) ▸ '> user'
+        (out.includes('38;2;0;0;255')) ▸ yes
+        out != lit.turn.user('> user') ▸ yes
+
+    ▸ a role can be built from hex, foreground inside background
+
+        c = (text) -> lit.bg('#1e40af', lit.fg('#ffffff', lit.turn.user(text)))
+
+        (strip(c('> user'))) ▸ '> user'
+        ((c('> user')).includes('48;2;30;64;175')) ▸ yes
+
+#  ███████   ███████   ███       ███████   ███   ███  ████████ 
+# ███       ███   ███  ███      ███   ███  ███   ███  ███   ███
+# ███       ███   ███  ███      ███   ███  ███   ███  ███████  
+# ███       ███   ███  ███      ███   ███  ███   ███  ███   ███
+#  ███████   ███████   ███████   ███████    ███████   ███   ███
+
+▸ fg and bg when color is off
+
+    ▸ fg returns the text, not the hex
+
+        (plain.fg('#0000ff', 'hello')) ▸ 'hello'
+
+    ▸ bg returns the text, not the hex
+
+        (plain.bg('#ff0000', 'hello')) ▸ 'hello'
+
+    ▸ no escape codes are emitted
+
+        (strip(plain.fg('#0000ff', 'x'))) ▸ 'x'
+        (strip(plain.bg('#ff0000', 'x'))) ▸ 'x'
+
+    ▸ a role using fg does not leak the hex when color is off
+
+        name = (text) -> plain.fg('#00ff00', text)
+        (name('name')) ▸ 'name'
+
+# ████████    ███████   ███      ████████  █████████  █████████  ████████
+# ███   ███  ███   ███  ███      ███          ███        ███     ███     
+# ████████   █████████  ███      ███████      ███        ███     ███████ 
+# ███        ███   ███  ███      ███          ███        ███     ███     
+# ███        ███   ███  ███████  ████████     ███        ███     ████████
+
+▸ palette
+
+    ▸ exposes the named codes alongside fg and bg
+
+        typeof(lit.palette.bold) ▸ 'function'
+        typeof(lit.palette.gray) ▸ 'function'
+        typeof(lit.palette.fg) ▸ 'function'
+        typeof(lit.palette.bg) ▸ 'function'
+
+    ▸ fg composes with a named code the way a role author writes it
+
+        out = lit.fg '#0000ff', lit.palette.bold('hi')
+
+        (strip(out)) ▸ 'hi'
+        (out.includes('38;2;0;0;255')) ▸ yes
+        (out.includes("\u001b[1m")) ▸ yes
+
+    ▸ bg composes with fg for a foreground on a background
+
+        out = lit.bg '#ff0000', lit.fg('#ffff00', 'hi')
+
+        (strip(out)) ▸ 'hi'
+        (out.includes('48;2;255;0;0')) ▸ yes
+        (out.includes('38;2;255;255;0')) ▸ yes
+
+    ▸ the palette follows the color setting too
+
+        (plain.palette.bold('hi')) ▸ 'hi'
+        lit.palette.bold('hi') != 'hi' ▸ yes
+
+# ███   ███   ███████   ███      ███  ███████     ███████   █████████  ███   ███████   ███   ███
+# ███   ███  ███   ███  ███      ███  ███   ███  ███   ███     ███     ███  ███   ███  ████  ███
+#  ███ ███   █████████  ███      ███  ███   ███  █████████     ███     ███  ███   ███  ███ █ ███
+#    ███     ███   ███  ███      ███  ███   ███  ███   ███     ███     ███  ███   ███  ███  ████
+#     █      ███   ███  ███████  ███  ███████    ███   ███     ███     ███   ███████   ███   ███
+
+▸ hex validation
+
+    bad = ['#12345' '#1234567' '#gggggg' 'blue' '' '#']
+
+    ▸ rejects each malformed hex value
+
+        for value in bad
+            throws (-> lit.fg(value, 'x')), isStyleError
+
+    ▸ rejects a non-string
+
+        throws (-> lit.fg(255, 'x')), isStyleError
+        throws (-> lit.bg(null, 'x')), isStyleError
+
+    ▸ rejects eight digit hex with a message mentioning alpha
+
+        throws (-> lit.fg('#0000ffff', 'x')), /hex|rgb/i
+
+    ▸ the error names the offending value
+
+        throws (-> lit.fg('#zzzzzz', 'x')), /#zzzzzz/
+
+    ▸ nothing is validated while color is off, since nothing is applied
+
+        (plain.fg('nope', 'x')) ▸ 'x'

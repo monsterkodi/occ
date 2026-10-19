@@ -1,0 +1,96 @@
+###
+ ███████   ███████   █████████
+███       ███   ███     ███
+███       █████████     ███
+███       ███   ███     ███
+ ███████  ███   ███     ███
+###
+
+use ../test/fixtures/build
+use ../db
+use ../cat
+use ../style
+use ./helpers ▪ throws
+
+DB_PATH = build.fixtures().DB_PATH
+
+plain = style.createStyle false
+
+run = (ids, width=80) ->
+
+    database = db.openDb DB_PATH
+    cat {db: database, prefixes: ids, width, style: plain}
+
+#  the conversation: turns only, no tool blocks
+
+▸ cat
+
+    ▸ starts with the session row, then the turns
+
+        lines = run(['aaaaaa']).split '\n'
+
+        lines[0].trimStart().startsWith('aaaaaa ') ▸ yes
+        lines[1] ▸ '> user'
+        lines[2] ▸ 'hello'
+
+    ▸ shows no tool calls or results at all
+
+        out = run ['aaaaaa']
+
+        not out.includes('$ ') ▸ yes
+        not out.includes('hyprctl') ▸ yes
+
+    ▸ text on both sides of a tool call joins into one turn
+
+        out = run ['aaaaaa']
+
+        out.includes("hi there\n\ndone listing") ▸ yes
+        not out.includes('total 48') ▸ yes
+
+    ▸ consecutive text parts in one message still join with a blank line
+
+        run(['aaaaaa']).includes("first bit\n\nsecond bit") ▸ yes
+
+▸ cat selection
+
+    ▸ shows every session when no ids are given
+
+        out = run []
+
+        out.includes('> user') ▸ yes
+        out.split('\n').filter((l) -> l == '> user').length ▸ 3
+
+    ▸ ids filter which sessions are shown
+
+        out = run ['cccccc']
+
+        not out.includes('hello') ▸ yes
+        out.includes('> user') ▸ yes
+
+    ▸ ids keep the order they were given in
+
+        out = run ['bbbbbb', 'aaaaaa']
+
+        out.indexOf('bbbbbb') < out.indexOf('aaaaaa') ▸ yes
+
+    ▸ sessions are separated by a blank line, not a rule
+
+        lines = run(['aaaaaa', 'cccccc']).split '\n'
+        secondRow = lines.findIndex (l) -> l.trimStart().startsWith 'cccccc '
+
+        lines[secondRow - 1] ▸ ''
+
+    ▸ a session with no renderable turns prints only its row
+
+        run(['bbbbbb']) ▸ run(['bbbbbb']).split('\n')[0]
+
+▸ cat errors
+
+    ▸ unknown id surfaces the error
+
+        throws(-> run(['zzzzzz']), /no\x20session/i)
+
+    ▸ output ends without a trailing blank line
+
+        out = run ['aaaaaa']
+        not out.endsWith('\n') ▸ yes

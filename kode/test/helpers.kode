@@ -1,0 +1,81 @@
+#  the assertions the tester cannot spell on its own. everything else is a
+#  compare:  lhs ▸ rhs
+
+#  throws: run fn and report what came out against the matcher - a regexp
+#  against the message, a class, or a predicate. a pass counts, a failure
+#  shows the matcher against what it got.
+
+throws = (fn, match) ->
+
+    err = null
+    try
+        fn()
+    catch e
+        err = e
+
+    if not err?
+        ⮐ compare 'an error', 'nothing thrown'
+
+    if not match?
+        ⮐ compare err, err
+
+    if match instanceof RegExp
+        if match.test err.message
+            ⮐ compare match, match
+        ⮐ compare match, err.message
+
+    #  a predicate answers to being called, a class cannot be called at all -
+    #  so the throw is what hands the decision to instanceof
+
+    ok = false
+    try
+        ok = match err
+    catch classErr
+        ok = err instanceof match
+
+    #  the matcher itself never goes into a compare: the tester calls a
+    #  function on the right hand side as a predicate, an ES6 class cannot be
+    #  called without new, and a predicate handed itself answers about itself
+    #  rather than about the error - all three throw out of the tester's
+    #  reach.  the name says which matcher was asked, the error says what it
+    #  got.
+
+    ident = match.name or 'matcher'
+
+    if ok
+        ⮐ compare ident, ident
+    compare ident, err
+
+#  matches / notMatches: a pass counts, a failure shows the pattern against
+#  the text it did not find (or did find) in.
+
+matches = (text, pattern) ->
+
+    if pattern.test text
+        ⮐ compare pattern, pattern
+    compare pattern, text
+
+notMatches = (text, pattern) ->
+
+    if pattern.test text
+        ⮐ compare 'no ' + pattern, text
+    compare true, true
+
+#  catching: run fn, which may answer with a promise, and hand back what came
+#  out instead of letting it escape. the async work of a test module happens
+#  at the top level, where a rejection would otherwise take the whole module
+#  down with it.
+
+catching = (fn) ○->
+
+    try
+        value = ○ fn()
+        ⮐ {value: value, error: null}
+    catch e
+        ⮐ {value: null, error: e}
+
+export
+    throws: throws
+    matches: matches
+    notMatches: notMatches
+    catching: catching

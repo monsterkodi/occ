@@ -1,0 +1,166 @@
+###
+    ██     ██  ████████   ███████   ███████   ███████    ███████   ████████   ███████  
+    ███   ███  ███       ███       ███       ███   ███  ███        ███       ███       
+    █████████  ███████   ███████   ███████   █████████  ███  ████  ███████   ███████   
+    ███ █ ███  ███            ███       ███  ███   ███  ███   ███  ███            ███  
+    ███   ███  ████████  ███████   ███████   ███   ███   ███████   ████████  ███████   
+###
+
+#  what happened in one session: messages in, blocks out.
+#
+#  A block is a turn (something was said), a call (a tool was asked), a result
+#  (the tool answered) or an exit (the tool failed). Every command renders the
+#  same blocks and filters them differently.
+
+use ../test/fixtures/build
+use ../db
+use ../query
+use ./helpers ▪ throws
+
+DB_PATH = build.fixtures().DB_PATH
+
+database = db.openDb DB_PATH
+
+A = 'ses_aaaaaaaaaaaaaaaaaaaaaaaaa1'
+C = 'ses_ccccccccccccccccccccccc3'
+
+blocks = (id) -> query.getSession(database, id).blocks
+
+brief = (rows) -> rows.map((b) -> if b.kind == 'call' then [b.kind, b.name] else [b.kind, b.text])
+
+ofKind = (id, kind) -> blocks(id).filter (b) -> b.kind == kind
+
+#  ███████   ████████   ███████    ████████  ████████ 
+# ███   ███  ███   ███  ███   ███  ███       ███   ███
+# ███   ███  ███████    ███   ███  ███████   ███████  
+# ███   ███  ███   ███  ███   ███  ███       ███   ███
+#  ███████   ███   ███  ███████    ████████  ███   ███
+
+▸ getSession order
+
+    ▸ walks messages and parts in order
+
+        (brief(blocks(A))) ▸ [
+            ['turn', 'hello']
+            ['turn', 'hi there']
+            ['call', 'shell']
+            ['result', 'total 48\n---\nHyprland 0.56.2']
+            ['turn', 'done listing']
+            ['turn', 'again']
+            ['turn', 'first bit\n\nsecond bit']
+            ['turn', 'no agent field']
+            ['call', 'shell']
+            ['call', 'webfetch']
+            ['result', 'StatusCode: non 2xx status code (404)']
+            ['call', 'grep']
+            ['call', 'read']
+            ['result', 'name: occ\n']
+        ]
+
+    ▸ consecutive text parts in one message join with a blank line
+
+        turn = blocks(A).find (b) -> b.text == 'first bit\n\nsecond bit'
+
+        turn.kind ▸ 'turn'
+
+# █████████  ███   ███  ████████   ████████   ███████
+#    ███      ███ ███   ███   ███  ███       ███     
+#    ███       █████    ████████   ███████   ███████ 
+#    ███        ███     ███        ███            ███
+#    ███        ███     ███        ████████  ███████ 
+
+▸ getSession message types
+
+    ▸ reasoning, synthetic and idle never produce blocks
+
+        texts = blocks(A).map((b) -> b.text ? '').join '\n'
+
+        not texts.includes 'thinking about the greeting' ▸ yes
+        not texts.includes 'only thinking' ▸ yes
+        not texts.includes 'system note' ▸ yes
+
+    ▸ turn blocks carry the role and agent field
+
+        turns = ofKind A, 'turn'
+
+        turns[0].role ▸ 'user'
+        turns[0].agent ▸ null
+        turns[1].role ▸ 'agent'
+        turns[1].agent ▸ 'plan'
+        turns[4].agent ▸ 'build'
+        turns[5].agent ▸ null
+
+    ▸ call blocks carry the agent of the message they came from
+
+        ofKind(C, 'call')[0].agent ▸ 'build'
+
+    ▸ unknown session id is an error
+
+        throws((-> query.getSession(database, 'nope')), /no\x20session/i)
+
+    ▸ the row is the same one listSessions returns
+
+        fromList = query.listSessions(database, ['aaaaaa'])[0]
+        row = query.getSession(database, A).row
+
+        row.id ▸ fromList.id
+        row.title ▸ fromList.title
+        row.turns ▸ fromList.turns
+        row.time_created ▸ build.BASE
+
+# █████████   ███████    ███████   ███    
+#    ███     ███   ███  ███   ███  ███    
+#    ███     ███   ███  ███   ███  ███    
+#    ███     ███   ███  ███   ███  ███    
+#    ███      ███████    ███████   ███████
+
+▸ getSession tool blocks
+
+    ▸ a call block carries the tool name and its input command
+
+        call = ofKind(A, 'call')[0]
+
+        call.name ▸ 'shell'
+        call.command ▸ 'ls -la; echo ---; hyprctl version'
+
+    ▸ a tool with empty output produces no result block
+
+        ofKind(A, 'call').length ▸ 5
+        ofKind(A, 'result').length ▸ 3
+
+    ▸ an errored tool puts the error message where the result would be
+
+        texts = ofKind(A, 'result').map (b) -> b.text
+
+        texts.includes 'StatusCode: non 2xx status code (404)' ▸ yes
+
+    ▸ a running tool produces no result block
+
+        names = ofKind(A, 'call').map (b) -> b.name
+
+        names.includes 'grep' ▸ yes
+        ofKind(A, 'result').length ▸ 3
+
+    ▸ every call block carries its tool name
+
+        (ofKind(C, 'call').map((b) -> b.name)) ▸ ['shell' 'shell' 'shell']
+
+    ▸ a nonzero exit produces an exit block naming the tool
+
+        (ofKind(C, 'exit')) ▸ [{kind: 'exit', name: 'shell', code: 42}]
+
+    ▸ a zero exit produces no exit block
+
+        ofKind(A, 'exit').length ▸ 0
+
+    ▸ a truncated result carries its full output path
+
+        truncated = ofKind(A, 'result').find (b) -> b.outputPath
+
+        truncated.outputPath ▸ '/home/kodi/.local/share/opencode/tool-output/tool_abc'
+
+    ▸ a non-truncated result has no output path
+
+        full = ofKind(A, 'result').find (b) -> b.text.startsWith 'total 48'
+
+        full.outputPath ▸ null

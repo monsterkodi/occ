@@ -1,0 +1,235 @@
+###
+████████  ███  ███      █████████  ████████  ████████   ███  ███   ███   ███████
+███       ███  ███         ███     ███       ███   ███  ███  ████  ███  ███
+██████    ███  ███         ███     ███████   ███████    ███  ███ █ ███  ███  ████
+███       ███  ███         ███     ███       ███   ███  ███  ███  ████  ███   ███
+███       ███  ███████     ███     ████████  ███   ███  ███  ███   ███   ███████
+###
+
+#  which sessions, and in what order — the side of query.kode that answers
+#  "which", before any of the message parsing.
+
+import sqlite from 'node:sqlite'
+
+use ../test/fixtures/build
+use ../db
+use ../query
+use ./helpers ▪ throws
+
+DB_PATH = build.fixtures().DB_PATH
+
+database = db.openDb DB_PATH
+
+ids = -> query.listSessions(database, []).map((s) -> s.id)
+
+A = 'ses_aaaaaaaaaaaaaaaaaaaaaaaaa1'
+C = 'ses_ccccccccccccccccccccccc3'
+
+#  Named, because an arrow as an argument of throws is more than the parser
+#  wants to read: a second arrow on the same statement flattens. The
+#  prototype is cleared so throws reads check as a predicate, not a class:
+#  a compiled -> always carries one, and a class is what that looks like.
+
+throwsOcls = (pattern) ->
+    check = (e) -> e instanceof db.OclsError and (pattern.test(e.message))
+    check.prototype = null
+    check
+
+###
+ ███████   ████████   ███████    ████████  ████████   ███  ███   ███   ███████ 
+███   ███  ███   ███  ███   ███  ███       ███   ███  ███  ████  ███  ███      
+███   ███  ███████    ███   ███  ███████   ███████    ███  ███ █ ███  ███  ████
+███   ███  ███   ███  ███   ███  ███       ███   ███  ███  ███  ████  ███   ███
+ ███████   ███   ███  ███████    ████████  ███   ███  ███  ███   ███   ███████ 
+###
+
+▸ listSessions filtering
+
+    ▸ returns every top-level session, oldest last message first
+
+        (ids()) ▸ [
+            'ses_bbbbbbbbbbbbbbbbbbbbbbb2'
+            C
+            A
+        ]
+
+    ▸ excludes child sessions
+
+        not ids().includes('ses_ddddddddddddddddddddddd4') ▸ yes
+
+    ▸ carries the directory the session runs in
+
+        byId = (id) -> query.listSessions(database, [id])[0]
+
+        byId(A).directory ▸ '/home/kodi/a/coco'
+        byId('ses_bbbbbbbbbbbbbbbbbbbbbbb2').directory ▸ '/home/kodi/.config'
+
+    ▸ filters by a 6-character prefix
+
+        found = query.listSessions database, ['cccccc']
+
+        found.length ▸ 1
+        found[0].id ▸ C
+
+    ▸ accepts a prefix with the ses_ prefix included
+
+        query.listSessions(database, ["ses_aaaaaa"]).length ▸ 1
+
+    ▸ matches several prefixes at once, keeping the query order
+
+        (query.listSessions(database, ['ccccccc', 'aaaaaaa']).map((s) -> s.id)) ▸ [C, A]
+
+    ▸ matches a title substring, case insensitive
+
+        (query.listSessions(database, ['ocls']).map((s) -> s.id)) ▸ [A]
+        (query.listSessions(database, ['OCLS']).map((s) -> s.id)) ▸ [A]
+        (query.listSessions(database, ['Coco']).map((s) -> s.id)) ▸ [A]
+
+    ▸ matches anywhere in a title, not only the start
+
+        (query.listSessions(database, ['hyprsession']).map((s) -> s.id)) ▸ [C]
+        (query.listSessions(database, ['hypr']).map((s) -> s.id)) ▸ [C]
+
+    ▸ an id still wins over a title
+
+        (query.listSessions(database, ['aaaaaaa']).map((s) -> s.id)) ▸ [A]
+
+    ▸ ids and titles can be mixed, in the order given
+
+        (query.listSessions(database, ['conny', 'aaaaaaa']).map((s) -> s.id)) ▸ [C, A]
+        (query.listSessions(database, ['aaaaaaa', 'conny']).map((s) -> s.id)) ▸ [A, C]
+
+    ▸ overlapping title arguments list a session once
+
+        (query.listSessions(database, ['ocls', 'coco']).map((s) -> s.id)) ▸ [A]
+
+    ▸ title search never finds a child session
+
+        throws((-> query.listSessions(database, ['child'])), /no\x20session/i)
+
+    ▸ an ambiguous id prefix does not fall through to titles
+
+        throws((-> query.listSessions(database, ['ses_'])), /matches\x20\d+\x20sessions/i)
+
+    ▸ sql wildcards in an argument stay literal
+
+        throws((-> query.listSessions(database, ['%'])), /no\x20session/i)
+        throws((-> query.listSessions(database, ['_'])), /no\x20session/i)
+
+    ▸ a term matching nothing is an error
+
+        throws((-> query.listSessions(database, ['zzzzzz'])), /no\x20session/i)
+
+    ▸ unknown prefix is an error
+
+        throws((-> query.listSessions(database, ['zzzzzz'])), throwsOcls(/no\x20session/i))
+
+    ▸ ambiguous prefix is an error
+
+        throws((-> query.listSessions(database, ['ses_'])), throwsOcls(/matches\x20\d+\x20sessions/i))
+
+###
+████████    ███████   ███   ███        ███████     ███████   █████████   ███████ 
+███   ███  ███   ███  ███ █ ███        ███   ███  ███   ███     ███     ███   ███
+███████    ███   ███  █████████        ███   ███  █████████     ███     █████████
+███   ███  ███   ███  ███   ███        ███   ███  ███   ███     ███     ███   ███
+███   ███   ███████   ██     ██        ███████    ███   ███     ███     ███   ███
+###
+
+▸ listSessions ordering
+
+    ▸ follows the last message, not the update time
+
+        rows = query.listSessions database, []
+        pairs = rows.map (s) -> [s.id, s]
+        byId = Object.fromEntries pairs
+
+        #  ses_a… has the newest message but the oldest update time, ses_c… the reverse
+
+        byId[A].time_last > byId[C].time_last ▸ yes
+        byId[A].time_updated < byId[C].time_updated ▸ yes
+        rows.at(-1).id ▸ A
+
+    ▸ a session with no messages sorts on its update time
+
+        empty = new sqlite.DatabaseSync ':memory:'
+
+        empty.exec """
+          CREATE TABLE session_v2 (
+            id text PRIMARY KEY, parent_id text, title text, directory text,
+            time_created integer NOT NULL, time_updated integer NOT NULL
+          );
+          CREATE TABLE session_message (
+            id text PRIMARY KEY, session_id text NOT NULL, type text NOT NULL,
+            seq integer NOT NULL, time_created integer NOT NULL, data text NOT NULL
+          );
+        """
+
+        insert = empty.prepare "INSERT INTO session_v2 (id, parent_id, title, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)"
+
+        insert.run 'ses_1111111111111111111111a', null, 'Old, touched late', '/home/kodi/a/coco', build.BASE, build.BASE + 9 * 3600000
+        insert.run 'ses_2222222222222222222222b', null, 'New, touched early', '/home/kodi/a/coco', build.BASE, build.BASE + 60000
+
+        message = empty.prepare "INSERT INTO session_message (id, session_id, type, seq, time_created, data) VALUES (?, ?, ?, ?, ?, ?)"
+
+        message.run 'm1', 'ses_2222222222222222222222b', 'user', 1, build.BASE + 5 * 3600000, '{"text":"hi"}'
+
+        (query.listSessions(empty, []).map((s) -> s.id)) ▸ [
+            'ses_2222222222222222222222b'
+            'ses_1111111111111111111111a'
+        ]
+
+        empty.close()
+
+▸ listSessions row data
+
+    ▸ counts turns from user messages with text only
+
+        pairs = query.listSessions(database, []).map (s) -> [s.id, s.turns]
+        byId = Object.fromEntries pairs
+
+        byId[A] ▸ 2
+        byId['ses_bbbbbbbbbbbbbbbbbbbbbbb2'] ▸ 0
+        byId[C] ▸ 1
+
+    ▸ null title comes through as null
+
+        second = query.listSessions(database, ['bbbbbb'])[0]
+
+        second.title ▸ null
+        second.time_created ▸ build.BASE + 120000
+        second.time_updated ▸ build.BASE + 180000
+
+    ▸ time_last is the time of the newest message
+
+        pairs = query.listSessions(database, []).map (s) -> [s.id, s.time_last]
+        byId = Object.fromEntries pairs
+
+        byId[A] ▸ build.BASE + 7 * 1000
+        byId['ses_bbbbbbbbbbbbbbbbbbbbbbb2'] ▸ build.BASE + 2 * 1000
+        byId[C] ▸ build.BASE + 4 * 1000
+
+    ▸ time_last falls back to the update time of a session with no messages
+
+        empty = new sqlite.DatabaseSync ':memory:'
+
+        empty.exec """
+          CREATE TABLE session_v2 (
+            id text PRIMARY KEY, parent_id text, title text, directory text,
+            time_created integer NOT NULL, time_updated integer NOT NULL
+          );
+          CREATE TABLE session_message (
+            id text PRIMARY KEY, session_id text NOT NULL, type text NOT NULL,
+            seq integer NOT NULL, time_created integer NOT NULL, data text NOT NULL
+          );
+        """
+
+        insert = empty.prepare "INSERT INTO session_v2 (id, parent_id, title, directory, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?)"
+
+        insert.run 'ses_eeeeeeeeeeeeeeeeeeeeeee5', null, 'Empty', '/home/kodi/a/coco', build.BASE, build.BASE + 42
+
+        rows = query.listSessions empty, []
+
+        rows[0].time_last ▸ build.BASE + 42
+
+        empty.close()

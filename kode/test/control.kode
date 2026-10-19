@@ -1,0 +1,176 @@
+###
+     ███████   ███████   ███   ███  █████████  ████████    ███████   ███    
+    ███       ███   ███  ████  ███     ███     ███   ███  ███   ███  ███    
+    ███       ███   ███  ███ █ ███     ███     ███████    ███   ███  ███    
+    ███       ███   ███  ███  ████     ███     ███   ███  ███   ███  ███    
+     ███████   ███████   ███   ███     ███     ███   ███   ███████   ███████
+###
+
+use ../test/fixtures/build
+use ../db
+use ../shell
+use ../log
+use ../ls
+use ../render
+use ../escape
+use ../style
+
+CONTROL_DB_PATH = build.fixtures().CONTROL_DB_PATH
+
+plain = style.createStyle false
+
+#  every byte an escape function has to deal with: nul, the C0 controls that
+#  are not tab, newline or the escape byte, and delete
+
+CONTROL_BYTES = /[\0-\x08\x0b-\x1a\x1c-\x1f\x7f]/
+
+#  log is the console builtin, so the module answers to a second name
+
+history = log
+
+run = (command) ->
+
+    database = db.openDb CONTROL_DB_PATH
+
+    if command == history then history({db: database, prefixes: ['eeeeee'], width: 80, style: plain})
+    command({db: database, prefixes: ['eeeeee'], width: 80, style: plain})
+
+bytesOf = (text) -> Array.from Buffer.from(text, 'utf8')
+
+
+▸ escapeControl
+
+    ▸ leaves printable text alone
+
+        (escape('plain text 123 !?')) ▸ 'plain text 123 !?'
+
+    ▸ keeps tab and newline, since they are layout, not noise
+
+        (escape("a\tb\nc")) ▸ "a\tb\nc"
+
+    ▸ escapes nul as a hex byte
+
+        (escape("a\0b")) ▸ 'a\\x00b'
+
+    ▸ escapes every other c0 control as hex
+
+        all = Array.from({length: 0x20}, (_, i) -> String.fromCharCode(i))
+        c0 = all.filter((c) -> not ("\t\n\u001b").includes(c)).join ''
+
+        for c in c0
+            hex = c.charCodeAt(0).toString(16).padStart 2, '0'
+            (escape("a#{c}b")) ▸ "a\\x#{hex}b"
+
+    ▸ escapes delete
+
+        (escape("a\u007fb")) ▸ 'a\\x7fb'
+
+    ▸ keeps the ansi escape byte, since colors are output to keep
+
+        (escape("\u001b[31mred\u001b[39m")) ▸ "\u001b[31mred\u001b[39m"
+
+    ▸ leaves multibyte text untouched
+
+        (escape('héllo → 🎉')) ▸ 'héllo → 🎉'
+
+    ▸ coerces a non-string
+
+        (escape(42)) ▸ '42'
+        (escape(null)) ▸ 'null'
+
+    ▸ output never carries a control byte other than tab and newline
+
+        for c in Array.from({length: 0x80}, (_, i) -> String.fromCharCode(i))
+            out = escape "a#{c}b"
+            bad = bytesOf(out).filter (b) ->
+                if b == 0x09 or b == 0x0a or b == 0x1b then false else b < 0x20 or b == 0x7f
+            bad ▸ []
+
+# ███████    ███   ███  █████████  ████████   ███████
+# ███   ███   ███ ███      ███     ███       ███     
+# ███████      █████       ███     ███████   ███████ 
+# ███   ███     ███        ███     ███            ███
+# ███████       ███        ███     ████████  ███████ 
+
+▸ control bytes in a session
+
+    ▸ the raw fixture result really does contain the offending bytes
+
+        (bytesOf(build.CONTROL_RESULT).includes(0x00)) ▸ yes
+        (bytesOf(build.CONTROL_TITLE).includes(0x00)) ▸ yes
+
+    ▸ shell and log output holds no control byte and shows the nul bytes
+
+        for entry in [['shell', shell] ['log', history]]
+            [name, command] = entry
+
+            out = run command
+            not (CONTROL_BYTES.test(out)) ▸ yes
+
+            out = run command
+            (out.includes('\\x00')) ▸ yes
+
+    ▸ the escaped result keeps its tabs, newlines and colors
+
+        out = run shell
+
+        (out.includes("tab\there")) ▸ yes
+        (out.includes("<anonymous_script>:1\n")) ▸ yes
+        (out.includes("\u001b[31mred\u001b[39m")) ▸ yes
+
+    ▸ a session title with control bytes is escaped in the table
+
+        database = db.openDb CONTROL_DB_PATH
+        out = ls {db: database, prefixes: [], width: 80, style: plain}
+
+        not (CONTROL_BYTES.test(out)) ▸ yes
+        (out.includes(build.CONTROL_TITLE.replace("\0", '\\x00'))) ▸ yes
+
+    ▸ a command carrying control bytes is escaped too
+
+        blocks = [
+            {kind: 'call', name: 'shell', agent: null, command: "printf '\0'"}
+            {kind: 'result', name: 'shell', text: 'ok', outputPath: null}
+        ]
+
+        out = render.renderBlocks blocks, plain
+
+        not (CONTROL_BYTES.test(out)) ▸ yes
+        (out.includes("printf '\\x00'")) ▸ yes
+
+    ▸ a truncated result's output path is escaped as well
+
+        blocks = [
+            {kind: 'call', name: 'read', agent: null, command: 'cat f'}
+            {kind: 'result', name: 'read', text: 'head', outputPath: "/tmp/out\0put"}
+        ]
+
+        out = render.renderBlocks blocks, plain
+
+        not (CONTROL_BYTES.test(out)) ▸ yes
+        (out.includes('/tmp/out\\x00put')) ▸ yes
+
+    ▸ the row renderer escapes a title before it is cropped
+
+        session =
+            id: build.CONTROL_SESSION
+            title: ("x").repeat(79) + "\0"
+            time_created: 1791283494422
+            time_updated: 1791283494422 + 60000
+            time_last: 1791283494422 + 60000
+            turns: 1
+
+        out = render.renderSession session, 80, plain
+
+        not (CONTROL_BYTES.test(out)) ▸ yes
+        out.length ▸ 80
+
+    ▸ escaping survives the round trip through the database
+
+        out = run shell
+
+        #  the old source forgot the space the fixture's 0x20 byte escapes to,
+        #  and only passed because the parser compiled the line into a truth
+        #  check on the includes method itself - here the check is real
+
+        (out.includes('\\x00\\x00\\x00 \\x08\\x10\\x00\\x040\\x00\\x00')) ▸ yes

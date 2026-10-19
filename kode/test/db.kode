@@ -1,0 +1,55 @@
+###
+    ███████    ███████
+    ███   ███  ███   ███
+    ███   ███  ███████
+    ███   ███  ███   ███
+    ███████    ███████
+###
+
+#  where the database is, and what happens when it is not the database we asked
+#  for.
+
+use ../test/fixtures/build
+use ../db
+use ./helpers ▪ throws
+
+fx = build.fixtures()
+
+DB_PATH = fx.DB_PATH
+BAD_SCHEMA_DB_PATH = fx.BAD_SCHEMA_DB_PATH
+MISSING_COLUMN_DB_PATH = fx.MISSING_COLUMN_DB_PATH
+
+throwsOclsError = (pattern) -> (e) -> e instanceof db.OclsError and (pattern.test e.message)
+
+▸ resolveDbPath
+
+    ▸ uses XDG_DATA_HOME when set
+
+        db.resolveDbPath({XDG_DATA_HOME: '/xdg'}) ▸ '/xdg/opencode/opencode.db'
+
+    ▸ falls back to ~/.local/share
+
+        db.resolveDbPath({}) ▸ "#{process.env.HOME}/.local/share/opencode/opencode.db"
+
+▸ openDb
+
+    ▸ opens the fixture read-only
+
+        d = db.openDb DB_PATH
+
+        (d.prepare('SELECT count(*) c FROM session_v2').get()).c ▸ 4
+        throws(-> d.prepare('DELETE FROM session_v2').run(), /readonly/i)
+
+        d.close()
+
+    ▸ missing file gives a clear error
+
+        throws(-> db.openDb('/nonexistent/opencode.db'), throwsOclsError(/no\x20database/i))
+
+    ▸ unrecognized schema gives a clear error
+
+        throws(-> db.openDb(BAD_SCHEMA_DB_PATH), throwsOclsError(/schema/i))
+
+    ▸ missing required column gives a clear error
+
+        throws(-> db.openDb(MISSING_COLUMN_DB_PATH), throwsOclsError(/time_updated/))
