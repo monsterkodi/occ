@@ -7,13 +7,7 @@
 ###
 
 use ../test/fixtures/build
-use ../db
-use ../shell
-use ../log
-use ../ls
-use ../render
-use ../escape
-use ../style
+use .. ◆ db shell log ls render escape style
 
 CONTROL_DB_PATH = build.fixtures().CONTROL_DB_PATH
 

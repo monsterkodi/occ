@@ -1,12 +1,12 @@
 var toExport = {}
 var BAD_SCHEMA_DB_PATH, d, DB_PATH, fx, MISSING_COLUMN_DB_PATH, throwsOclsError
 
-import build from "../test/fixtures/build.js"
-
 import db from "../db.js"
 
-import helpers from "./helpers.js"
-let throws = helpers.throws
+import build from "./fixtures/build.js"
+
+import utils from "./utils.js"
+let throws = utils.throws
 
 fx = build.fixtures()
 DB_PATH = fx.DB_PATH

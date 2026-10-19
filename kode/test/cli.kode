@@ -11,7 +11,7 @@ import path from 'node:path'
 import url from 'node:url'
 
 use ./fixtures/build
-use ./helpers ▪ matches notMatches
+use ./utils ▪ matches notMatches
 
 #  Two up, not one: this file is run from js/test, where the source is
 #  kode/test. The entry point is bin/occ, the file the package runs.

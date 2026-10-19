@@ -9,9 +9,9 @@
 #  where the database is, and what happens when it is not the database we asked
 #  for.
 
-use ../test/fixtures/build
 use ../db
-use ./helpers ▪ throws
+use ./fixtures/build
+use ./utils ▪ throws
 
 fx = build.fixtures()
 

@@ -9,8 +9,8 @@ import cat from "../cat.js"
 
 import style from "../style.js"
 
-import helpers from "./helpers.js"
-let throws = helpers.throws
+import utils from "./utils.js"
+let throws = utils.throws
 
 DB_PATH = build.fixtures().DB_PATH
 plain = style.createStyle(false)

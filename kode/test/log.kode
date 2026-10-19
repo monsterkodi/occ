@@ -1,16 +1,14 @@
 ###
-██       ███████    ███████
-███      ███   ███  ███
-███      ███   ███  ███  ████
-███      ███   ███  ███   ███
-███████   ███████    ███████
+    ███       ███████    ███████   
+    ███      ███   ███  ███        
+    ███      ███   ███  ███  ████  
+    ███      ███   ███  ███   ███  
+    ███████   ███████    ███████   
 ###
 
-use ../test/fixtures/build
-use ../db
-use ../log
-use ../style
-use ./helpers ▪ throws
+use ./fixtures/build
+use .. ◆ db log style
+use ./utils ▪ throws
 
 #  log is the console builtin as well, so the module is called something else
 #  here — otherwise `log {db: …}` prints the argument.

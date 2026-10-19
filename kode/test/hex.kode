@@ -10,7 +10,7 @@
 #  that validates: with colour off nothing is applied, so nothing is checked.
 
 use ../style
-use ./helpers ▪ throws
+use ./utils ▪ throws
 
 strip = (text) -> text.replace /\x1b\[[0-9;]*m/g, ''
 

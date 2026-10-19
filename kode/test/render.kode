@@ -6,9 +6,8 @@
     ███   ███  ████████  ███   ███  ███████    ████████  ███   ███  
 ###
 
-use ../render
-use ../style
-use ./helpers ▪ matches
+use .. ◆ render style
+use ./utils ▪ matches
 
 plain = style.createStyle false
 colored = style.createStyle true

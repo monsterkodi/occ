@@ -7,10 +7,8 @@
 ###
 
 use ../test/fixtures/build
-use ../db
-use ../del
-use ../style
-use ./helpers ▪ matches throws
+use .. ◆ db del style
+use ./utils ▪ matches throws
 
 plain = style.createStyle false
 

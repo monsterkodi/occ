@@ -12,10 +12,9 @@
 #  (the tool answered) or an exit (the tool failed). Every command renders the
 #  same blocks and filters them differently.
 
-use ../test/fixtures/build
-use ../db
-use ../query
-use ./helpers ▪ throws
+use ./fixtures/build
+use .. ◆ db query
+use ./utils ▪ throws
 
 DB_PATH = build.fixtures().DB_PATH
 

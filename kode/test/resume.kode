@@ -1,9 +1,9 @@
 ###
-    ████████   ████████   ███████  ███   ███  ██     ██  ████████
-    ███   ███  ███       ███       ███   ███  ███   ███  ███
-    ███████    ███████   ███████   ███   ███  █████████  ███████
-    ███   ███  ███            ███  ███   ███  ███  ███ █ ███  ███
-    ███   ███  ████████  ███████    ███████   ███   ███  ████████
+    ████████   ████████   ███████  ███   ███  ██     ██  ████████  
+    ███   ███  ███       ███       ███   ███  ███   ███  ███       
+    ███████    ███████   ███████   ███   ███  █████████  ███████   
+    ███   ███  ███            ███  ███   ███  ███ █ ███  ███       
+    ███   ███  ████████  ███████    ███████   ███   ███  ████████  
 ###
 
 #  `occ resume sess` — hand the session back to opencode.
@@ -18,9 +18,8 @@
 #  konrad/knrd test is built the same way.
 
 use ./fixtures/build
-use ../db
-use ../resume
-use ./helpers ▪ catching
+use .. ◆ db resume
+use ./utils ▪ catching
 
 A = 'ses_aaaaaaaaaaaaaaaaaaaaaaaaa1'
 B = 'ses_bbbbbbbbbbbbbbbbbbbbbbb2'

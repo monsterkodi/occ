@@ -3,7 +3,7 @@
        ███     ███       ███   ███  ███   ███  ███  ████  ███  ███   ███  ███
        ███     ███████   ███████    █████████  ███  ███ █ ███  █████████  ███
        ███     ███       ███   ███  ███ █ ███  ███  ███  ████  ███   ███  ███
-       ███     ████████  ████████   ███   ███  ███  ███   ███  ███   ███  ███████
+       ███     ████████  ███   ███  ███   ███  ███  ███   ███  ███   ███  ███████
 ###
 
 #  terminal.kode has one export and it is the module, so `use ../terminal`
@@ -32,3 +32,5 @@ sink = ->
 
         terminal(sink(), true).interactive  ▸ true
         terminal(sink(), false).interactive ▸ false
+        
+        terminal(sink()).interactive ▸ Boolean(process.stdin.isTTY)

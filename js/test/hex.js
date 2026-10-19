@@ -5,8 +5,8 @@ var bad, c, isStyleError, lit, name, out, plain, strip, value
 
 import style from "../style.js"
 
-import helpers from "./helpers.js"
-let throws = helpers.throws
+import utils from "./utils.js"
+let throws = utils.throws
 
 
 strip = function (text)

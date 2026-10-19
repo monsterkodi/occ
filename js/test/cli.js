@@ -8,9 +8,9 @@ import path from 'node:path'
 import url from 'node:url'
 import build from "./fixtures/build.js"
 
-import helpers from "./helpers.js"
-let matches = helpers.matches
-let notMatches = helpers.notMatches
+import utils from "./utils.js"
+let matches = utils.matches
+let notMatches = utils.notMatches
 
 here = url.fileURLToPath(import.meta.url)
 root = path.join(path.dirname(here),'..','..')
