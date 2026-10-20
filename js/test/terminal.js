@@ -36,4 +36,4 @@ export default toExport
 
 
 //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVybWluYWwuanMiLCJzb3VyY2VzIjpbIi4uLy4uL2tvZGUvdGVzdC90ZXJtaW5hbC5rb2RlIl0sIm1hcHBpbmdzIjoiOzs7Ozs7QUFhQTs7OztJQUVJO0lBQ0E7O2VBQWtCLE9BQU8sS0FBSzs7WUFFOUIsT0FBUSxPQUNSLE1BQU87Ozs7OztRQU1ILE1BQU07UUFDTixTQUFTLElBQUssT0FBTyxNQUFNO2dCQUUzQixJQUFJLFFBQVU7Ozs7Z0JBSWQsU0FBUyxPQUFRLE1BQU0sWUFBZTtnQkFDdEMsU0FBUyxPQUFRLE9BQU8sWUFBYztnQkFFdEMsU0FBUyxRQUFRLFlBQWMsUUFBUSxRQUFRLE1BQU0ifQ==
-//# sourceURL=file://kode/test/terminal.kode
+//# sourceURL=file:///home/kodi/s/occ/kode/test/terminal.kode

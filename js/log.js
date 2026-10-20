@@ -20,4 +20,4 @@ log = function (opt)
 export default log;
 
 //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibG9nLmpzIiwic291cmNlcyI6WyIuLi9rb2RlL2xvZy5rb2RlIl0sIm1hcHBpbmdzIjoiOzs7OztBQWFBOzs7O0lBRUksV0FBVyxJQUFJO0lBQ2YscUJBQVcsSUFBSTtJQUNmLGtCQUFRLElBQUksMkJBQVE7SUFDcEIsTUFBTSxJQUFJO0lBRVY7O2VBQXlCOztXQUV6QixTQUFTLFNBQVUsU0FBVSxNQUFPLElBQUs7O2VBRXRDIn0=
-//# sourceURL=file://kode/log.kode
+//# sourceURL=file:///home/kodi/s/occ/kode/log.kode

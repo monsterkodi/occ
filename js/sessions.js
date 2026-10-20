@@ -26,4 +26,4 @@ renderSessions = function (database, prefixes, width, sty, filter)
 export default renderSessions;
 
 //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic2Vzc2lvbnMuanMiLCJzb3VyY2VzIjpbIi4uL2tvZGUvc2Vzc2lvbnMua29kZSJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBY0E7Ozs7SUFFSTt3QkFFZSxNQUFNLGFBQWEsU0FBVTs7OztRQUV4QyxNQUFNLE1BQU0sV0FBVyxTQUFVLFFBQVE7UUFFekMsT0FBTyxPQUFPLGNBQWMsSUFBSSxJQUFLLE1BQU87UUFDNUMsT0FBTyxPQUFPLGFBQWEsT0FBTyxJQUFJLFFBQVM7UUFFL0MsT0FBTyxLQUFRLFNBQVEsS0FBUSxVQUFhLFNBQVM7O1dBRXpELE9BQU8sS0FBSzs7ZUFFVCJ9
-//# sourceURL=file://kode/sessions.kode
+//# sourceURL=file:///home/kodi/s/occ/kode/sessions.kode
